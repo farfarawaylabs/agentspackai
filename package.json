@@ -1,0 +1,23 @@
+{
+	"name": "agents-pack",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"agents-pack": "./src/cli/main.ts"
+	},
+	"scripts": {
+		"check": "bun run format:check && bun run lint && bun run typecheck && bun test",
+		"cli": "bun src/cli/main.ts",
+		"format": "biome format --write .",
+		"format:check": "biome format .",
+		"lint": "biome lint .",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.5",
+		"@types/bun": "1.3.14",
+		"typescript": "7.0.2"
+	}
+}

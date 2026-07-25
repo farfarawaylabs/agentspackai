@@ -1,0 +1,15 @@
+schema_version = 1
+id = "agents-pack-smoke"
+version = "0.2.0"
+
+[[components]]
+id = "instruction.smoke"
+kind = "instruction"
+source = "instructions/smoke.md"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.smoke"
+kind = "skill"
+source = "skills/agents-pack-smoke-test"
+targets = ["claude", "codex", "cursor"]
