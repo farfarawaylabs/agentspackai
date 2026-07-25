@@ -1,0 +1,14 @@
+Agents Pack update plan
+Scope: repository
+
+Operations:
+  REPLACE FILE .agents/skills/agents-pack-smoke-test/SKILL.md
+  REPLACE FILE .claude/rules/agents-pack/smoke.md
+  REPLACE FILE .claude/skills/agents-pack-smoke-test/SKILL.md
+  REPLACE FILE .cursor/rules/agents-pack/smoke.mdc
+  REPLACE BLOCK instruction.smoke -> AGENTS.md
+  REPLACE FILE .agents-pack/pack.toml
+  REPLACE FILE .agents-pack/lock.json
+
+Warnings:
+  - Cursor may discover agents-pack-smoke-test through both Claude and Codex compatibility roots.

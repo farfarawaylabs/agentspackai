@@ -1,0 +1,13 @@
+Agents Pack eject plan
+Scope: repository
+
+Operations:
+  REMOVE FILE .agents/skills/agents-pack-smoke-test/SKILL.md
+  REMOVE FILE .claude/rules/agents-pack/smoke.md
+  REMOVE FILE .claude/skills/agents-pack-smoke-test/SKILL.md
+  REMOVE FILE .cursor/rules/agents-pack/smoke.mdc
+  REMOVE BLOCK instruction.smoke -> AGENTS.md
+  REMOVE FILE .agents-pack/pack.toml
+  REMOVE FILE .agents-pack/lock.json
+  REMOVE EMPTY DIRECTORY .agents-pack/transactions
+  REMOVE EMPTY DIRECTORY .agents-pack

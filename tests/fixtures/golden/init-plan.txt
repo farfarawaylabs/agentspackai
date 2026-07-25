@@ -1,0 +1,14 @@
+Agents Pack init plan
+Scope: repository
+
+Operations:
+  CREATE FILE .agents/skills/agents-pack-smoke-test/SKILL.md
+  CREATE FILE .claude/rules/agents-pack/smoke.md
+  CREATE FILE .claude/skills/agents-pack-smoke-test/SKILL.md
+  CREATE FILE .cursor/rules/agents-pack/smoke.mdc
+  INSERT BLOCK instruction.smoke -> AGENTS.md
+  CREATE FILE .agents-pack/pack.toml
+  CREATE FILE .agents-pack/lock.json
+
+Warnings:
+  - Cursor may discover agents-pack-smoke-test through both Claude and Codex compatibility roots.
