@@ -10,7 +10,7 @@ import {
 	serializeLockFile,
 	serializeScopeConfig,
 } from "../../src/core/state.ts";
-import type { ScopeConfig } from "../../src/core/types.ts";
+import type { LockFile, ScopeConfig } from "../../src/core/types.ts";
 
 const HASH = `sha256:${"a".repeat(64)}`;
 const temporaryDirectories: string[] = [];
@@ -25,72 +25,49 @@ afterEach(async () => {
 
 describe("scope configuration", () => {
 	test("parses schema version 1", () => {
-		expect(
-			parseScopeConfig({
-				schema_version: 1,
-				scope: "repository",
-				pack_id: "agents-pack-smoke",
-				pack_version: "0.1.0",
-				targets: ["claude", "codex", "cursor"],
-			}),
-		).toEqual({
-			schemaVersion: 1,
-			scope: "repository",
-			packId: "agents-pack-smoke",
-			packVersion: "0.1.0",
-			targets: ["claude", "codex", "cursor"],
-		});
+		expect(parseScopeConfig(validConfigValue())).toEqual(validConfig());
 	});
 
 	test("loads TOML from disk", async () => {
 		const directory = await createTemporaryDirectory();
 		const path = join(directory, "pack.toml");
-		await writeFile(
-			path,
-			`
-schema_version = 1
-scope = "global"
-pack_id = "agents-pack-smoke"
-pack_version = "0.1.0"
-targets = ["claude", "codex"]
-`.trimStart(),
-		);
+		await writeFile(path, serializeScopeConfig(validConfig()));
 
-		expect(await loadScopeConfig(path)).toMatchObject({
-			scope: "global",
-			targets: ["claude", "codex"],
-		});
+		expect(await loadScopeConfig(path)).toEqual(validConfig());
 	});
 
-	test("rejects duplicate targets", () => {
+	test("rejects duplicate targets and components", () => {
 		expect(() =>
 			parseScopeConfig({
-				schema_version: 1,
-				scope: "repository",
-				pack_id: "agents-pack-smoke",
-				pack_version: "0.1.0",
+				...validConfigValue(),
 				targets: ["claude", "claude"],
+			}),
+		).toThrow("must not contain duplicates");
+		expect(() =>
+			parseScopeConfig({
+				...validConfigValue(),
+				components: ["ap-smoke-instructions", "ap-smoke-instructions"],
 			}),
 		).toThrow("must not contain duplicates");
 	});
 
-	test("serializes a deterministic TOML representation that round-trips", () => {
-		const config: ScopeConfig = {
-			schemaVersion: 1,
-			scope: "repository",
-			packId: "agents-pack-smoke",
-			packVersion: "0.1.0",
-			targets: ["claude", "codex"],
-		};
+	test("serializes deterministic TOML that round-trips", () => {
+		const config = validConfig();
 		const bytes = serializeScopeConfig(config);
 
 		expect(new TextDecoder().decode(bytes)).toBe(
 			[
 				"schema_version = 1",
 				'scope = "repository"',
-				'pack_id = "agents-pack-smoke"',
-				'pack_version = "0.1.0"',
 				'targets = ["claude", "codex"]',
+				"components = [",
+				'  "ap-smoke-instructions",',
+				'  "agents-pack-smoke-test",',
+				"]",
+				"",
+				"[pack]",
+				'id = "agents-pack-smoke"',
+				'source = "local"',
 				"",
 			].join("\n"),
 		);
@@ -101,26 +78,18 @@ targets = ["claude", "codex"]
 });
 
 describe("lockfile", () => {
-	test("parses file and managed-block outputs", () => {
+	test("parses components, files, and managed blocks", () => {
 		const lock = parseLockFile(validLock());
 
-		expect(lock.outputs).toEqual([
+		expect(lock.rendererVersion).toBe(1);
+		expect(lock.components).toEqual([
 			{
-				componentId: "instruction.smoke",
-				adapter: "claude",
-				kind: "file",
-				path: ".claude/rules/agents-pack/smoke.md",
-				sha256: HASH,
-			},
-			{
-				componentId: "instruction.smoke",
-				adapter: "codex",
-				kind: "managed-block",
-				blockId: "instruction.smoke",
-				path: "AGENTS.md",
+				id: "ap-smoke-instructions",
+				kind: "instruction",
 				sha256: HASH,
 			},
 		]);
+		expect(lock.outputs).toHaveLength(2);
 	});
 
 	test("loads JSON from disk", async () => {
@@ -130,6 +99,7 @@ describe("lockfile", () => {
 
 		expect(await loadLockFile(path)).toMatchObject({
 			schemaVersion: 1,
+			rendererVersion: 1,
 			pack: {
 				id: "agents-pack-smoke",
 				version: "0.1.0",
@@ -137,43 +107,32 @@ describe("lockfile", () => {
 		});
 	});
 
-	test("rejects unsafe output paths", () => {
-		const lock = validLock();
-		requireOutput(lock, 0).path = "../outside.md";
+	test("rejects unsafe outputs, malformed hashes, and unlocked components", () => {
+		const unsafe = validLock();
+		requireOutput(unsafe, 0).path = "../outside.md";
+		expect(() => parseLockFile(unsafe)).toThrow("path is not safe");
 
-		expect(() => parseLockFile(lock)).toThrow("path is not safe");
-	});
+		const malformed = validLock();
+		malformed.pack.sha256 = "not-a-hash";
+		expect(() => parseLockFile(malformed)).toThrow("must be a SHA-256 hash");
 
-	test("requires blockId for a managed block", () => {
-		const lock = validLock();
-		delete requireOutput(lock, 1).blockId;
-
-		expect(() => parseLockFile(lock)).toThrow(
-			"blockId must be a non-empty string",
+		const unlocked = validLock();
+		requireOutput(unlocked, 0).componentId = "ap-other";
+		expect(() => parseLockFile(unlocked)).toThrow(
+			"references unlocked component",
 		);
 	});
 
-	test("requires managed blocks to use the Codex adapter", () => {
-		const lock = validLock();
-		requireOutput(lock, 1).adapter = "cursor";
-
-		expect(() => parseLockFile(lock)).toThrow(
+	test("requires Codex managed blocks with distinct identities", () => {
+		const wrongAdapter = validLock();
+		requireOutput(wrongAdapter, 1).adapter = "cursor";
+		expect(() => parseLockFile(wrongAdapter)).toThrow(
 			"managed-block adapter must be codex",
 		);
-	});
 
-	test("rejects malformed hashes", () => {
-		const lock = validLock();
-		lock.pack.sha256 = "not-a-hash";
-
-		expect(() => parseLockFile(lock)).toThrow("must be a SHA-256 hash");
-	});
-
-	test("rejects a managed block sharing a complete managed-file path", () => {
-		const lock = validLock();
-		requireOutput(lock, 0).path = "AGENTS.md";
-
-		expect(() => parseLockFile(lock)).toThrow(
+		const collision = validLock();
+		requireOutput(collision, 0).path = "AGENTS.md";
+		expect(() => parseLockFile(collision)).toThrow(
 			"cannot share a path with a complete managed file",
 		);
 	});
@@ -190,46 +149,56 @@ describe("lockfile", () => {
 	});
 });
 
-interface MutableLockOutput {
-	componentId: string;
-	adapter: string;
-	kind: string;
-	blockId?: string;
-	path: string;
-	sha256: string;
-}
-
-interface MutableLock {
-	schemaVersion: number;
-	pack: {
-		id: string;
-		version: string;
-		sha256: string;
-	};
-	outputs: MutableLockOutput[];
-}
-
-function validLock(): MutableLock {
+function validConfig(): ScopeConfig {
 	return {
 		schemaVersion: 1,
+		scope: "repository",
+		targets: ["claude", "codex"],
+		components: ["ap-smoke-instructions", "agents-pack-smoke-test"],
+		pack: { id: "agents-pack-smoke", source: "local" },
+	};
+}
+
+function validConfigValue(): Record<string, unknown> {
+	return {
+		schema_version: 1,
+		scope: "repository",
+		targets: ["claude", "codex"],
+		components: ["ap-smoke-instructions", "agents-pack-smoke-test"],
+		pack: { id: "agents-pack-smoke", source: "local" },
+	};
+}
+
+function validLock(): LockFile {
+	return {
+		schemaVersion: 1,
+		rendererVersion: 1,
 		pack: {
 			id: "agents-pack-smoke",
 			version: "0.1.0",
 			sha256: HASH,
+			source: { kind: "local" },
 		},
+		components: [
+			{
+				id: "ap-smoke-instructions",
+				kind: "instruction",
+				sha256: HASH,
+			},
+		],
 		outputs: [
 			{
-				componentId: "instruction.smoke",
+				componentId: "ap-smoke-instructions",
 				adapter: "claude",
 				kind: "file",
-				path: ".claude/rules/agents-pack/smoke.md",
+				path: ".claude/rules/agents-pack/ap-smoke-instructions.md",
 				sha256: HASH,
 			},
 			{
-				componentId: "instruction.smoke",
+				componentId: "ap-smoke-instructions",
 				adapter: "codex",
 				kind: "managed-block",
-				blockId: "instruction.smoke",
+				blockId: "ap-smoke-instructions",
 				path: "AGENTS.md",
 				sha256: HASH,
 			},
@@ -237,11 +206,14 @@ function validLock(): MutableLock {
 	};
 }
 
-function requireOutput(lock: MutableLock, index: number): MutableLockOutput {
+function requireOutput(
+	lock: LockFile,
+	index: number,
+): LockFile["outputs"][number] {
 	const output = lock.outputs[index];
 
 	if (output === undefined) {
-		throw new Error(`Missing test lock output at index ${index}.`);
+		throw new Error(`Missing lock output ${index}.`);
 	}
 
 	return output;

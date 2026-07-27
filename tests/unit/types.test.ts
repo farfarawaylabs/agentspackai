@@ -11,6 +11,7 @@ describe("Phase 0 contracts", () => {
 			schemaVersion: 1,
 			id: "agents-pack-smoke",
 			version: "0.1.0",
+			title: "Agents Pack Smoke Test",
 			components: [],
 		};
 

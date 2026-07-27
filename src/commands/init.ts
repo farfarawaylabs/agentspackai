@@ -1,12 +1,21 @@
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { type InitArguments, parseInitArguments } from "../cli/arguments.ts";
-import { confirmApply, promptForInitArguments } from "../cli/prompts.ts";
+import {
+	confirmApply,
+	promptForComponentChoice,
+	promptForInitArguments,
+} from "../cli/prompts.ts";
+import { cachePack } from "../core/base-cache.ts";
 import { AgentsPackError } from "../core/errors.ts";
 import { formatChangePlan } from "../core/format-plan.ts";
 import { loadPack } from "../core/pack.ts";
 import { planInit } from "../core/plan.ts";
 import { resolveScopePaths } from "../core/paths.ts";
+import {
+	expandComponentChoice,
+	type ComponentChoice,
+} from "../core/selection.ts";
 import type {
 	AgentTarget,
 	ChangePlan,
@@ -21,6 +30,10 @@ export interface InitCommandDependencies {
 	interactive?: boolean;
 	write?: (text: string) => void;
 	promptForArguments?: (partial: InitArguments) => Promise<InitArguments>;
+	promptForComponents?: (
+		pack: Awaited<ReturnType<typeof loadPack>>,
+		targets: readonly AgentTarget[],
+	) => Promise<ComponentChoice>;
 	confirm?: () => Promise<boolean>;
 }
 
@@ -39,7 +52,7 @@ export async function runInit(
 		if (!interactive) {
 			throw new AgentsPackError(
 				"USAGE",
-				"Non-interactive init requires --scope, --agents, and --pack.",
+				"Non-interactive init requires --scope, --agents, --pack, and --components.",
 				{ exitCode: 2 },
 			);
 		}
@@ -52,6 +65,17 @@ export async function runInit(
 	const options = requireCompleteArguments(parsed);
 	const context: PathContext = { cwd, userHome };
 	const pack = await loadPack(resolve(cwd, options.packPath));
+	const choice =
+		options.components ??
+		(await (dependencies.promptForComponents ?? promptForComponentChoice)(
+			pack,
+			options.agents,
+		));
+	const components = expandComponentChoice(
+		pack.manifest,
+		options.agents,
+		choice,
+	);
 	const paths = await resolveScopePaths(options.scope, context);
 	const apply = (approvedPlan?: ChangePlan) =>
 		runMutation({
@@ -62,6 +86,7 @@ export async function runInit(
 					pack,
 					scope: options.scope,
 					targets: options.agents,
+					components,
 					context,
 				});
 
@@ -84,7 +109,17 @@ export async function runInit(
 		});
 
 	if (options.yes && !options.dryRun) {
-		const result = await apply();
+		const approvedPlan = await planInit({
+			pack,
+			scope: options.scope,
+			targets: options.agents,
+			components,
+			context,
+		});
+		write(formatComponentSelection(pack, components));
+		write(formatChangePlan(approvedPlan));
+		await cachePack(userHome, pack);
+		const result = await apply(approvedPlan);
 		writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
 		return;
 	}
@@ -93,8 +128,10 @@ export async function runInit(
 		pack,
 		scope: options.scope,
 		targets: options.agents,
+		components,
 		context,
 	});
+	write(formatComponentSelection(pack, components));
 	write(formatChangePlan(approvedPlan));
 
 	if (options.dryRun) {
@@ -103,6 +140,7 @@ export async function runInit(
 	}
 
 	if (approvedPlan.operations.length === 0) {
+		await cachePack(userHome, pack);
 		write("Agents Pack is already initialized. No changes applied.\n");
 		return;
 	}
@@ -124,6 +162,7 @@ export async function runInit(
 		}
 	}
 
+	await cachePack(userHome, pack);
 	const result = await apply(approvedPlan);
 	writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
 }
@@ -158,7 +197,8 @@ function hasMissingRequiredArguments(options: InitArguments): boolean {
 	return (
 		options.scope === undefined ||
 		options.agents === undefined ||
-		options.packPath === undefined
+		options.packPath === undefined ||
+		options.components === undefined
 	);
 }
 
@@ -166,6 +206,7 @@ function requireCompleteArguments(options: InitArguments): {
 	scope: Scope;
 	agents: AgentTarget[];
 	packPath: string;
+	components?: ComponentChoice;
 	yes: boolean;
 	dryRun: boolean;
 } {
@@ -186,6 +227,7 @@ function requireCompleteArguments(options: InitArguments): {
 		scope: options.scope,
 		agents: options.agents,
 		packPath: options.packPath,
+		components: options.components,
 		yes: options.yes,
 		dryRun: options.dryRun,
 	};
@@ -203,4 +245,20 @@ function planSignature(plan: ChangePlan): string {
 				: {}),
 		})),
 	});
+}
+
+function formatComponentSelection(
+	pack: Awaited<ReturnType<typeof loadPack>>,
+	componentIds: readonly string[],
+): string {
+	const selected = new Set(componentIds);
+	const lines = ["Selected components:"];
+
+	for (const component of pack.manifest.components) {
+		if (selected.has(component.id)) {
+			lines.push(`  ${component.id} (${component.selection})`);
+		}
+	}
+
+	return `${lines.join("\n")}\n\n`;
 }

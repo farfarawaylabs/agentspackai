@@ -147,6 +147,8 @@ async function readLockRecord(path: string): Promise<LockRecord | undefined> {
 			value.pid <= 0 ||
 			(value.command !== "init" &&
 				value.command !== "update" &&
+				value.command !== "install" &&
+				value.command !== "remove" &&
 				value.command !== "eject") ||
 			(value.scope !== "global" && value.scope !== "repository")
 		) {

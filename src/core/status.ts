@@ -1,6 +1,7 @@
 import type { Dirent } from "node:fs";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
+import { getBaseCachePath } from "./base-cache.ts";
 import { detectInstalledScope, inspectLockedOutputs } from "./inspect.ts";
 import { resolveScopePaths } from "./paths.ts";
 import type {
@@ -24,6 +25,7 @@ export type StatusReport =
 			packId: string;
 			packVersion: string;
 			targets: AgentTarget[];
+			components: string[];
 			outputs: InspectedOutput[];
 			warnings: string[];
 	  }
@@ -61,15 +63,20 @@ export async function getStatusReport(
 	return {
 		kind: "installed",
 		scope: state.config.scope,
-		packId: state.config.packId,
-		packVersion: state.config.packVersion,
+		packId: state.config.pack.id,
+		packVersion: state.lock.pack.version,
 		targets: state.config.targets,
+		components: state.config.components,
 		outputs: await inspectLockedOutputs(
 			state.paths.root,
 			state.config.scope,
 			state.lock,
 		),
-		warnings: statusWarnings(state.config.targets),
+		warnings: await statusWarnings(
+			state.config.targets,
+			context.userHome,
+			state.lock.pack.sha256,
+		),
 	};
 }
 
@@ -105,6 +112,7 @@ export function formatStatusReport(report: StatusReport): string {
 		`Scope: ${report.scope}`,
 		`Pack: ${report.packId}@${report.packVersion}`,
 		`Agents: ${report.targets.join(", ")}`,
+		`Components: ${report.components.join(", ")}`,
 		"",
 		"Managed:",
 	];
@@ -210,18 +218,30 @@ async function readJournalState(path: string): Promise<string> {
 	}
 }
 
-function statusWarnings(targets: readonly AgentTarget[]): string[] {
+async function statusWarnings(
+	targets: readonly AgentTarget[],
+	userHome: string,
+	packHash: string,
+): Promise<string[]> {
+	const warnings: string[] = [];
+
 	if (
 		targets.includes("cursor") &&
 		targets.includes("claude") &&
 		targets.includes("codex")
 	) {
-		return [
+		warnings.push(
 			"Cursor may discover skills through both Claude and Codex compatibility roots.",
-		];
+		);
 	}
 
-	return [];
+	if (!(await exists(getBaseCachePath(userHome, packHash)))) {
+		warnings.push(
+			"The installed Base is missing; install and remove require the exact pack to be restored.",
+		);
+	}
+
+	return warnings;
 }
 
 async function exists(path: string): Promise<boolean> {

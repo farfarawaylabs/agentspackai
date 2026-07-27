@@ -209,11 +209,20 @@ describe("inspectDesiredDestination", () => {
 function lockWith(output: LockedOutput): LockFile {
 	return {
 		schemaVersion: 1,
+		rendererVersion: 1,
 		pack: {
 			id: "agents-pack-smoke",
 			version: "0.1.0",
 			sha256: hashBytes(encoder.encode("pack")),
+			source: { kind: "local" },
 		},
+		components: [
+			{
+				id: output.componentId,
+				kind: "instruction",
+				sha256: hashBytes(encoder.encode("component")),
+			},
+		],
 		outputs: [output],
 	};
 }

@@ -12,6 +12,8 @@ The repository contains:
 - [Lifecycle MVP review](./docs/agent-portability/agents-pack-mvp-review.md)
 - [Core content catalog](./content/README.md)
 - [Core content conformance — 2026-07-27](./docs/agent-portability/agents-pack-core-content-conformance-2026-07-27.md)
+- [Component selection and state design](./docs/agent-portability/agents-pack-component-selection-design.md)
+- [Component-selection conformance — 2026-07-27](./docs/agent-portability/agents-pack-component-selection-conformance-2026-07-27.md)
 
 ## Development
 
@@ -21,26 +23,32 @@ bun run check
 bun run cli --help
 ```
 
-All four lifecycle commands—`init`, `status`, `update`, and `eject`—work on top
-of the transactional lifecycle foundation. The first real core pack contains
-one always-on instruction component, 22 portable skills, and six native
-subagents. Claude Code, Codex, and Cursor passed repository discovery checks
-for the core instruction, a representative skill, and a representative
-subagent.
+Seven lifecycle commands—`init`, `status`, `list`, `install`, `remove`,
+`update`, and `eject`—work on top of the transactional lifecycle foundation.
+Initialization supports explicit Recommended, All, or component-ID selection.
+The selected IDs are stored as user intent, while the lockfile records exact
+component and output hashes. Applied packs are cached immutably by digest so
+later component operations do not need the original `--pack` path.
 
-The CLI remains an internal prototype. It currently installs a complete local
-pack supplied with `--pack`; component selection, user-owned components, remote
-content resolution, and public release packaging are the next product
-increments.
+The first real core pack contains one required instruction component, 22
+portable skills, and six native subagents. User-owned components, remote
+content resolution, and public release packaging remain later increments.
 
 ```sh
 bun run cli init \
   --scope repository \
   --agents claude,codex,cursor \
   --pack ./fixtures/packs/0.1.0 \
+  --components recommended \
   --dry-run
 
 bun run cli status
+
+bun run cli list --available
+
+bun run cli install agents-pack-smoke-test --dry-run
+
+bun run cli remove agents-pack-smoke-test --dry-run
 
 bun run cli update \
   --pack ./fixtures/packs/0.2.0 \

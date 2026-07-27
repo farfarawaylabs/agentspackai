@@ -1,15 +1,24 @@
 schema_version = 1
 id = "agents-pack-smoke"
 version = "0.1.0"
+title = "Agents Pack Smoke Test"
 
 [[components]]
-id = "instruction.smoke"
+id = "ap-smoke-instructions"
 kind = "instruction"
+title = "Smoke-test instructions"
+summary = "Install deterministic fixture instructions."
+category = "core"
+selection = "required"
 source = "instructions/smoke.md"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
-id = "skill.smoke"
+id = "agents-pack-smoke-test"
 kind = "skill"
+title = "Smoke-test skill"
+summary = "Install a deterministic fixture skill."
+category = "testing"
+selection = "recommended"
 source = "skills/agents-pack-smoke-test"
 targets = ["claude", "codex", "cursor"]

@@ -64,12 +64,26 @@ export async function inspectScopeState(
 	}
 
 	if (
-		config.packId !== lock.pack.id ||
-		config.packVersion !== lock.pack.version
+		config.pack.id !== lock.pack.id ||
+		config.pack.source !== lock.pack.source.kind
 	) {
 		throw new AgentsPackError(
 			"MALFORMED_STATE",
 			"Scope configuration and lockfile disagree about the installed pack.",
+		);
+	}
+
+	const lockedComponents = lock.components.map((component) => component.id);
+
+	if (
+		config.components.length !== lockedComponents.length ||
+		config.components.some(
+			(component, index) => component !== lockedComponents[index],
+		)
+	) {
+		throw new AgentsPackError(
+			"MALFORMED_STATE",
+			"Scope configuration and lockfile disagree about selected components.",
 		);
 	}
 

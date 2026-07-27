@@ -41,12 +41,18 @@ describe("init CLI", () => {
 		expect(first.stdout).toContain("Warnings:");
 		expect(
 			await exists(
-				join(environment.repository, ".claude/rules/agents-pack/smoke.md"),
+				join(
+					environment.repository,
+					".claude/rules/agents-pack/ap-smoke-instructions.md",
+				),
 			),
 		).toBe(true);
 		expect(
 			await exists(
-				join(environment.repository, ".cursor/rules/agents-pack/smoke.mdc"),
+				join(
+					environment.repository,
+					".cursor/rules/agents-pack/ap-smoke-instructions.mdc",
+				),
 			),
 		).toBe(true);
 		expect(
@@ -83,7 +89,10 @@ describe("init CLI", () => {
 		expect(agents).toContain("agents-pack:start");
 		expect(
 			await exists(
-				join(environment.repository, ".claude/rules/agents-pack/smoke.md"),
+				join(
+					environment.repository,
+					".claude/rules/agents-pack/ap-smoke-instructions.md",
+				),
 			),
 		).toBe(false);
 		expect(
@@ -96,12 +105,13 @@ describe("init CLI", () => {
 		).toBe(true);
 	});
 
-	test("installs native subagent definitions from a schema version 2 pack", async () => {
+	test("installs native subagent definitions from a schema version 1 pack", async () => {
 		const environment = await createEnvironment();
 		const args = initArgsForPack(
 			"repository",
 			"claude,codex,cursor",
 			CORE_PACK,
+			"all",
 		);
 		const first = await runCli(environment, args);
 
@@ -273,7 +283,10 @@ describe("init CLI", () => {
 		);
 		expect(
 			await exists(
-				join(environment.userHome, ".claude/rules/agents-pack/smoke.md"),
+				join(
+					environment.userHome,
+					".claude/rules/agents-pack/ap-smoke-instructions.md",
+				),
 			),
 		).toBe(true);
 		expect(await snapshotTree(environment.repository)).toEqual(
@@ -305,6 +318,8 @@ describe("init CLI", () => {
 			"claude",
 			"--pack",
 			PACK_V1,
+			"--components",
+			"recommended",
 			"--dry-run",
 		]);
 
@@ -321,6 +336,8 @@ describe("init CLI", () => {
 			"claude",
 			"--pack",
 			PACK_V1,
+			"--components",
+			"recommended",
 		]);
 		expect(refused.exitCode).toBe(2);
 		expect(refused.stderr).toContain("requires --yes");
@@ -345,6 +362,7 @@ describe("init CLI", () => {
 					agents: ["claude"],
 				};
 			},
+			promptForComponents: async () => ({ kind: "recommended" }),
 			confirm: async () => false,
 		});
 
@@ -364,6 +382,7 @@ describe("init CLI", () => {
 				userHome: environment.userHome,
 				interactive: true,
 				write: (text) => output.push(text),
+				promptForComponents: async () => ({ kind: "recommended" }),
 				confirm: async () => true,
 			},
 		);
@@ -371,7 +390,10 @@ describe("init CLI", () => {
 		expect(output.join("")).toContain("Initialized agents-pack-smoke@0.1.0");
 		expect(
 			await exists(
-				join(environment.repository, ".claude/rules/agents-pack/smoke.md"),
+				join(
+					environment.repository,
+					".claude/rules/agents-pack/ap-smoke-instructions.md",
+				),
 			),
 		).toBe(true);
 	});
@@ -445,7 +467,10 @@ describe("update CLI", () => {
 		const fileEnvironment = await createEnvironment();
 		await runCli(fileEnvironment, initArgs("repository", "claude"));
 		await writeFile(
-			join(fileEnvironment.repository, ".claude/rules/agents-pack/smoke.md"),
+			join(
+				fileEnvironment.repository,
+				".claude/rules/agents-pack/ap-smoke-instructions.md",
+			),
 			"modified\n",
 		);
 		const fileBefore = await snapshotTree(fileEnvironment.repository);
@@ -598,7 +623,10 @@ describe("eject CLI", () => {
 		expect(await exists(environment.repositoryState)).toBe(false);
 		expect(
 			await exists(
-				join(environment.repository, ".cursor/rules/agents-pack/smoke.mdc"),
+				join(
+					environment.repository,
+					".cursor/rules/agents-pack/ap-smoke-instructions.mdc",
+				),
 			),
 		).toBe(false);
 
@@ -615,9 +643,15 @@ describe("eject CLI", () => {
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stdout).toContain("global scope");
-		expect(await exists(join(environment.userHome, ".agents-pack"))).toBe(
-			false,
-		);
+		expect(
+			await exists(join(environment.userHome, ".agents-pack/config.toml")),
+		).toBe(false);
+		expect(
+			await exists(join(environment.userHome, ".agents-pack/lock.json")),
+		).toBe(false);
+		expect(
+			await exists(join(environment.userHome, ".agents-pack/cache/packs")),
+		).toBe(true);
 		expect(await exists(join(environment.userHome, ".codex/AGENTS.md"))).toBe(
 			true,
 		);
@@ -633,7 +667,10 @@ describe("eject CLI", () => {
 		const fileEnvironment = await createEnvironment();
 		await runCli(fileEnvironment, initArgs("repository", "claude"));
 		await writeFile(
-			join(fileEnvironment.repository, ".claude/rules/agents-pack/smoke.md"),
+			join(
+				fileEnvironment.repository,
+				".claude/rules/agents-pack/ap-smoke-instructions.md",
+			),
 			"modified\n",
 		);
 		const fileBefore = await snapshotTree(fileEnvironment.repository);
@@ -646,7 +683,7 @@ describe("eject CLI", () => {
 		await runCli(blockEnvironment, initArgs("repository", "codex"));
 		await writeFile(
 			join(blockEnvironment.repository, "AGENTS.md"),
-			"<!-- agents-pack:start id=instruction.smoke version=0.1.0 -->\n",
+			"<!-- agents-pack:start id=ap-smoke-instructions version=0.1.0 -->\n",
 		);
 		const blockBefore = await snapshotTree(blockEnvironment.repository);
 		const blockResult = await runCli(blockEnvironment, ["eject", "--yes"]);
@@ -729,12 +766,15 @@ describe("status CLI", () => {
 			),
 		);
 		await writeFile(
-			join(environment.repository, ".claude/rules/agents-pack/smoke.md"),
+			join(
+				environment.repository,
+				".claude/rules/agents-pack/ap-smoke-instructions.md",
+			),
 			"modified\n",
 		);
 		await writeFile(
 			join(environment.repository, "AGENTS.md"),
-			"<!-- agents-pack:start id=instruction.smoke version=0.1.0 -->\n",
+			"<!-- agents-pack:start id=ap-smoke-instructions version=0.1.0 -->\n",
 		);
 
 		const drifted = await runCli(environment, ["status"]);
@@ -755,7 +795,9 @@ describe("status CLI", () => {
 		);
 
 		const status = await runCli(environment, ["status"]);
-		expect(status.stdout).toContain("clean     AGENTS.md#instruction.smoke");
+		expect(status.stdout).toContain(
+			"clean     AGENTS.md#ap-smoke-instructions",
+		);
 	});
 
 	test("reports an unfinished transaction without recovering or writing", async () => {
@@ -789,6 +831,7 @@ function initArgsForPack(
 	scope: "global" | "repository",
 	agents: string,
 	pack: string,
+	components = "recommended",
 ): string[] {
 	return [
 		"init",
@@ -798,6 +841,8 @@ function initArgsForPack(
 		agents,
 		"--pack",
 		pack,
+		"--components",
+		components,
 		"--yes",
 	];
 }

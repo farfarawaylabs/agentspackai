@@ -109,7 +109,7 @@ describe("init planning", () => {
 		const conflictEnvironment = await createEnvironment();
 		await writePortable(
 			conflictEnvironment.repository,
-			".claude/rules/agents-pack/smoke.md",
+			".claude/rules/agents-pack/ap-smoke-instructions.md",
 			encoder.encode("unowned\n"),
 		);
 		expect(
@@ -128,7 +128,7 @@ describe("init planning", () => {
 			environment.repository,
 			"AGENTS.md",
 			encoder.encode(
-				"<!-- agents-pack:start id=instruction.smoke version=0.1.0 -->\n",
+				"<!-- agents-pack:start id=ap-smoke-instructions version=0.1.0 -->\n",
 			),
 		);
 
@@ -209,7 +209,10 @@ describe("update planning", () => {
 		const missingEnvironment = await createEnvironment();
 		await initialize(missingEnvironment, ["claude"]);
 		await rm(
-			join(missingEnvironment.repository, ".claude/rules/agents-pack/smoke.md"),
+			join(
+				missingEnvironment.repository,
+				".claude/rules/agents-pack/ap-smoke-instructions.md",
+			),
 		);
 
 		expect(
@@ -223,7 +226,7 @@ describe("update planning", () => {
 		await initialize(modifiedEnvironment, ["claude"]);
 		await writePortable(
 			modifiedEnvironment.repository,
-			".claude/rules/agents-pack/smoke.md",
+			".claude/rules/agents-pack/ap-smoke-instructions.md",
 			encoder.encode("edited\n"),
 		);
 
@@ -256,7 +259,7 @@ describe("update planning", () => {
 		await initialize(malformedEnvironment, ["codex"]);
 		await writeFile(
 			join(malformedEnvironment.repository, "AGENTS.md"),
-			"<!-- agents-pack:start id=instruction.smoke version=0.1.0 -->\n",
+			"<!-- agents-pack:start id=ap-smoke-instructions version=0.1.0 -->\n",
 		);
 
 		expect(
@@ -265,6 +268,78 @@ describe("update planning", () => {
 				context: malformedEnvironment.context,
 			}),
 		).rejects.toMatchObject({ code: "DRIFT" });
+	});
+
+	test("preserves explicit selection and adds a component only when it becomes required", async () => {
+		const environment = await createEnvironment();
+		await initialize(environment, ["claude"], ["ap-smoke-instructions"]);
+
+		const preserved = await planUpdate({
+			pack: packVersionTwo,
+			context: environment.context,
+		});
+		expect(
+			preserved.operations.some((operation) =>
+				operation.path.includes("agents-pack-smoke-test"),
+			),
+		).toBe(false);
+
+		const requiredPack: LoadedPack = {
+			...packVersionTwo,
+			manifest: {
+				...packVersionTwo.manifest,
+				components: packVersionTwo.manifest.components.map((component) =>
+					component.id === "agents-pack-smoke-test"
+						? { ...component, selection: "required" as const }
+						: component,
+				),
+			},
+		};
+		const requiredPlan = await planUpdate({
+			pack: requiredPack,
+			context: environment.context,
+		});
+
+		expect(
+			requiredPlan.operations.some(
+				(operation) =>
+					operation.kind === "create-file" &&
+					operation.path === ".claude/skills/agents-pack-smoke-test/SKILL.md",
+			),
+		).toBe(true);
+		const configOperation = requiredPlan.operations.find(
+			(operation) => operation.path === ".agents-pack/pack.toml",
+		);
+		expect(configOperation?.kind).toBe("replace-file");
+
+		if (configOperation?.kind === "replace-file") {
+			expect(decoder.decode(configOperation.bytes)).toContain(
+				'"agents-pack-smoke-test"',
+			);
+		}
+	});
+
+	test("refuses an update that removes a selected component", async () => {
+		const environment = await createEnvironment();
+		await initialize(environment, ["claude"]);
+		const missingSelected: LoadedPack = {
+			...packVersionTwo,
+			manifest: {
+				...packVersionTwo.manifest,
+				components: packVersionTwo.manifest.components.filter(
+					(component) => component.id !== "agents-pack-smoke-test",
+				),
+			},
+		};
+
+		expect(
+			planUpdate({
+				pack: missingSelected,
+				context: environment.context,
+			}),
+		).rejects.toMatchObject({
+			code: "UNKNOWN_COMPONENT",
+		});
 	});
 });
 
@@ -297,7 +372,10 @@ describe("eject planning", () => {
 		const missingEnvironment = await createEnvironment();
 		await initialize(missingEnvironment, ["claude"]);
 		await rm(
-			join(missingEnvironment.repository, ".claude/rules/agents-pack/smoke.md"),
+			join(
+				missingEnvironment.repository,
+				".claude/rules/agents-pack/ap-smoke-instructions.md",
+			),
 		);
 
 		expect(
@@ -309,11 +387,13 @@ describe("eject planning", () => {
 async function initialize(
 	environment: TestEnvironment,
 	targets: ("claude" | "codex" | "cursor")[],
+	components?: string[],
 ): Promise<void> {
 	const plan = await planInit({
 		pack: packVersionOne,
 		scope: "repository",
 		targets,
+		components,
 		context: environment.context,
 	});
 	await materializePlan(environment.repository, plan);

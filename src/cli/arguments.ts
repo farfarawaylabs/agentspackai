@@ -1,6 +1,15 @@
 import { AgentsPackError } from "../core/errors.ts";
+import type { ComponentChoice } from "../core/selection.ts";
 
-export const COMMAND_NAMES = ["init", "status", "update", "eject"] as const;
+export const COMMAND_NAMES = [
+	"init",
+	"status",
+	"list",
+	"install",
+	"remove",
+	"update",
+	"eject",
+] as const;
 
 export type CommandName = (typeof COMMAND_NAMES)[number];
 
@@ -15,6 +24,7 @@ export interface InitArguments {
 	scope?: "global" | "repository";
 	agents?: ("claude" | "codex" | "cursor")[];
 	packPath?: string;
+	components?: ComponentChoice;
 	yes: boolean;
 	dryRun: boolean;
 }
@@ -28,6 +38,17 @@ export interface UpdateArguments {
 export interface EjectArguments {
 	yes: boolean;
 	dryRun: boolean;
+}
+
+export interface ComponentMutationArguments {
+	componentId: string;
+	yes: boolean;
+	dryRun: boolean;
+}
+
+export interface ListArguments {
+	status?: "installed" | "available";
+	kind?: "instruction" | "skill" | "subagent";
 }
 
 export function parseArguments(argv: string[]): ParsedArguments {
@@ -97,6 +118,16 @@ export function parseInitArguments(args: readonly string[]): InitArguments {
 				parsed.packPath = requireOptionValue(args, index, "--pack");
 				index += 1;
 				break;
+			case "--components":
+				if (parsed.components !== undefined) {
+					throw usage("--components may be provided only once.");
+				}
+
+				parsed.components = parseComponents(
+					requireOptionValue(args, index, "--components"),
+				);
+				index += 1;
+				break;
 			case "--yes":
 				parsed.yes = true;
 				break;
@@ -106,6 +137,86 @@ export function parseInitArguments(args: readonly string[]): InitArguments {
 			default:
 				throw usage(`Unknown init option: ${argument ?? ""}`);
 		}
+	}
+
+	return parsed;
+}
+
+export function parseComponentMutationArguments(
+	command: "install" | "remove",
+	args: readonly string[],
+): ComponentMutationArguments {
+	const parsed = { componentId: "", yes: false, dryRun: false };
+
+	for (const argument of args) {
+		if (argument === "--yes") {
+			if (parsed.yes) {
+				throw usage("--yes may be provided only once.");
+			}
+			parsed.yes = true;
+			continue;
+		}
+
+		if (argument === "--dry-run") {
+			if (parsed.dryRun) {
+				throw usage("--dry-run may be provided only once.");
+			}
+			parsed.dryRun = true;
+			continue;
+		}
+
+		if (argument.startsWith("--")) {
+			throw usage(`Unknown ${command} option: ${argument}`);
+		}
+
+		if (parsed.componentId.length > 0) {
+			throw usage(`${command} accepts exactly one component ID.`);
+		}
+
+		parsed.componentId = argument;
+	}
+
+	if (parsed.componentId.length === 0) {
+		throw usage(`${command} requires a component ID.`);
+	}
+
+	return parsed;
+}
+
+export function parseListArguments(args: readonly string[]): ListArguments {
+	const parsed: ListArguments = {};
+
+	for (let index = 0; index < args.length; index += 1) {
+		const argument = args[index];
+
+		if (argument === "--installed" || argument === "--available") {
+			if (parsed.status !== undefined) {
+				throw usage("--installed and --available cannot be combined.");
+			}
+			parsed.status = argument === "--installed" ? "installed" : "available";
+			continue;
+		}
+
+		if (argument === "--kind") {
+			if (parsed.kind !== undefined) {
+				throw usage("--kind may be provided only once.");
+			}
+			const value = requireOptionValue(args, index, "--kind");
+
+			if (
+				value !== "instruction" &&
+				value !== "skill" &&
+				value !== "subagent"
+			) {
+				throw usage("--kind must be instruction, skill, or subagent.");
+			}
+
+			parsed.kind = value;
+			index += 1;
+			continue;
+		}
+
+		throw usage(`Unknown list option: ${argument ?? ""}`);
 	}
 
 	return parsed;
@@ -198,6 +309,26 @@ function parseAgents(value: string): ("claude" | "codex" | "cursor")[] {
 	}
 
 	return agents;
+}
+
+function parseComponents(value: string): ComponentChoice {
+	if (value === "recommended" || value === "all") {
+		return { kind: value };
+	}
+
+	const ids = value.split(",");
+
+	if (ids.some((id) => id.length === 0)) {
+		throw usage(
+			"--components must be recommended, all, or a comma-separated component list.",
+		);
+	}
+
+	if (new Set(ids).size !== ids.length) {
+		throw usage("--components must not contain duplicate component IDs.");
+	}
+
+	return { kind: "explicit", ids };
 }
 
 function requireOptionValue(
