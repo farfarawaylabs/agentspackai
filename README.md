@@ -14,6 +14,8 @@ The repository contains:
 - [Core content conformance — 2026-07-27](./docs/agent-portability/agents-pack-core-content-conformance-2026-07-27.md)
 - [Component selection and state design](./docs/agent-portability/agents-pack-component-selection-design.md)
 - [Component-selection conformance — 2026-07-27](./docs/agent-portability/agents-pack-component-selection-conformance-2026-07-27.md)
+- [User-owned component design and workflow](./docs/agent-portability/agents-pack-user-components.md)
+- [User-owned component conformance — 2026-07-27](./docs/agent-portability/agents-pack-user-components-conformance-2026-07-27.md)
 
 ## Development
 
@@ -23,16 +25,18 @@ bun run check
 bun run cli --help
 ```
 
-Seven lifecycle commands—`init`, `status`, `list`, `install`, `remove`,
-`update`, and `eject`—work on top of the transactional lifecycle foundation.
+Ten lifecycle commands—`init`, `status`, `list`, `install`, `remove`, `create`,
+`fork`, `sync`, `update`, and `eject`—work on top of the transactional
+lifecycle foundation.
 Initialization supports explicit Recommended, All, or component-ID selection.
 The selected IDs are stored as user intent, while the lockfile records exact
 component and output hashes. Applied packs are cached immutably by digest so
 later component operations do not need the original `--pack` path.
 
-The first real core pack contains one required instruction component, 22
-portable skills, and six native subagents. User-owned components, remote
-content resolution, and public release packaging remain later increments.
+The first real core pack contains one required instruction component, 24
+portable skills, and six native subagents. User-owned skills and subagents have
+separate canonical source and generated-output state. Remote content resolution
+and public release packaging remain later increments.
 
 ```sh
 bun run cli init \
@@ -49,6 +53,16 @@ bun run cli list --available
 bun run cli install agents-pack-smoke-test --dry-run
 
 bun run cli remove agents-pack-smoke-test --dry-run
+
+bun run cli create skill explain-incidents \
+  --description "Explain incidents clearly. Use for incident reviews." \
+  --dry-run
+
+bun run cli fork agents-pack-smoke-test \
+  --name custom-smoke-test \
+  --dry-run
+
+bun run cli sync --dry-run
 
 bun run cli update \
   --pack ./fixtures/packs/0.2.0 \

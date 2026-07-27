@@ -6,6 +6,9 @@ const COMMAND_SUMMARIES: Record<CommandName, string> = {
 	list: "List installed and available components.",
 	install: "Install a component from the current pack.",
 	remove: "Remove an optional component.",
+	create: "Create a canonical user-owned skill or subagent.",
+	fork: "Copy an official component into user ownership.",
+	sync: "Render user-owned components for selected agents.",
 	update: "Preview or apply a content-pack update.",
 	eject: "Remove managed Agents Pack content safely.",
 };
@@ -22,6 +25,9 @@ Commands:
   list      ${COMMAND_SUMMARIES.list}
   install   ${COMMAND_SUMMARIES.install}
   remove    ${COMMAND_SUMMARIES.remove}
+  create    ${COMMAND_SUMMARIES.create}
+  fork      ${COMMAND_SUMMARIES.fork}
+  sync      ${COMMAND_SUMMARIES.sync}
   update    ${COMMAND_SUMMARIES.update}
   eject     ${COMMAND_SUMMARIES.eject}
 
@@ -102,6 +108,57 @@ Options:
   --pack <path>  Proposed local content-pack directory.
   --yes          Apply without an interactive confirmation.
   --dry-run      Print the update plan without writing.
+`;
+	}
+
+	if (command === "create") {
+		return `Agents Pack: create
+
+Usage:
+  agents-pack create skill <name> --description <text> [--yes] [--dry-run]
+  agents-pack create subagent <name> --description <text> [--write] [--yes] [--dry-run]
+
+${COMMAND_SUMMARIES.create}
+
+The canonical source is created under .agents-pack/user. Edit that source, then
+run agents-pack sync to regenerate provider copies.
+
+Options:
+  --description <text>  Explain what the component does and when to use it.
+  --write               Give a subagent workspace-write access; default is read-only.
+  --yes                 Apply without an interactive confirmation.
+  --dry-run             Print the plan without writing.
+`;
+	}
+
+	if (command === "fork") {
+		return `Agents Pack: fork
+
+Usage:
+  agents-pack fork <official-component> --name <user-name> [--yes] [--dry-run]
+
+${COMMAND_SUMMARIES.fork}
+
+The new name cannot use the reserved ap- prefix.
+
+Options:
+  --name <name>  Name for the user-owned copy.
+  --yes          Apply without an interactive confirmation.
+  --dry-run      Print the plan without writing.
+`;
+	}
+
+	if (command === "sync") {
+		return `Agents Pack: sync
+
+Usage:
+  agents-pack sync [--yes] [--dry-run]
+
+${COMMAND_SUMMARIES.sync}
+
+Options:
+  --yes      Apply without an interactive confirmation.
+  --dry-run  Print the plan without writing.
 `;
 	}
 

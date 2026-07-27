@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Agents Pack"
+  short_description: "Manage cross-agent components safely"
+  default_prompt: "Use $ap-manage-agents-pack to manage this Agents Pack installation."

@@ -3,9 +3,12 @@ import {
 	assertNoCommandArguments,
 	parseArguments,
 	parseComponentMutationArguments,
+	parseCreateArguments,
 	parseEjectArguments,
+	parseForkArguments,
 	parseInitArguments,
 	parseListArguments,
+	parseSyncArguments,
 	parseUpdateArguments,
 } from "../../src/cli/arguments.ts";
 
@@ -47,6 +50,55 @@ describe("parseArguments", () => {
 			rest: [],
 			unknownCommand: "unknown",
 		});
+	});
+});
+
+describe("user component arguments", () => {
+	test("parses create, fork, and sync options", () => {
+		expect(
+			parseCreateArguments([
+				"subagent",
+				"release-checker",
+				"--description",
+				"Review releases.",
+				"--write",
+				"--yes",
+			]),
+		).toEqual({
+			kind: "subagent",
+			name: "release-checker",
+			description: "Review releases.",
+			workspaceWrite: true,
+			yes: true,
+			dryRun: false,
+		});
+		expect(
+			parseForkArguments(["ap-debug", "--name", "my-debug", "--dry-run"]),
+		).toEqual({
+			componentId: "ap-debug",
+			name: "my-debug",
+			yes: false,
+			dryRun: true,
+		});
+		expect(parseSyncArguments(["--yes"])).toEqual({
+			yes: true,
+			dryRun: false,
+		});
+	});
+
+	test("rejects invalid user component arguments", () => {
+		expect(() => parseCreateArguments(["command", "test"])).toThrow(
+			"skill or subagent",
+		);
+		expect(() => parseCreateArguments(["skill", "test", "--write"])).toThrow(
+			"valid only for subagents",
+		);
+		expect(() => parseForkArguments(["ap-debug"])).toThrow(
+			"requires an official component ID and --name",
+		);
+		expect(() => parseSyncArguments(["component"])).toThrow(
+			"Unknown sync option",
+		);
 	});
 });
 

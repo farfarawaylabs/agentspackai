@@ -241,6 +241,24 @@ describe("transaction rollback", () => {
 				}),
 			}),
 		).rejects.toMatchObject({ code: "OWNERSHIP_CONFLICT" });
+
+		expect(
+			runMutation({
+				paths: environment.paths,
+				command: "remove",
+				createPlan: () => ({
+					command: "remove",
+					scope: "repository",
+					operations: [
+						{
+							kind: "remove-file",
+							path: ".agents-pack/user/skills/user-owned/SKILL.md",
+						},
+					],
+					warnings: [],
+				}),
+			}),
+		).rejects.toMatchObject({ code: "OWNERSHIP_CONFLICT" });
 		await expectNoTransactionArtifacts(environment.paths);
 	});
 });

@@ -199,6 +199,23 @@ export async function promptForPackPath(): Promise<string> {
 	}
 }
 
+export async function promptForComponentDescription(): Promise<string> {
+	const readline = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+
+	try {
+		return (
+			await readline.question(
+				"Description (what it does and when it should be used): ",
+			)
+		).trim();
+	} finally {
+		readline.close();
+	}
+}
+
 function parseScope(value: string): "global" | "repository" {
 	const normalized = value.trim().toLowerCase();
 

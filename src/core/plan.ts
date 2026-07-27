@@ -14,7 +14,11 @@ import {
 	inspectLockedOutputs,
 } from "./inspect.ts";
 import { toPortablePath } from "./paths.ts";
-import { serializeLockFile, serializeScopeConfig } from "./state.ts";
+import {
+	loadLockFileIfExists,
+	serializeLockFile,
+	serializeScopeConfig,
+} from "./state.ts";
 import type {
 	AgentTarget,
 	ChangeOperation,
@@ -215,7 +219,14 @@ export async function planEject(
 ): Promise<ChangePlan> {
 	const state = await detectInstalledScope(options.context);
 	const { config, lock, paths } = requireInstalledState(state);
-	const inspected = await inspectLockedOutputs(paths.root, config.scope, lock);
+	const userLock = await loadLockFileIfExists(paths.userLockPath);
+	const [officialInspected, userInspected] = await Promise.all([
+		inspectLockedOutputs(paths.root, config.scope, lock),
+		userLock === undefined
+			? Promise.resolve([])
+			: inspectLockedOutputs(paths.root, config.scope, userLock),
+	]);
+	const inspected = [...officialInspected, ...userInspected];
 	assertOutputsClean(inspected, "eject");
 
 	const operations = inspected
@@ -236,6 +247,14 @@ export async function planEject(
 			kind: "remove-file",
 			path: toPortablePath(paths.root, paths.lockPath),
 		},
+		...(userLock === undefined
+			? []
+			: [
+					{
+						kind: "remove-file" as const,
+						path: toPortablePath(paths.root, paths.userLockPath),
+					},
+				]),
 		{
 			kind: "remove-empty-directory",
 			path: toPortablePath(paths.root, paths.transactionsDirectory),
@@ -250,7 +269,12 @@ export async function planEject(
 		command: "eject",
 		scope: config.scope,
 		operations,
-		warnings: [],
+		warnings:
+			userLock === undefined
+				? []
+				: [
+						"User-owned canonical sources under .agents-pack/user are preserved.",
+					],
 	};
 }
 
@@ -298,7 +322,7 @@ async function reconcileInstalled(
 	return createPlan(command, config.scope, operations, rendered.warnings);
 }
 
-async function createInitialOutputs(
+export async function createInitialOutputs(
 	paths: ScopePaths,
 	outputs: readonly DesiredOutput[],
 ): Promise<{ operations: ChangeOperation[]; lockedOutputs: LockedOutput[] }> {
@@ -333,7 +357,7 @@ async function createInitialOutputs(
 	return { operations, lockedOutputs };
 }
 
-async function reconcileOutputs(
+export async function reconcileOutputs(
 	paths: ScopePaths,
 	inspected: readonly InspectedOutput[],
 	desiredOutputs: readonly DesiredOutput[],
@@ -445,7 +469,7 @@ async function reconcileOutputs(
 	return { operations, lockedOutputs };
 }
 
-function createPlan(
+export function createPlan(
 	command: ChangePlan["command"],
 	scope: Scope,
 	operations: ChangeOperation[],
@@ -502,7 +526,7 @@ function createScopeConfig(
 	};
 }
 
-function createLockFile(
+export function createLockFile(
 	pack: LoadedPack,
 	rendered: RenderedPack,
 	outputs: LockedOutput[],
@@ -623,7 +647,7 @@ function assertInstalledContentMatches(
 	}
 }
 
-function assertOutputsClean(
+export function assertOutputsClean(
 	inspected: readonly InspectedOutput[],
 	action: string,
 ): void {
@@ -733,7 +757,7 @@ function emptyComponentDirectoryOperations(
 	}));
 }
 
-function outputIdentity(output: DesiredOutput | LockedOutput): string {
+export function outputIdentity(output: DesiredOutput | LockedOutput): string {
 	return output.kind === "managed-block"
 		? `managed-block:${output.path}#${output.blockId}`
 		: `file:${output.path}`;
@@ -796,7 +820,8 @@ function isStateOperation(operation: ChangeOperation): boolean {
 	return (
 		operation.path === ".agents-pack/pack.toml" ||
 		operation.path === ".agents-pack/config.toml" ||
-		operation.path === ".agents-pack/lock.json"
+		operation.path === ".agents-pack/lock.json" ||
+		operation.path === ".agents-pack/user-lock.json"
 	);
 }
 
@@ -811,7 +836,7 @@ function scopeConfigsEqual(left: ScopeConfig, right: ScopeConfig): boolean {
 	);
 }
 
-function lockFilesEqual(left: LockFile, right: LockFile): boolean {
+export function lockFilesEqual(left: LockFile, right: LockFile): boolean {
 	if (
 		left.schemaVersion !== right.schemaVersion ||
 		left.rendererVersion !== right.rendererVersion ||

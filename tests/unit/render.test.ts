@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.24.0");
+		expect(corePack.manifest.version).toBe("0.25.0");
 		expect(rendered.outputs.map((output) => output.path)).toEqual([
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
@@ -95,6 +95,8 @@ describe("renderPack", () => {
 			".claude/skills/ap-clear-dev-context/SKILL.md",
 			".claude/skills/ap-compress-todos/SKILL.md",
 			".claude/skills/ap-continue-dev-session/SKILL.md",
+			".claude/skills/ap-create-new-skill/SKILL.md",
+			".claude/skills/ap-create-new-skill/agents/openai.yaml",
 			".claude/skills/ap-create-prd/SKILL.md",
 			".claude/skills/ap-create-prd/references/prd-structure.md",
 			".claude/skills/ap-debug/SKILL.md",
@@ -121,6 +123,8 @@ describe("renderPack", () => {
 			".claude/skills/ap-landing-page/SKILL.md",
 			".claude/skills/ap-landing-page/references/pre-publish-checklist.md",
 			".claude/skills/ap-landing-page/references/search-and-citation.md",
+			".claude/skills/ap-manage-agents-pack/SKILL.md",
+			".claude/skills/ap-manage-agents-pack/agents/openai.yaml",
 			".claude/skills/ap-refresh-repo-docs/SKILL.md",
 			".claude/skills/ap-review-plan/SKILL.md",
 			".claude/skills/ap-run-market-research/SKILL.md",
@@ -149,6 +153,28 @@ describe("renderPack", () => {
 				".claude/rules/agents-pack/ap-core-instructions.md",
 			),
 		).toContain("concise concrete example or familiar analogy");
+	});
+
+	test("always renders the Agents Pack management skills", () => {
+		const rendered = renderPack(
+			corePack,
+			"repository",
+			["claude"],
+			["ap-core-instructions"],
+		);
+		const paths = rendered.outputs.map((output) => output.path);
+
+		expect(paths).toContain(".claude/skills/ap-manage-agents-pack/SKILL.md");
+		expect(paths).toContain(".claude/skills/ap-create-new-skill/SKILL.md");
+		expect(
+			corePack.manifest.components
+				.filter((component) =>
+					["ap-manage-agents-pack", "ap-create-new-skill"].includes(
+						component.id,
+					),
+				)
+				.every((component) => component.selection === "required"),
+		).toBe(true);
 	});
 
 	test("renders action workflows as portable skills, not legacy commands", () => {

@@ -7,6 +7,9 @@ export const COMMAND_NAMES = [
 	"list",
 	"install",
 	"remove",
+	"create",
+	"fork",
+	"sync",
 	"update",
 	"eject",
 ] as const;
@@ -49,6 +52,27 @@ export interface ComponentMutationArguments {
 export interface ListArguments {
 	status?: "installed" | "available";
 	kind?: "instruction" | "skill" | "subagent";
+}
+
+export interface CreateArguments {
+	kind: "skill" | "subagent";
+	name: string;
+	description?: string;
+	workspaceWrite: boolean;
+	yes: boolean;
+	dryRun: boolean;
+}
+
+export interface ForkArguments {
+	componentId: string;
+	name: string;
+	yes: boolean;
+	dryRun: boolean;
+}
+
+export interface SyncArguments {
+	yes: boolean;
+	dryRun: boolean;
 }
 
 export function parseArguments(argv: string[]): ParsedArguments {
@@ -217,6 +241,149 @@ export function parseListArguments(args: readonly string[]): ListArguments {
 		}
 
 		throw usage(`Unknown list option: ${argument ?? ""}`);
+	}
+
+	return parsed;
+}
+
+export function parseCreateArguments(args: readonly string[]): CreateArguments {
+	const parsed: CreateArguments = {
+		kind: "skill",
+		name: "",
+		workspaceWrite: false,
+		yes: false,
+		dryRun: false,
+	};
+	const positionals: string[] = [];
+
+	for (let index = 0; index < args.length; index += 1) {
+		const argument = args[index];
+
+		switch (argument) {
+			case "--description":
+				if (parsed.description !== undefined) {
+					throw usage("--description may be provided only once.");
+				}
+				parsed.description = requireOptionValue(args, index, "--description");
+				index += 1;
+				break;
+			case "--write":
+				if (parsed.workspaceWrite) {
+					throw usage("--write may be provided only once.");
+				}
+				parsed.workspaceWrite = true;
+				break;
+			case "--yes":
+				if (parsed.yes) {
+					throw usage("--yes may be provided only once.");
+				}
+				parsed.yes = true;
+				break;
+			case "--dry-run":
+				if (parsed.dryRun) {
+					throw usage("--dry-run may be provided only once.");
+				}
+				parsed.dryRun = true;
+				break;
+			default:
+				if (argument?.startsWith("--")) {
+					throw usage(`Unknown create option: ${argument}`);
+				}
+				positionals.push(argument ?? "");
+		}
+	}
+
+	if (positionals.length !== 2) {
+		throw usage("create requires a kind and name.");
+	}
+
+	const [kind, name] = positionals;
+
+	if (kind !== "skill" && kind !== "subagent") {
+		throw usage("create kind must be skill or subagent.");
+	}
+
+	if (name === undefined || name.length === 0) {
+		throw usage("create requires a component name.");
+	}
+
+	if (kind === "skill" && parsed.workspaceWrite) {
+		throw usage("--write is valid only for subagents.");
+	}
+
+	return { ...parsed, kind, name };
+}
+
+export function parseForkArguments(args: readonly string[]): ForkArguments {
+	const parsed: ForkArguments = {
+		componentId: "",
+		name: "",
+		yes: false,
+		dryRun: false,
+	};
+
+	for (let index = 0; index < args.length; index += 1) {
+		const argument = args[index];
+
+		switch (argument) {
+			case "--name":
+				if (parsed.name.length > 0) {
+					throw usage("--name may be provided only once.");
+				}
+				parsed.name = requireOptionValue(args, index, "--name");
+				index += 1;
+				break;
+			case "--yes":
+				if (parsed.yes) {
+					throw usage("--yes may be provided only once.");
+				}
+				parsed.yes = true;
+				break;
+			case "--dry-run":
+				if (parsed.dryRun) {
+					throw usage("--dry-run may be provided only once.");
+				}
+				parsed.dryRun = true;
+				break;
+			default:
+				if (argument?.startsWith("--")) {
+					throw usage(`Unknown fork option: ${argument}`);
+				}
+				if (parsed.componentId.length > 0) {
+					throw usage("fork accepts exactly one official component ID.");
+				}
+				parsed.componentId = argument ?? "";
+		}
+	}
+
+	if (parsed.componentId.length === 0 || parsed.name.length === 0) {
+		throw usage("fork requires an official component ID and --name.");
+	}
+
+	return parsed;
+}
+
+export function parseSyncArguments(args: readonly string[]): SyncArguments {
+	const parsed: SyncArguments = { yes: false, dryRun: false };
+
+	for (const argument of args) {
+		if (argument === "--yes") {
+			if (parsed.yes) {
+				throw usage("--yes may be provided only once.");
+			}
+			parsed.yes = true;
+			continue;
+		}
+
+		if (argument === "--dry-run") {
+			if (parsed.dryRun) {
+				throw usage("--dry-run may be provided only once.");
+			}
+			parsed.dryRun = true;
+			continue;
+		}
+
+		throw usage(`Unknown sync option: ${argument}`);
 	}
 
 	return parsed;

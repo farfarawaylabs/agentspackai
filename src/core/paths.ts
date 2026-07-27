@@ -109,6 +109,7 @@ export async function resolveScopePaths(
 			? await findRepositoryRoot(normalized.cwd)
 			: await requireDirectory(normalized.userHome, "User home");
 	const stateDirectory = join(root, ".agents-pack");
+	const userDirectory = join(stateDirectory, "user");
 
 	return {
 		scope,
@@ -119,6 +120,9 @@ export async function resolveScopePaths(
 			scope === "global" ? "config.toml" : "pack.toml",
 		),
 		lockPath: join(stateDirectory, "lock.json"),
+		userDirectory,
+		userManifestPath: join(userDirectory, "pack.toml"),
+		userLockPath: join(stateDirectory, "user-lock.json"),
 		operationLockPath: join(root, ".agents-pack.operation.lock"),
 		transactionsDirectory: join(stateDirectory, "transactions"),
 	};

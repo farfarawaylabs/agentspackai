@@ -5,6 +5,10 @@
 **Scope:** First public pack, configuration, and lockfile formats; interactive
 component selection; official component installation and removal
 
+> **Later increment:** User-owned skills, subagents, and forking are now
+> implemented with separate canonical source and lock state. See
+> [Agents Pack user-owned components](./agents-pack-user-components.md).
+
 ## 1. Goal
 
 Let a user choose which official Agents Pack components are installed:
@@ -47,10 +51,10 @@ There is no migration or backward-compatibility work.
 
 ## 3. Non-goals
 
-This increment does not add:
+This component-selection increment did not add:
 
 - remote pack downloads, channels, or signature verification;
-- user-owned skills or subagents;
+- user-owned skills or subagents, which were added in the following increment;
 - drift-resolution choices such as restore, fork, or pin;
 - component dependencies, conflicts, bundles, or profiles;
 - scripts, hooks, plugins, or MCP installation;
@@ -793,7 +797,7 @@ The following decisions belong to later increments:
 
 - remote artifact URL and signature fields;
 - official versus third-party publisher identity;
-- user-owned component state and naming;
+- deletion and renaming of user-owned components;
 - component renames or replacement metadata;
 - pack pinning and rollback history;
 - restoring a missing Base automatically;

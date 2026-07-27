@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { lstat, readFile } from "node:fs/promises";
 import { AgentsPackError } from "./errors.ts";
 import { validatePortableRelativePath } from "./paths.ts";
 import type {
@@ -52,6 +52,30 @@ export async function loadLockFile(lockPath: string): Promise<LockFile> {
 	}
 
 	return parseLockFile(parsed, lockPath);
+}
+
+export async function loadLockFileIfExists(
+	lockPath: string,
+): Promise<LockFile | undefined> {
+	try {
+		const info = await lstat(lockPath);
+
+		if (!info.isFile()) {
+			throw malformedState(`Lockfile path is not a regular file: ${lockPath}`);
+		}
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			"code" in error &&
+			(error as NodeJS.ErrnoException).code === "ENOENT"
+		) {
+			return undefined;
+		}
+
+		throw error;
+	}
+
+	return loadLockFile(lockPath);
 }
 
 export function serializeScopeConfig(config: ScopeConfig): Uint8Array {

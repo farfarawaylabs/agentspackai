@@ -2,14 +2,17 @@ import type { Dirent } from "node:fs";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { getBaseCachePath } from "./base-cache.ts";
+import { AgentsPackError } from "./errors.ts";
 import { detectInstalledScope, inspectLockedOutputs } from "./inspect.ts";
 import { resolveScopePaths } from "./paths.ts";
+import { loadLockFileIfExists } from "./state.ts";
 import type {
 	AgentTarget,
 	InspectedOutput,
 	PathContext,
 	Scope,
 } from "./types.ts";
+import { loadUserPack, USER_PACK_ID } from "./user-components.ts";
 
 export interface ScopeActivity {
 	scope: Scope;
@@ -26,6 +29,7 @@ export type StatusReport =
 			packVersion: string;
 			targets: AgentTarget[];
 			components: string[];
+			userComponents: string[];
 			outputs: InspectedOutput[];
 			warnings: string[];
 	  }
@@ -60,6 +64,35 @@ export async function getStatusReport(
 		throw new Error("Installed scope detection returned no installation.");
 	}
 
+	const [officialOutputs, userLock, userPack] = await Promise.all([
+		inspectLockedOutputs(state.paths.root, state.config.scope, state.lock),
+		loadLockFileIfExists(state.paths.userLockPath),
+		loadUserPack(state.paths),
+	]);
+
+	if (userLock !== undefined && userLock.pack.id !== USER_PACK_ID) {
+		throw new AgentsPackError(
+			"MALFORMED_STATE",
+			`User lockfile must identify ${USER_PACK_ID}.`,
+		);
+	}
+
+	if (userLock !== undefined && userPack === undefined) {
+		throw new AgentsPackError(
+			"MALFORMED_STATE",
+			"The user component lock exists but its canonical manifest is missing.",
+		);
+	}
+
+	const userOutputs =
+		userLock === undefined
+			? []
+			: await inspectLockedOutputs(
+					state.paths.root,
+					state.config.scope,
+					userLock,
+				);
+
 	return {
 		kind: "installed",
 		scope: state.config.scope,
@@ -67,16 +100,26 @@ export async function getStatusReport(
 		packVersion: state.lock.pack.version,
 		targets: state.config.targets,
 		components: state.config.components,
-		outputs: await inspectLockedOutputs(
-			state.paths.root,
-			state.config.scope,
-			state.lock,
-		),
-		warnings: await statusWarnings(
-			state.config.targets,
-			context.userHome,
-			state.lock.pack.sha256,
-		),
+		userComponents:
+			userPack?.manifest.components.map((component) => component.id) ?? [],
+		outputs: [...officialOutputs, ...userOutputs],
+		warnings: [
+			...(await statusWarnings(
+				state.config.targets,
+				context.userHome,
+				state.lock.pack.sha256,
+			)),
+			...(userPack !== undefined && userLock === undefined
+				? [
+						"User-owned components exist but are not rendered; run agents-pack sync.",
+					]
+				: []),
+			...(userPack !== undefined &&
+			userLock !== undefined &&
+			userPack.sha256 !== userLock.pack.sha256
+				? ["User-owned canonical sources changed; run agents-pack sync."]
+				: []),
+		],
 	};
 }
 
@@ -112,7 +155,8 @@ export function formatStatusReport(report: StatusReport): string {
 		`Scope: ${report.scope}`,
 		`Pack: ${report.packId}@${report.packVersion}`,
 		`Agents: ${report.targets.join(", ")}`,
-		`Components: ${report.components.join(", ")}`,
+		`Official components: ${report.components.join(", ")}`,
+		`User components: ${report.userComponents.join(", ") || "none"}`,
 		"",
 		"Managed:",
 	];

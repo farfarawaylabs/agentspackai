@@ -5,8 +5,10 @@
 **Related specification:** [Agents Pack lifecycle MVP](./agents-pack-lifecycle-mvp.md)
 
 > **Historical plan:** Phases 0–9 describe the completed stub-content lifecycle
-> prototype. The subsequent real core-content milestone is recorded in
-> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md).
+> prototype. Subsequent milestones are recorded in
+> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md),
+> [component-selection conformance](./agents-pack-component-selection-conformance-2026-07-27.md),
+> and [user-owned components](./agents-pack-user-components.md).
 
 ## 1. Goal
 
