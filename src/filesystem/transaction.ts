@@ -983,8 +983,11 @@ function assertManagedTransactionPath(
 	]);
 	const prefixes = [
 		".agents/skills/",
+		".claude/agents/",
 		".claude/rules/agents-pack/",
 		".claude/skills/",
+		".codex/agents/",
+		".cursor/agents/",
 		".cursor/rules/agents-pack/",
 		".cursor/skills/",
 	];

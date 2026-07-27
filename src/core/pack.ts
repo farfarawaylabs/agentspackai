@@ -19,6 +19,7 @@ const AGENT_TARGETS = new Set<AgentTarget>(["claude", "codex", "cursor"]);
 const COMPONENT_KINDS = new Set<PackComponent["kind"]>([
 	"instruction",
 	"skill",
+	"subagent",
 ]);
 
 type UnknownRecord = Record<string, unknown>;
@@ -134,6 +135,46 @@ async function validateComponentSources(
 				throw invalidPack(`Skill SKILL.md must be a file: ${component.source}`);
 			}
 		}
+
+		if (component.kind === "subagent") {
+			if (!sourceInfo.isDirectory()) {
+				throw invalidPack(
+					`Subagent source must be a directory: ${component.source}`,
+				);
+			}
+
+			for (const requiredFile of ["agent.toml", "instructions.md"]) {
+				let requiredPath: string;
+
+				try {
+					requiredPath = await resolveContainedPath(
+						root,
+						`${component.source}/${requiredFile}`,
+						{ label: `${requiredFile} for ${component.id}` },
+					);
+				} catch (cause) {
+					throw invalidPack(
+						`Invalid ${requiredFile} path for component ${component.id}`,
+						{ cause },
+					);
+				}
+
+				const requiredInfo = await stat(requiredPath).catch(
+					(cause: unknown) => {
+						throw invalidPack(
+							`Subagent source is missing ${requiredFile}: ${component.source}`,
+							{ cause },
+						);
+					},
+				);
+
+				if (!requiredInfo.isFile()) {
+					throw invalidPack(
+						`Subagent ${requiredFile} must be a file: ${component.source}`,
+					);
+				}
+			}
+		}
 	}
 }
 
@@ -225,10 +266,11 @@ function validateManifest(value: unknown, manifestPath: string): PackManifest {
 		throw invalidManifest(manifestPath, "the document must be a table");
 	}
 
-	if (value.schema_version !== 1) {
-		throw invalidManifest(manifestPath, "schema_version must be 1");
+	if (value.schema_version !== 1 && value.schema_version !== 2) {
+		throw invalidManifest(manifestPath, "schema_version must be 1 or 2");
 	}
 
+	const schemaVersion = value.schema_version;
 	const id = requireNonEmptyString(value.id, "id", manifestPath);
 	const version = requireNonEmptyString(value.version, "version", manifestPath);
 
@@ -237,7 +279,7 @@ function validateManifest(value: unknown, manifestPath: string): PackManifest {
 	}
 
 	const components = value.components.map((component, index) =>
-		validateComponent(component, index, manifestPath),
+		validateComponent(component, index, manifestPath, schemaVersion),
 	);
 	const componentIds = new Set<string>();
 
@@ -253,7 +295,7 @@ function validateManifest(value: unknown, manifestPath: string): PackManifest {
 	}
 
 	return {
-		schemaVersion: 1,
+		schemaVersion,
 		id,
 		version,
 		components,
@@ -264,6 +306,7 @@ function validateComponent(
 	value: unknown,
 	index: number,
 	manifestPath: string,
+	schemaVersion: PackManifest["schemaVersion"],
 ): PackComponent {
 	const field = `components[${index}]`;
 
@@ -292,7 +335,14 @@ function validateComponent(
 	if (!COMPONENT_KINDS.has(kind as PackComponent["kind"])) {
 		throw invalidManifest(
 			manifestPath,
-			`${field}.kind must be instruction or skill`,
+			`${field}.kind must be instruction, skill, or subagent`,
+		);
+	}
+
+	if (schemaVersion === 1 && kind === "subagent") {
+		throw invalidManifest(
+			manifestPath,
+			`${field}.kind subagent requires schema_version 2`,
 		);
 	}
 

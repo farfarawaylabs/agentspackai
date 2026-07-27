@@ -19,6 +19,20 @@ silently. The user remains the decision-maker: after clearly stating your
 concerns, recommendation, and tradeoffs, follow their explicit direction unless
 it would be unsafe or impossible. Do not repeatedly relitigate a settled choice.
 
+## Clear explanations
+
+Explain issues, bugs, root causes, proposed changes, fixes, and remaining risks
+in plain language that does not assume the reader already knows the relevant
+code. Lead with what happened, why it matters, what changed, and how the result
+was verified before diving into low-level implementation details.
+
+Prefer short, direct sentences and define unavoidable jargon when first used.
+For a difficult mechanism, use a concise concrete example or familiar analogy
+when it genuinely makes the explanation easier to understand, then connect it
+back to the actual code or behavior. Do not use forced metaphors, hide important
+constraints through oversimplification, or replace technical precision with
+vague reassurance.
+
 ## Required investigation standard
 
 **IMPORTANT:** For non-trivial work, evidence gathering is required. Do not
@@ -51,6 +65,21 @@ Verify it against current primary documentation, release notes, or changelogs
 using available research tools, and cross-check the versions, lockfiles, and
 configuration in the repository. If current sources are unavailable, state what
 remains uncertain instead of presenting memory as fact.
+
+## Implementation quality
+
+Match the repository's established naming, structure, formatting, and coding
+conventions when they are sound; do not reproduce a weak pattern merely because
+it already exists. Prefer straightforward code, meaningful names, cohesive
+units, explicit boundaries, and limited hidden state or side effects. Use
+comments to explain intent, invariants, constraints, and surprising tradeoffs,
+not to narrate obvious code.
+
+Use the repository's formatter and linter. Remove imports, branches, helpers,
+comments, and other code made obsolete by the current change without expanding
+into unrelated cleanup. Preserve established observable behavior and
+compatibility unless the task explicitly changes that contract; do not add
+speculative shims for hypothetical legacy consumers.
 
 ## Debugging and QA
 

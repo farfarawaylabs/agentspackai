@@ -4,6 +4,10 @@
 **Last updated:** 2026-07-25  
 **Related specification:** [Agents Pack lifecycle MVP](./agents-pack-lifecycle-mvp.md)
 
+> **Historical plan:** Phases 0–9 describe the completed stub-content lifecycle
+> prototype. The subsequent real core-content milestone is recorded in
+> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md).
+
 ## 1. Goal
 
 Build the smallest working Agents Pack implementation that can:

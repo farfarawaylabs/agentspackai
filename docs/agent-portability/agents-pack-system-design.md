@@ -331,6 +331,12 @@ The portable core is the standard `SKILL.md` body and its supporting files. Targ
 
 Official components are versioned and replaceable.
 
+Official skill and subagent names use the `ap-` prefix. This reserves a clear,
+searchable namespace in provider menus and avoids collisions with components
+from other packs. Stable manifest IDs do not use the prefix as a migration
+mechanism; they identify the same logical component even when its installed
+name or path changes.
+
 Custom components live in an explicitly user-owned area:
 
 ```text
@@ -355,22 +361,52 @@ The new component:
 
 Subagents require a neutral definition because model choices, tools, permissions, memory, background execution, and handoff behavior differ by agent.
 
-Proposed canonical metadata:
+The first implemented canonical layout is:
 
-```toml
-id = "subagent.researcher"
-kind = "subagent"
-name = "researcher"
-description = "Research a topic using primary sources."
-
-[capabilities]
-filesystem = "read"
-web = "preferred"
-background = "preferred"
-memory = "project"
+```text
+subagents/<category>/<name>/
+├── agent.toml
+└── instructions.md
 ```
 
-Adapters render the instruction body and supported metadata for Claude, Codex, and Cursor.
+The pack manifest points at the directory:
+
+```toml
+[[components]]
+id = "subagent.code-reviewer"
+kind = "subagent"
+source = "subagents/engineering/ap-code-reviewer"
+targets = ["claude", "codex", "cursor"]
+```
+
+`agent.toml` stores only provider-neutral metadata and execution intent:
+
+```toml
+schema_version = 1
+name = "ap-code-reviewer"
+description = "Read-only reviewer for a specified change or the current diff."
+
+[execution]
+filesystem = "read-only"
+reasoning_effort = "high"
+```
+
+`filesystem` currently accepts `read-only` and `workspace-write`.
+`workspace-write` allows an implementation agent to edit the selected
+workspace, but it does not bypass the provider's approval policy or grant
+unrestricted host access.
+
+`instructions.md` is the canonical prompt body. Adapters currently render:
+
+| Target | Project path | Read-only mapping | Workspace-write mapping | Reasoning mapping |
+| --- | --- | --- | --- | --- |
+| Claude Code | `.claude/agents/<name>.md` | `permissionMode: plan` | `permissionMode: default` | `effort` |
+| Codex | `.codex/agents/<name>.toml` | `sandbox_mode = "read-only"` | `sandbox_mode = "workspace-write"` | `model_reasoning_effort` |
+| Cursor | `.cursor/agents/<name>.md` | `readonly: true` | `readonly: false` | Not currently rendered |
+
+Agents Pack does not pin provider model names in official subagents. The
+provider or user remains free to choose a current model, while the canonical
+profile can request a portable reasoning level where the provider supports it.
 
 If a target cannot provide requested behavior, Agents Pack reports the difference. It does not silently claim full equivalence.
 
@@ -384,13 +420,12 @@ This avoids treating simple prompt commands as a completely separate canonical c
 
 ### 6.5 Discovery collisions
 
-Cursor reads several compatibility skill and subagent roots, including roots used by Claude and Codex. Installing the same component into several roots may create duplicate discovery.
+Cursor reads several compatibility skill and subagent roots, including roots used by Claude and Codex. Skill collision behavior still needs conservative handling. For subagents, current Cursor documentation defines native `.cursor/agents` definitions as higher priority than same-name compatibility definitions. Agents Pack nevertheless renders a native Cursor file because Cursor's `readonly` metadata is not shared by the Claude or Codex formats.
 
 Before finalizing the renderer, we need a conformance test for:
 
 - same-name skills in `.agents/skills`, `.claude/skills`, and `.cursor/skills`;
 - symlinked versus copied packages;
-- same-name subagents across native and compatibility roots; and
 - which root wins or whether Cursor shows duplicates.
 
 Until that behavior is verified, the CLI must report potential duplicates rather than assume deduplication.
@@ -398,6 +433,27 @@ Until that behavior is verified, the CLI must report potential duplicates rather
 ## 7. Adding capabilities after installation
 
 Agents Pack should install a small maintenance skill that teaches any supported agent how to use the CLI.
+
+There are two different operations and the CLI should name them differently:
+
+1. **Install an official catalog component.** The component already exists in
+   the selected Agents Pack channel:
+
+   ```text
+   agents-pack install ap-debug
+   agents-pack install ap-code-reviewer
+   ```
+
+2. **Create a user-owned component.** The user or an agent is authoring a new
+   canonical definition:
+
+   ```text
+   agents-pack create skill deploy-app
+   agents-pack create subagent researcher
+   ```
+
+Do not overload one `add` command with both meanings. Installation changes the
+selected official component set; creation adds editable user-owned source.
 
 When the user says:
 
@@ -415,9 +471,9 @@ the active agent should:
 Equivalent CLI operations should be available directly:
 
 ```text
-agents-pack add skill deploy-app
-agents-pack add subagent researcher
-agents-pack add command review-pr
+agents-pack create skill deploy-app
+agents-pack create subagent researcher
+agents-pack create command review-pr
 ```
 
 The maintenance skill must use the CLI. It should not teach agents to maintain three independent copies by hand.
@@ -490,13 +546,33 @@ The choice is stored and reused by `status`, `update`, `add`, `remove`, and `doc
 
 ### Step 3: Choose targets and components
 
-The user selects:
+Interactive initialization presents:
 
 - Claude Code, Codex, Cursor, or a combination;
-- base instruction modules;
-- base skills;
-- base subagents; and
-- optional manual commands.
+- **Recommended**, which selects the maintained default set;
+- **All**, which selects every compatible component in the pack; or
+- **Custom**, which opens a categorized multi-select menu for individual
+  skills, subagents, and command workflows.
+
+The base instruction component is required for an initialized scope and is
+shown separately from optional components. The confirmation screen lists the
+exact resulting selection before anything is written.
+
+Non-interactive initialization supports the same behavior without a menu:
+
+```text
+agents-pack init ... --components all
+agents-pack init ... --components ap-debug,ap-code-reviewer
+```
+
+After initialization, users can install another official component without
+rerunning setup:
+
+```text
+agents-pack install ap-security-audit
+```
+
+The selected component IDs are persisted and updates preserve that selection.
 
 ### Step 4: Build a plan
 
@@ -618,11 +694,14 @@ agents-pack diff
 agents-pack doctor
 agents-pack validate
 
-agents-pack add skill <name>
-agents-pack add subagent <name>
-agents-pack add command <name>
-agents-pack fork <kind> <name>
+agents-pack list
+agents-pack install <component>
 agents-pack remove <component>
+
+agents-pack create skill <name>
+agents-pack create subagent <name>
+agents-pack create command <name>
+agents-pack fork <kind> <name>
 agents-pack pin <component-or-pack>@<version>
 
 agents-pack eject

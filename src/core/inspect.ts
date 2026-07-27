@@ -267,9 +267,17 @@ function assertOwnedOutputPath(output: LockedOutput, scope: Scope): void {
 	}
 
 	const prefixes: Record<LockedOutput["adapter"], readonly string[]> = {
-		claude: [".claude/rules/agents-pack/", ".claude/skills/"],
-		codex: [".agents/skills/"],
-		cursor: [".cursor/rules/agents-pack/", ".cursor/skills/"],
+		claude: [
+			".claude/agents/",
+			".claude/rules/agents-pack/",
+			".claude/skills/",
+		],
+		codex: [".agents/skills/", ".codex/agents/"],
+		cursor: [
+			".cursor/agents/",
+			".cursor/rules/agents-pack/",
+			".cursor/skills/",
+		],
 	};
 
 	if (

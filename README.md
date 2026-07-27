@@ -1,13 +1,17 @@
 # Agents Pack
 
-Agents Pack is an experimental CLI for installing and safely updating shared coding-agent instructions and skills across Claude Code, Codex, and Cursor.
+Agents Pack is an experimental CLI for installing and safely updating shared
+coding-agent instructions, skills, and subagents across Claude Code, Codex, and
+Cursor.
 
-The repository contains the completed internal lifecycle MVP described in:
+The repository contains:
 
 - [Lifecycle MVP](./docs/agent-portability/agents-pack-lifecycle-mvp.md)
 - [MVP development plan](./docs/agent-portability/agents-pack-mvp-development-plan.md)
 - [Real-agent conformance — 2026-07-24 to 2026-07-25](./docs/agent-portability/agents-pack-conformance-2026-07-25.md)
 - [Lifecycle MVP review](./docs/agent-portability/agents-pack-mvp-review.md)
+- [Core content catalog](./content/README.md)
+- [Core content conformance — 2026-07-27](./docs/agent-portability/agents-pack-core-content-conformance-2026-07-27.md)
 
 ## Development
 
@@ -17,7 +21,17 @@ bun run check
 bun run cli --help
 ```
 
-All four lifecycle commands—`init`, `status`, `update`, and `eject`—work on top of the transactional lifecycle foundation. Claude Code, Codex, and Cursor passed repository v1-to-v2 conformance; Claude Code and Codex also passed global conformance. The MVP review approves the architecture for the next internal content increment, but not yet for public distribution.
+All four lifecycle commands—`init`, `status`, `update`, and `eject`—work on top
+of the transactional lifecycle foundation. The first real core pack contains
+one always-on instruction component, 22 portable skills, and six native
+subagents. Claude Code, Codex, and Cursor passed repository discovery checks
+for the core instruction, a representative skill, and a representative
+subagent.
+
+The CLI remains an internal prototype. It currently installs a complete local
+pack supplied with `--pack`; component selection, user-owned components, remote
+content resolution, and public release packaging are the next product
+increments.
 
 ```sh
 bun run cli init \

@@ -11,6 +11,7 @@ import { renderClaudeInstruction } from "./claude.ts";
 import { renderCodexInstruction } from "./codex.ts";
 import { renderCursorInstruction } from "./cursor.ts";
 import { renderSkill } from "./skills.ts";
+import { renderSubagent } from "./subagents.ts";
 
 const TARGET_ORDER: readonly AgentTarget[] = ["claude", "codex", "cursor"];
 const COMPONENT_NAME = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
@@ -32,9 +33,14 @@ export function renderPack(
 			continue;
 		}
 
-		const renderedSkill = renderSkill(component, pack.files, selectedTargets);
-		outputs.push(...renderedSkill.outputs);
-		warnings.push(...renderedSkill.warnings);
+		if (component.kind === "skill") {
+			const renderedSkill = renderSkill(component, pack.files, selectedTargets);
+			outputs.push(...renderedSkill.outputs);
+			warnings.push(...renderedSkill.warnings);
+			continue;
+		}
+
+		outputs.push(...renderSubagent(component, pack.files, selectedTargets));
 	}
 
 	outputs.sort(compareOutputs);

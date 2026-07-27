@@ -8,7 +8,7 @@ export interface PathContext {
 }
 
 export interface PackManifest {
-	schemaVersion: 1;
+	schemaVersion: 1 | 2;
 	id: string;
 	version: string;
 	components: PackComponent[];
@@ -16,7 +16,7 @@ export interface PackManifest {
 
 export interface PackComponent {
 	id: string;
-	kind: "instruction" | "skill";
+	kind: "instruction" | "skill" | "subagent";
 	source: string;
 	targets: AgentTarget[];
 }

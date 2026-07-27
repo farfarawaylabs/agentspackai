@@ -5,6 +5,13 @@
 **Next-increment decision:** Go, with the constraints in section 8  
 **Public-release decision:** No-go
 
+> **Subsequent status — 2026-07-27:** The Git baseline, real first-party core
+> content, pack schema v2, native subagent rendering, and representative
+> real-agent conformance are now complete. Component selection, user-owned
+> component state, drift-resolution choices, remote immutable resolution, and
+> release packaging remain future work. See
+> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md).
+
 ## 1. Outcome
 
 The lifecycle MVP proved the part of Agents Pack that was most important to

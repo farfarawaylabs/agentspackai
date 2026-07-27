@@ -1,0 +1,7 @@
+schema_version = 1
+name = "ap-code-reviewer"
+description = "Read-only reviewer for a specified change or the current diff. Use after implementation and before commit or PR creation to find high-confidence correctness, security, regression, architecture, and test risks."
+
+[execution]
+filesystem = "read-only"
+reasoning_effort = "high"
