@@ -5,6 +5,7 @@ import {
 	type UpdateArguments,
 } from "../cli/arguments.ts";
 import { confirmApply, promptForPackPath } from "../cli/prompts.ts";
+import { cachePack } from "../core/base-cache.ts";
 import { AgentsPackError } from "../core/errors.ts";
 import { formatChangePlan } from "../core/format-plan.ts";
 import { detectInstalledScope } from "../core/inspect.ts";
@@ -75,7 +76,10 @@ export async function runUpdate(
 		});
 
 	if (parsed.yes && !parsed.dryRun) {
-		const result = await apply();
+		const approvedPlan = await planUpdate({ pack, context });
+		write(formatChangePlan(approvedPlan));
+		await cachePack(userHome, pack);
+		const result = await apply(approvedPlan);
 		writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
 		return;
 	}
@@ -89,6 +93,7 @@ export async function runUpdate(
 	}
 
 	if (approvedPlan.operations.length === 0) {
+		await cachePack(userHome, pack);
 		write("Agents Pack is already at this version. No changes applied.\n");
 		return;
 	}
@@ -106,6 +111,7 @@ export async function runUpdate(
 		return;
 	}
 
+	await cachePack(userHome, pack);
 	const result = await apply(approvedPlan);
 	writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
 }

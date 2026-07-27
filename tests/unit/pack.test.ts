@@ -26,16 +26,25 @@ describe("loadPackManifest", () => {
 			schemaVersion: 1,
 			id: "agents-pack-smoke",
 			version: "0.1.0",
+			title: "Agents Pack Smoke Test",
 			components: [
 				{
-					id: "instruction.smoke",
+					id: "ap-smoke-instructions",
 					kind: "instruction",
+					title: "Smoke-test instructions",
+					summary: "Install deterministic fixture instructions.",
+					category: "core",
+					selection: "required",
 					source: "instructions/smoke.md",
 					targets: ["claude", "codex", "cursor"],
 				},
 				{
-					id: "skill.smoke",
+					id: "agents-pack-smoke-test",
 					kind: "skill",
+					title: "Smoke-test skill",
+					summary: "Install a deterministic fixture skill.",
+					category: "testing",
+					selection: "recommended",
 					source: "skills/agents-pack-smoke-test",
 					targets: ["claude", "codex", "cursor"],
 				},
@@ -57,21 +66,26 @@ components = []
 		});
 	});
 
-	test("requires schema version 2 for subagents", async () => {
+	test("accepts subagents in schema version 1", async () => {
 		const packRoot = await createTemporaryPack(`
 schema_version = 1
 id = "invalid"
 version = "1.0.0"
+title = "Invalid test pack"
 
 [[components]]
-id = "subagent.reviewer"
+id = "ap-reviewer"
 kind = "subagent"
+title = "Reviewer"
+summary = "Review code."
+category = "engineering"
+selection = "optional"
 source = "subagents/reviewer"
 targets = ["claude"]
 `);
 
-		expect(loadPackManifest(packRoot)).rejects.toThrow(
-			"subagent requires schema_version 2",
+		expect((await loadPackManifest(packRoot)).components[0]?.kind).toBe(
+			"subagent",
 		);
 	});
 
@@ -80,10 +94,15 @@ targets = ["claude"]
 schema_version = 1
 id = "invalid"
 version = "1.0.0"
+title = "Invalid test pack"
 
 [[components]]
-id = "instruction.invalid"
+id = "ap-invalid"
 kind = "instruction"
+title = "Invalid"
+summary = "Invalid traversal fixture."
+category = "testing"
+selection = "required"
 source = "../outside.md"
 targets = ["claude"]
 `);
@@ -98,10 +117,15 @@ targets = ["claude"]
 schema_version = 1
 id = "invalid"
 version = "1.0.0"
+title = "Invalid test pack"
 
 [[components]]
-id = "instruction.invalid"
+id = "ap-invalid"
 kind = "instruction"
+title = "Invalid"
+summary = "Invalid target fixture."
+category = "testing"
+selection = "required"
 source = "instruction.md"
 targets = ["unknown"]
 `);
@@ -161,7 +185,7 @@ describe("loadPack", () => {
 		});
 		await writeFile(
 			join(root, "skills/agents-pack-smoke-test/SKILL.md"),
-			"skill",
+			"---\nname: agents-pack-smoke-test\ndescription: Test skill.\n---\n\n# Test\n",
 		);
 
 		expect(loadPack(root)).rejects.toMatchObject({
@@ -192,7 +216,7 @@ async function createValidTemporaryPack(): Promise<string> {
 	await writeFile(join(root, "instructions/smoke.md"), "instruction");
 	await writeFile(
 		join(root, "skills/agents-pack-smoke-test/SKILL.md"),
-		"skill",
+		"---\nname: agents-pack-smoke-test\ndescription: Test skill.\n---\n\n# Test\n",
 	);
 	return root;
 }
@@ -214,16 +238,25 @@ function validManifest(): string {
 schema_version = 1
 id = "agents-pack-smoke"
 version = "0.1.0"
+title = "Agents Pack Smoke Test"
 
 [[components]]
-id = "instruction.smoke"
+id = "ap-smoke-instructions"
 kind = "instruction"
+title = "Smoke-test instructions"
+summary = "Install deterministic fixture instructions."
+category = "core"
+selection = "required"
 source = "instructions/smoke.md"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
-id = "skill.smoke"
+id = "agents-pack-smoke-test"
 kind = "skill"
+title = "Smoke-test skill"
+summary = "Install a deterministic fixture skill."
+category = "testing"
+selection = "recommended"
 source = "skills/agents-pack-smoke-test"
 targets = ["claude", "codex", "cursor"]
 `;

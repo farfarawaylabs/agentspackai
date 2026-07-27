@@ -170,6 +170,7 @@ async function prepareTransaction(
 				.filter((operation) => operation.kind === "remove-empty-directory")
 				.map((operation) => operation.path),
 		};
+		assertPendingDirectoryOwnership(journal, "OWNERSHIP_CONFLICT");
 		await writeJournal(journalPath, journal);
 
 		return {
@@ -718,6 +719,8 @@ function parseJournal(
 		(record.scope !== "global" && record.scope !== "repository") ||
 		(record.command !== "init" &&
 			record.command !== "update" &&
+			record.command !== "install" &&
+			record.command !== "remove" &&
 			record.command !== "eject") ||
 		(record.state !== "prepared" &&
 			record.state !== "applying" &&
@@ -953,6 +956,28 @@ function assertJournalOwnership(journal: TransactionJournal): void {
 			true,
 		);
 	}
+
+	assertPendingDirectoryOwnership(journal, "RECOVERY_FAILED");
+}
+
+function assertPendingDirectoryOwnership(
+	journal: TransactionJournal,
+	errorCode: "OWNERSHIP_CONFLICT" | "RECOVERY_FAILED",
+): void {
+	for (const directory of journal.pendingEmptyDirectories) {
+		const stateDirectory =
+			directory === ".agents-pack" || directory === ".agents-pack/transactions";
+		const ownsDirectory = journal.snapshots.some((snapshot) =>
+			snapshot.path.startsWith(`${directory}/`),
+		);
+
+		if (!stateDirectory && !ownsDirectory) {
+			throw new AgentsPackError(
+				errorCode,
+				`Transaction contains an unowned empty directory: ${directory}`,
+			);
+		}
+	}
 }
 
 function assertManagedTransactionPath(
@@ -964,7 +989,16 @@ function assertManagedTransactionPath(
 	const errorCode = recovery ? "RECOVERY_FAILED" : "OWNERSHIP_CONFLICT";
 
 	if (kind === "remove-empty-directory") {
-		if (path !== ".agents-pack" && path !== ".agents-pack/transactions") {
+		const managedComponentDirectory =
+			/^(\.claude\/skills|\.agents\/skills|\.cursor\/skills)\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\/.*)?$/.test(
+				path,
+			);
+
+		if (
+			path !== ".agents-pack" &&
+			path !== ".agents-pack/transactions" &&
+			!managedComponentDirectory
+		) {
 			throw new AgentsPackError(
 				errorCode,
 				`Transaction refuses to remove an unowned directory: ${path}`,

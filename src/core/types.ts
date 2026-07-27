@@ -8,15 +8,23 @@ export interface PathContext {
 }
 
 export interface PackManifest {
-	schemaVersion: 1 | 2;
+	schemaVersion: 1;
 	id: string;
 	version: string;
+	title: string;
 	components: PackComponent[];
 }
 
+export type ComponentKind = "instruction" | "skill" | "subagent";
+export type ComponentSelection = "required" | "recommended" | "optional";
+
 export interface PackComponent {
 	id: string;
-	kind: "instruction" | "skill" | "subagent";
+	kind: ComponentKind;
+	title: string;
+	summary: string;
+	category: string;
+	selection: ComponentSelection;
 	source: string;
 	targets: AgentTarget[];
 }
@@ -37,14 +45,26 @@ export interface LoadedPack {
 export interface ScopeConfig {
 	schemaVersion: 1;
 	scope: Scope;
-	packId: string;
-	packVersion: string;
 	targets: AgentTarget[];
+	components: string[];
+	pack: {
+		id: string;
+		source: "local";
+	};
 }
 
 export interface LockedPack {
 	id: string;
 	version: string;
+	sha256: string;
+	source: {
+		kind: "local";
+	};
+}
+
+export interface LockedComponent {
+	id: string;
+	kind: ComponentKind;
 	sha256: string;
 }
 
@@ -69,8 +89,22 @@ export type LockedOutput = LockedFileOutput | LockedManagedBlockOutput;
 
 export interface LockFile {
 	schemaVersion: 1;
+	rendererVersion: 1;
 	pack: LockedPack;
+	components: LockedComponent[];
 	outputs: LockedOutput[];
+}
+
+export interface BaseCacheFile {
+	path: string;
+	sha256: string;
+	contentBase64: string;
+}
+
+export interface BaseCache {
+	schemaVersion: 1;
+	pack: LockedPack;
+	files: BaseCacheFile[];
 }
 
 export interface ScopePaths {
@@ -84,6 +118,7 @@ export interface ScopePaths {
 }
 
 export interface RenderedPack {
+	components: PackComponent[];
 	outputs: DesiredOutput[];
 	warnings: string[];
 }
@@ -146,7 +181,7 @@ export type ChangeOperation =
 	| { kind: "remove-empty-directory"; path: string };
 
 export interface ChangePlan {
-	command: "init" | "update" | "eject";
+	command: "init" | "update" | "install" | "remove" | "eject";
 	scope: Scope;
 	operations: ChangeOperation[];
 	warnings: string[];

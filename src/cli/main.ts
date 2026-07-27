@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 
 import { runEject } from "../commands/eject.ts";
+import { runInstall, runRemove } from "../commands/components.ts";
 import { runInit } from "../commands/init.ts";
+import { runList } from "../commands/list.ts";
 import { runStatus } from "../commands/status.ts";
 import { runUpdate } from "../commands/update.ts";
 import { AgentsPackError } from "../core/errors.ts";
@@ -34,6 +36,15 @@ export async function run(argv: string[]): Promise<number> {
 				break;
 			case "status":
 				await runStatus(parsed.rest);
+				break;
+			case "list":
+				await runList(parsed.rest);
+				break;
+			case "install":
+				await runInstall(parsed.rest);
+				break;
+			case "remove":
+				await runRemove(parsed.rest);
 				break;
 			case "update":
 				await runUpdate(parsed.rest);

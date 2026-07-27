@@ -1,11 +1,12 @@
 import { renderPack } from "../adapters/render.ts";
+import { posix } from "node:path";
 import {
 	findManagedBlock,
 	insertManagedBlock,
 	replaceManagedBlock,
 } from "../filesystem/managed-block.ts";
 import { AgentsPackError } from "./errors.ts";
-import { hashBytes } from "./hash.ts";
+import { hashBytes, hashPackComponent } from "./hash.ts";
 import {
 	assertScopeAvailable,
 	detectInstalledScope,
@@ -24,6 +25,7 @@ import type {
 	LockFile,
 	LockedOutput,
 	PathContext,
+	RenderedPack,
 	Scope,
 	ScopeConfig,
 	ScopePaths,
@@ -36,11 +38,18 @@ export interface InitPlanOptions {
 	pack: LoadedPack;
 	scope: Scope;
 	targets: readonly AgentTarget[];
+	components?: readonly string[];
 	context: PathContext;
 }
 
 export interface UpdatePlanOptions {
 	pack: LoadedPack;
+	context: PathContext;
+}
+
+export interface ComponentPlanOptions {
+	pack: LoadedPack;
+	componentId: string;
 	context: PathContext;
 }
 
@@ -50,8 +59,15 @@ export interface EjectPlanOptions {
 
 export async function planInit(options: InitPlanOptions): Promise<ChangePlan> {
 	const targets = canonicalTargets(options.targets);
-	const rendered = renderPack(options.pack, options.scope, targets);
+	const rendered = renderPack(
+		options.pack,
+		options.scope,
+		targets,
+		options.components ??
+			options.pack.manifest.components.map((component) => component.id),
+	);
 	const state = await assertScopeAvailable(options.scope, options.context);
+	const selectedIds = rendered.components.map((component) => component.id);
 
 	if (state.status === "installed") {
 		assertRepeatedInitMatches(
@@ -59,6 +75,7 @@ export async function planInit(options: InitPlanOptions): Promise<ChangePlan> {
 			state.lock,
 			options.pack,
 			targets,
+			selectedIds,
 			rendered.outputs,
 		);
 		const inspected = await inspectLockedOutputs(
@@ -77,40 +94,20 @@ export async function planInit(options: InitPlanOptions): Promise<ChangePlan> {
 		};
 	}
 
-	const operations: ChangeOperation[] = [];
-	const lockedOutputs: LockedOutput[] = [];
-
-	for (const desired of rendered.outputs) {
-		const destination = await inspectDesiredDestination(
-			state.paths.root,
-			desired,
-		);
-
-		if (desired.kind === "file") {
-			operations.push({
-				kind: "create-file",
-				path: desired.path,
-				bytes: desired.bytes,
-			});
-			lockedOutputs.push(toLockedOutput(desired, hashBytes(desired.bytes)));
-			continue;
-		}
-
-		const existingBytes = destination.existingBytes ?? new Uint8Array();
-		const projected = insertManagedBlock(existingBytes, desired.bytes);
-		const block = requireProjectedBlock(projected, desired.blockId);
-		operations.push({
-			kind: "insert-block",
-			path: desired.path,
-			blockId: desired.blockId,
-			bytes: desired.bytes,
-		});
-		lockedOutputs.push(toLockedOutput(desired, hashBytes(block.ownedBytes)));
-	}
-
-	const config = createScopeConfig(options.scope, options.pack, targets);
-	const lock = createLockFile(options.pack, lockedOutputs);
-	operations.push(...createStateOperations(state.paths, config, lock));
+	const { operations, lockedOutputs } = await createInitialOutputs(
+		state.paths,
+		rendered.outputs,
+	);
+	const config = createScopeConfig(
+		options.scope,
+		options.pack,
+		targets,
+		selectedIds,
+	);
+	const lock = createLockFile(options.pack, rendered, lockedOutputs);
+	operations.push(
+		...createStateOperations(state.paths, config, lock, "create"),
+	);
 
 	return createPlan("init", options.scope, operations, rendered.warnings);
 }
@@ -121,10 +118,10 @@ export async function planUpdate(
 	const state = await detectInstalledScope(options.context);
 	const { config, lock, paths } = requireInstalledState(state);
 
-	if (options.pack.manifest.id !== config.packId) {
+	if (options.pack.manifest.id !== config.pack.id) {
 		throw new AgentsPackError(
 			"INVALID_PACK",
-			`Installed pack ${config.packId} cannot be updated with ${options.pack.manifest.id}.`,
+			`Installed pack ${config.pack.id} cannot be updated with ${options.pack.manifest.id}.`,
 		);
 	}
 
@@ -138,132 +135,79 @@ export async function planUpdate(
 		);
 	}
 
-	const inspected = await inspectLockedOutputs(paths.root, config.scope, lock);
-	assertOutputsClean(inspected, "update");
-	const rendered = renderPack(options.pack, config.scope, config.targets);
-	const operations: ChangeOperation[] = [];
-	const newLockedOutputs: LockedOutput[] = [];
-	const oldByIdentity = new Map(
-		inspected.map((inspection) => [
-			outputIdentity(inspection.output),
-			inspection,
-		]),
+	return reconcileInstalled(
+		"update",
+		options.pack,
+		config,
+		lock,
+		paths,
+		config.components,
 	);
-	const desiredIdentities = new Set(
-		rendered.outputs.map((output) => outputIdentity(output)),
+}
+
+export async function planInstall(
+	options: ComponentPlanOptions,
+): Promise<ChangePlan> {
+	const state = await detectInstalledScope(options.context);
+	const { config, lock, paths } = requireInstalledState(state);
+	assertPackMatchesLock(options.pack, lock);
+	const component = options.pack.manifest.components.find(
+		(candidate) => candidate.id === options.componentId,
 	);
 
-	for (const inspection of inspected) {
-		if (!desiredIdentities.has(outputIdentity(inspection.output))) {
-			operations.push(removeOperation(inspection.output));
-		}
-	}
-
-	for (const desired of rendered.outputs) {
-		const old = oldByIdentity.get(outputIdentity(desired));
-
-		if (old === undefined) {
-			const destination = await inspectDesiredDestination(paths.root, desired);
-
-			if (desired.kind === "file") {
-				operations.push({
-					kind: "create-file",
-					path: desired.path,
-					bytes: desired.bytes,
-				});
-				newLockedOutputs.push(
-					toLockedOutput(desired, hashBytes(desired.bytes)),
-				);
-				continue;
-			}
-
-			const existingBytes = destination.existingBytes ?? new Uint8Array();
-			const projected = insertManagedBlock(existingBytes, desired.bytes);
-			const block = requireProjectedBlock(projected, desired.blockId);
-			operations.push({
-				kind: "insert-block",
-				path: desired.path,
-				blockId: desired.blockId,
-				bytes: desired.bytes,
-			});
-			newLockedOutputs.push(
-				toLockedOutput(desired, hashBytes(block.ownedBytes)),
-			);
-			continue;
-		}
-
-		if (desired.kind === "file" && old.output.kind === "file") {
-			const desiredHash = hashBytes(desired.bytes);
-
-			if (desiredHash !== old.output.sha256) {
-				operations.push({
-					kind: "replace-file",
-					path: desired.path,
-					bytes: desired.bytes,
-				});
-			}
-
-			newLockedOutputs.push(toLockedOutput(desired, desiredHash));
-			continue;
-		}
-
-		if (
-			desired.kind === "managed-block" &&
-			old.output.kind === "managed-block"
-		) {
-			const currentBytes = requireCurrentBytes(old);
-			const currentBlockBytes = requireCurrentBlockBytes(old);
-			const changed = !bytesEqual(currentBlockBytes, desired.bytes);
-			const projected = changed
-				? replaceManagedBlock(currentBytes, desired.bytes)
-				: currentBytes;
-			const block = requireProjectedBlock(projected, desired.blockId);
-
-			if (changed) {
-				operations.push({
-					kind: "replace-block",
-					path: desired.path,
-					blockId: desired.blockId,
-					bytes: desired.bytes,
-				});
-			}
-
-			newLockedOutputs.push(
-				toLockedOutput(desired, hashBytes(block.ownedBytes)),
-			);
-			continue;
-		}
-
+	if (component === undefined) {
 		throw new AgentsPackError(
-			"MALFORMED_STATE",
-			`Managed output changed kind without changing identity: ${desired.path}`,
+			"UNKNOWN_COMPONENT",
+			`Component ${options.componentId} is not available in the installed pack. Update the pack first if it was added later.`,
 		);
 	}
 
-	const newConfig = createScopeConfig(
-		config.scope,
+	const components = config.components.includes(options.componentId)
+		? config.components
+		: [...config.components, options.componentId];
+
+	return reconcileInstalled(
+		"install",
 		options.pack,
-		config.targets,
+		config,
+		lock,
+		paths,
+		components,
 	);
-	const newLock = createLockFile(options.pack, newLockedOutputs);
+}
 
-	if (!scopeConfigsEqual(config, newConfig)) {
-		operations.push({
-			kind: "replace-file",
-			path: toPortablePath(paths.root, paths.configPath),
-			bytes: serializeScopeConfig(newConfig),
-		});
+export async function planRemove(
+	options: ComponentPlanOptions,
+): Promise<ChangePlan> {
+	const state = await detectInstalledScope(options.context);
+	const { config, lock, paths } = requireInstalledState(state);
+	assertPackMatchesLock(options.pack, lock);
+	const component = options.pack.manifest.components.find(
+		(candidate) => candidate.id === options.componentId,
+	);
+
+	if (component === undefined) {
+		throw new AgentsPackError(
+			"UNKNOWN_COMPONENT",
+			`Unknown component: ${options.componentId}`,
+		);
 	}
 
-	if (!lockFilesEqual(lock, newLock)) {
-		operations.push({
-			kind: "replace-file",
-			path: toPortablePath(paths.root, paths.lockPath),
-			bytes: serializeLockFile(newLock),
-		});
+	if (component.selection === "required") {
+		throw new AgentsPackError(
+			"USAGE",
+			`Required component ${component.id} cannot be removed.`,
+		);
 	}
 
-	return createPlan("update", config.scope, operations, rendered.warnings);
+	return reconcileInstalled(
+		"remove",
+		options.pack,
+		config,
+		lock,
+		paths,
+		config.components.filter((id) => id !== options.componentId),
+	);
 }
 
 export async function planEject(
@@ -277,6 +221,11 @@ export async function planEject(
 	const operations = inspected
 		.map((inspection) => removeOperation(inspection.output))
 		.sort(compareOperations);
+	operations.push(
+		...emptyComponentDirectoryOperations(
+			inspected.map((inspection) => inspection.output),
+		),
+	);
 
 	operations.push(
 		{
@@ -305,6 +254,197 @@ export async function planEject(
 	};
 }
 
+async function reconcileInstalled(
+	command: "update" | "install" | "remove",
+	pack: LoadedPack,
+	config: ScopeConfig,
+	lock: LockFile,
+	paths: ScopePaths,
+	componentIds: readonly string[],
+): Promise<ChangePlan> {
+	const inspected = await inspectLockedOutputs(paths.root, config.scope, lock);
+	assertOutputsClean(inspected, command);
+	const rendered = renderPack(pack, config.scope, config.targets, componentIds);
+	const { operations, lockedOutputs } = await reconcileOutputs(
+		paths,
+		inspected,
+		rendered.outputs,
+	);
+	const selectedIds = rendered.components.map((component) => component.id);
+	const newConfig = createScopeConfig(
+		config.scope,
+		pack,
+		config.targets,
+		selectedIds,
+	);
+	const newLock = createLockFile(pack, rendered, lockedOutputs);
+
+	if (!scopeConfigsEqual(config, newConfig)) {
+		operations.push({
+			kind: "replace-file",
+			path: toPortablePath(paths.root, paths.configPath),
+			bytes: serializeScopeConfig(newConfig),
+		});
+	}
+
+	if (!lockFilesEqual(lock, newLock)) {
+		operations.push({
+			kind: "replace-file",
+			path: toPortablePath(paths.root, paths.lockPath),
+			bytes: serializeLockFile(newLock),
+		});
+	}
+
+	return createPlan(command, config.scope, operations, rendered.warnings);
+}
+
+async function createInitialOutputs(
+	paths: ScopePaths,
+	outputs: readonly DesiredOutput[],
+): Promise<{ operations: ChangeOperation[]; lockedOutputs: LockedOutput[] }> {
+	const operations: ChangeOperation[] = [];
+	const lockedOutputs: LockedOutput[] = [];
+
+	for (const desired of outputs) {
+		const destination = await inspectDesiredDestination(paths.root, desired);
+
+		if (desired.kind === "file") {
+			operations.push({
+				kind: "create-file",
+				path: desired.path,
+				bytes: desired.bytes,
+			});
+			lockedOutputs.push(toLockedOutput(desired, hashBytes(desired.bytes)));
+			continue;
+		}
+
+		const existingBytes = destination.existingBytes ?? new Uint8Array();
+		const projected = insertManagedBlock(existingBytes, desired.bytes);
+		const block = requireProjectedBlock(projected, desired.blockId);
+		operations.push({
+			kind: "insert-block",
+			path: desired.path,
+			blockId: desired.blockId,
+			bytes: desired.bytes,
+		});
+		lockedOutputs.push(toLockedOutput(desired, hashBytes(block.ownedBytes)));
+	}
+
+	return { operations, lockedOutputs };
+}
+
+async function reconcileOutputs(
+	paths: ScopePaths,
+	inspected: readonly InspectedOutput[],
+	desiredOutputs: readonly DesiredOutput[],
+): Promise<{ operations: ChangeOperation[]; lockedOutputs: LockedOutput[] }> {
+	const operations: ChangeOperation[] = [];
+	const lockedOutputs: LockedOutput[] = [];
+	const oldByIdentity = new Map(
+		inspected.map((inspection) => [
+			outputIdentity(inspection.output),
+			inspection,
+		]),
+	);
+	const desiredIdentities = new Set(
+		desiredOutputs.map((output) => outputIdentity(output)),
+	);
+
+	for (const inspection of inspected) {
+		if (!desiredIdentities.has(outputIdentity(inspection.output))) {
+			operations.push(removeOperation(inspection.output));
+		}
+	}
+
+	operations.push(
+		...emptyComponentDirectoryOperations(
+			inspected
+				.filter(
+					(inspection) =>
+						!desiredIdentities.has(outputIdentity(inspection.output)),
+				)
+				.map((inspection) => inspection.output),
+		),
+	);
+
+	for (const desired of desiredOutputs) {
+		const old = oldByIdentity.get(outputIdentity(desired));
+
+		if (old === undefined) {
+			const destination = await inspectDesiredDestination(paths.root, desired);
+
+			if (desired.kind === "file") {
+				operations.push({
+					kind: "create-file",
+					path: desired.path,
+					bytes: desired.bytes,
+				});
+				lockedOutputs.push(toLockedOutput(desired, hashBytes(desired.bytes)));
+				continue;
+			}
+
+			const existingBytes = destination.existingBytes ?? new Uint8Array();
+			const projected = insertManagedBlock(existingBytes, desired.bytes);
+			const block = requireProjectedBlock(projected, desired.blockId);
+			operations.push({
+				kind: "insert-block",
+				path: desired.path,
+				blockId: desired.blockId,
+				bytes: desired.bytes,
+			});
+			lockedOutputs.push(toLockedOutput(desired, hashBytes(block.ownedBytes)));
+			continue;
+		}
+
+		if (desired.kind === "file" && old.output.kind === "file") {
+			const desiredHash = hashBytes(desired.bytes);
+
+			if (desiredHash !== old.output.sha256) {
+				operations.push({
+					kind: "replace-file",
+					path: desired.path,
+					bytes: desired.bytes,
+				});
+			}
+
+			lockedOutputs.push(toLockedOutput(desired, desiredHash));
+			continue;
+		}
+
+		if (
+			desired.kind === "managed-block" &&
+			old.output.kind === "managed-block"
+		) {
+			const currentBytes = requireCurrentBytes(old);
+			const currentBlockBytes = requireCurrentBlockBytes(old);
+			const changed = !bytesEqual(currentBlockBytes, desired.bytes);
+			const projected = changed
+				? replaceManagedBlock(currentBytes, desired.bytes)
+				: currentBytes;
+			const block = requireProjectedBlock(projected, desired.blockId);
+
+			if (changed) {
+				operations.push({
+					kind: "replace-block",
+					path: desired.path,
+					blockId: desired.blockId,
+					bytes: desired.bytes,
+				});
+			}
+
+			lockedOutputs.push(toLockedOutput(desired, hashBytes(block.ownedBytes)));
+			continue;
+		}
+
+		throw new AgentsPackError(
+			"MALFORMED_STATE",
+			`Managed output changed kind without changing identity: ${desired.path}`,
+		);
+	}
+
+	return { operations, lockedOutputs };
+}
+
 function createPlan(
 	command: ChangePlan["command"],
 	scope: Scope,
@@ -328,15 +468,16 @@ function createStateOperations(
 	paths: ScopePaths,
 	config: ScopeConfig,
 	lock: LockFile,
+	kind: "create" | "replace",
 ): ChangeOperation[] {
 	return [
 		{
-			kind: "create-file",
+			kind: `${kind}-file`,
 			path: toPortablePath(paths.root, paths.configPath),
 			bytes: serializeScopeConfig(config),
 		},
 		{
-			kind: "create-file",
+			kind: `${kind}-file`,
 			path: toPortablePath(paths.root, paths.lockPath),
 			bytes: serializeLockFile(lock),
 		},
@@ -347,24 +488,39 @@ function createScopeConfig(
 	scope: Scope,
 	pack: LoadedPack,
 	targets: AgentTarget[],
+	components: string[],
 ): ScopeConfig {
 	return {
 		schemaVersion: 1,
 		scope,
-		packId: pack.manifest.id,
-		packVersion: pack.manifest.version,
 		targets,
+		components,
+		pack: {
+			id: pack.manifest.id,
+			source: "local",
+		},
 	};
 }
 
-function createLockFile(pack: LoadedPack, outputs: LockedOutput[]): LockFile {
+function createLockFile(
+	pack: LoadedPack,
+	rendered: RenderedPack,
+	outputs: LockedOutput[],
+): LockFile {
 	return {
 		schemaVersion: 1,
+		rendererVersion: 1,
 		pack: {
 			id: pack.manifest.id,
 			version: pack.manifest.version,
 			sha256: pack.sha256,
+			source: { kind: "local" },
 		},
+		components: rendered.components.map((component) => ({
+			id: component.id,
+			kind: component.kind,
+			sha256: hashPackComponent(pack, component),
+		})),
 		outputs: [...outputs].sort(compareLockedOutputs),
 	};
 }
@@ -395,17 +551,19 @@ function assertRepeatedInitMatches(
 	lock: LockFile,
 	pack: LoadedPack,
 	targets: readonly AgentTarget[],
+	components: readonly string[],
 	desired: readonly DesiredOutput[],
 ): void {
 	if (
-		config.packId !== pack.manifest.id ||
-		config.packVersion !== pack.manifest.version ||
+		config.pack.id !== pack.manifest.id ||
+		lock.pack.version !== pack.manifest.version ||
 		lock.pack.sha256 !== pack.sha256 ||
-		!arraysEqual(config.targets, targets)
+		!arraysEqual(config.targets, targets) ||
+		!arraysEqual(config.components, components)
 	) {
 		throw new AgentsPackError(
 			"USAGE",
-			"Agents Pack is already initialized with different settings; use update or eject first.",
+			"Agents Pack is already initialized with different settings; use install, remove, update, or eject.",
 		);
 	}
 
@@ -415,7 +573,20 @@ function assertRepeatedInitMatches(
 	if (!arraysEqual(desiredIdentities, lockedIdentities)) {
 		throw new AgentsPackError(
 			"MALFORMED_STATE",
-			"Installed lockfile outputs do not match the configured pack and targets.",
+			"Installed lockfile outputs do not match the configured pack, targets, and components.",
+		);
+	}
+}
+
+function assertPackMatchesLock(pack: LoadedPack, lock: LockFile): void {
+	if (
+		pack.manifest.id !== lock.pack.id ||
+		pack.manifest.version !== lock.pack.version ||
+		pack.sha256 !== lock.pack.sha256
+	) {
+		throw new AgentsPackError(
+			"INVALID_PACK",
+			"The cached Base does not match the installed lockfile.",
 		);
 	}
 }
@@ -514,6 +685,54 @@ function removeOperation(output: LockedOutput): ChangeOperation {
 		: { kind: "remove-file", path: output.path };
 }
 
+function emptyComponentDirectoryOperations(
+	outputs: readonly LockedOutput[],
+): ChangeOperation[] {
+	const skillRoots = [
+		".claude/skills/",
+		".agents/skills/",
+		".cursor/skills/",
+	] as const;
+	const directories = new Set<string>();
+
+	for (const output of outputs) {
+		if (output.kind !== "file") {
+			continue;
+		}
+
+		const skillRoot = skillRoots.find((root) => output.path.startsWith(root));
+
+		if (skillRoot === undefined) {
+			continue;
+		}
+
+		const relative = output.path.slice(skillRoot.length);
+		const componentDirectory = relative.split("/")[0];
+
+		if (componentDirectory === undefined || componentDirectory.length === 0) {
+			continue;
+		}
+
+		const root = `${skillRoot}${componentDirectory}`;
+		let directory = posix.dirname(output.path);
+
+		while (directory === root || directory.startsWith(`${root}/`)) {
+			directories.add(directory);
+
+			if (directory === root) {
+				break;
+			}
+
+			directory = posix.dirname(directory);
+		}
+	}
+
+	return [...directories].map((path) => ({
+		kind: "remove-empty-directory",
+		path,
+	}));
+}
+
 function outputIdentity(output: DesiredOutput | LockedOutput): string {
 	return output.kind === "managed-block"
 		? `managed-block:${output.path}#${output.blockId}`
@@ -549,6 +768,20 @@ function compareOperations(
 	left: ChangeOperation,
 	right: ChangeOperation,
 ): number {
+	if (
+		left.kind === "remove-empty-directory" &&
+		right.kind !== "remove-empty-directory"
+	) {
+		return 1;
+	}
+
+	if (
+		right.kind === "remove-empty-directory" &&
+		left.kind !== "remove-empty-directory"
+	) {
+		return -1;
+	}
+
 	const pathComparison = compareStrings(left.path, right.path);
 	return pathComparison !== 0
 		? pathComparison
@@ -556,15 +789,7 @@ function compareOperations(
 }
 
 function compareStrings(left: string, right: string): number {
-	if (left < right) {
-		return -1;
-	}
-
-	if (left > right) {
-		return 1;
-	}
-
-	return 0;
+	return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function isStateOperation(operation: ChangeOperation): boolean {
@@ -579,19 +804,37 @@ function scopeConfigsEqual(left: ScopeConfig, right: ScopeConfig): boolean {
 	return (
 		left.schemaVersion === right.schemaVersion &&
 		left.scope === right.scope &&
-		left.packId === right.packId &&
-		left.packVersion === right.packVersion &&
-		arraysEqual(left.targets, right.targets)
+		left.pack.id === right.pack.id &&
+		left.pack.source === right.pack.source &&
+		arraysEqual(left.targets, right.targets) &&
+		arraysEqual(left.components, right.components)
 	);
 }
 
 function lockFilesEqual(left: LockFile, right: LockFile): boolean {
 	if (
 		left.schemaVersion !== right.schemaVersion ||
+		left.rendererVersion !== right.rendererVersion ||
 		left.pack.id !== right.pack.id ||
 		left.pack.version !== right.pack.version ||
 		left.pack.sha256 !== right.pack.sha256 ||
+		left.pack.source.kind !== right.pack.source.kind ||
+		left.components.length !== right.components.length ||
 		left.outputs.length !== right.outputs.length
+	) {
+		return false;
+	}
+
+	if (
+		!left.components.every((component, index) => {
+			const candidate = right.components[index];
+			return (
+				candidate !== undefined &&
+				component.id === candidate.id &&
+				component.kind === candidate.kind &&
+				component.sha256 === candidate.sha256
+			);
+		})
 	) {
 		return false;
 	}

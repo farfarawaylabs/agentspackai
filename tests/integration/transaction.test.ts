@@ -15,7 +15,7 @@ import { join, resolve } from "node:path";
 import { loadPack } from "../../src/core/pack.ts";
 import { planEject, planInit, planUpdate } from "../../src/core/plan.ts";
 import { resolveScopePaths } from "../../src/core/paths.ts";
-import { loadScopeConfig } from "../../src/core/state.ts";
+import { loadLockFile } from "../../src/core/state.ts";
 import type {
 	ExecutorEvent,
 	LoadedPack,
@@ -57,7 +57,7 @@ describe("transaction success", () => {
 				join(environment.repository, ".agents-pack/pack.toml"),
 				"utf8",
 			),
-		).toContain('pack_version = "0.1.0"');
+		).toContain('id = "agents-pack-smoke"');
 		expect(
 			await readFile(join(environment.repository, "AGENTS.md"), "utf8"),
 		).toContain("agents-pack-instruction-v1");
@@ -89,12 +89,15 @@ describe("transaction success", () => {
 			createPlan: () => planEject({ context: environment.context }),
 		});
 
-		expect(result.appliedOperations).toBe(9);
+		expect(result.appliedOperations).toBe(11);
 		expect(await readFile(agentsPath, "utf8")).toBe("# User instructions\n");
 		expect(await exists(environment.paths.stateDirectory)).toBe(false);
 		expect(
 			await exists(
-				join(environment.repository, ".claude/rules/agents-pack/smoke.md"),
+				join(
+					environment.repository,
+					".claude/rules/agents-pack/ap-smoke-instructions.md",
+				),
 			),
 		).toBe(false);
 		await expectNoTransactionArtifacts(environment.paths);
@@ -111,12 +114,14 @@ describe("transaction success", () => {
 				return;
 			}
 
-			stateVersionBeforeWrite = (
-				await loadScopeConfig(environment.paths.configPath)
-			).packVersion;
+			stateVersionBeforeWrite = (await loadLockFile(environment.paths.lockPath))
+				.pack.version;
 			targetWasVersionTwo = (
 				await readFile(
-					join(environment.repository, ".claude/rules/agents-pack/smoke.md"),
+					join(
+						environment.repository,
+						".claude/rules/agents-pack/ap-smoke-instructions.md",
+					),
 					"utf8",
 				)
 			).includes("agents-pack-instruction-v2");
@@ -124,9 +129,9 @@ describe("transaction success", () => {
 
 		expect(stateVersionBeforeWrite).toBe("0.1.0");
 		expect(targetWasVersionTwo).toBe(true);
-		expect(
-			(await loadScopeConfig(environment.paths.configPath)).packVersion,
-		).toBe("0.2.0");
+		expect((await loadLockFile(environment.paths.lockPath)).pack.version).toBe(
+			"0.2.0",
+		);
 	});
 });
 
@@ -172,11 +177,7 @@ describe("transaction rollback", () => {
 
 			expect(await snapshotTree(environment.repository)).toEqual(before);
 			expect(
-				(
-					await loadScopeConfig(
-						join(environment.repository, ".agents-pack/pack.toml"),
-					)
-				).packVersion,
+				(await loadLockFile(environment.paths.lockPath)).pack.version,
 			).toBe("0.1.0");
 			await expectNoTransactionArtifacts(environment.paths);
 		});
@@ -222,6 +223,24 @@ describe("transaction rollback", () => {
 		).rejects.toMatchObject({ code: "OWNERSHIP_CONFLICT" });
 
 		expect(await exists(join(environment.repository, "README.md"))).toBe(false);
+
+		expect(
+			runMutation({
+				paths: environment.paths,
+				command: "remove",
+				createPlan: () => ({
+					command: "remove",
+					scope: "repository",
+					operations: [
+						{
+							kind: "remove-empty-directory",
+							path: ".claude/skills/user-owned-skill",
+						},
+					],
+					warnings: [],
+				}),
+			}),
+		).rejects.toMatchObject({ code: "OWNERSHIP_CONFLICT" });
 		await expectNoTransactionArtifacts(environment.paths);
 	});
 });
@@ -320,9 +339,9 @@ describe("operation locking and recovery", () => {
 				}
 			}),
 		).rejects.toMatchObject({ code: "EXECUTION_FAILED" });
-		expect(
-			(await loadScopeConfig(environment.paths.configPath)).packVersion,
-		).toBe("0.2.0");
+		expect((await loadLockFile(environment.paths.lockPath)).pack.version).toBe(
+			"0.2.0",
+		);
 		expect(await exists(environment.paths.transactionsDirectory)).toBe(true);
 
 		const result = await runMutation({
@@ -337,9 +356,9 @@ describe("operation locking and recovery", () => {
 
 		expect(result.recoveredTransactions).toHaveLength(1);
 		expect(result.appliedOperations).toBe(0);
-		expect(
-			(await loadScopeConfig(environment.paths.configPath)).packVersion,
-		).toBe("0.2.0");
+		expect((await loadLockFile(environment.paths.lockPath)).pack.version).toBe(
+			"0.2.0",
+		);
 		await expectNoTransactionArtifacts(environment.paths);
 	});
 
@@ -375,8 +394,8 @@ describe("operation locking and recovery", () => {
 			command: "update",
 			createPlan: async () => {
 				versionSeenWhilePlanning = (
-					await loadScopeConfig(environment.paths.configPath)
-				).packVersion;
+					await loadLockFile(environment.paths.lockPath)
+				).pack.version;
 				return planUpdate({
 					pack: packVersionTwo,
 					context: environment.context,
@@ -387,9 +406,9 @@ describe("operation locking and recovery", () => {
 		expect(versionSeenWhilePlanning).toBe("0.1.0");
 		expect(result.recoveredTransactions).toHaveLength(1);
 		expect(result.staleLockRecovered).toBe(true);
-		expect(
-			(await loadScopeConfig(environment.paths.configPath)).packVersion,
-		).toBe("0.2.0");
+		expect((await loadLockFile(environment.paths.lockPath)).pack.version).toBe(
+			"0.2.0",
+		);
 		await expectNoTransactionArtifacts(environment.paths);
 	});
 });

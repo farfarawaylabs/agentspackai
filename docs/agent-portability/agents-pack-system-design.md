@@ -318,14 +318,16 @@ An official skill may look like:
 ```text
 pack/
 └── skills/
-    └── code-review/
-        ├── component.toml
-        ├── SKILL.md
-        ├── references/
-        └── scripts/
+    └── engineering/
+        └── ap-code-review/
+            ├── SKILL.md
+            ├── references/
+            └── scripts/
 ```
 
-The portable core is the standard `SKILL.md` body and its supporting files. Target-specific metadata belongs in the component manifest or adapter.
+The portable core is the standard `SKILL.md` body and its supporting files.
+Catalog metadata belongs in the central pack manifest; target-specific
+rendering belongs in adapters.
 
 ### 6.2 Official and custom components
 
@@ -333,9 +335,9 @@ Official components are versioned and replaceable.
 
 Official skill and subagent names use the `ap-` prefix. This reserves a clear,
 searchable namespace in provider menus and avoids collisions with components
-from other packs. Stable manifest IDs do not use the prefix as a migration
-mechanism; they identify the same logical component even when its installed
-name or path changes.
+from other packs. The stable manifest ID is the same provider-visible and
+CLI-visible `ap-` name, so users do not have to translate between an internal
+ID and the name they install.
 
 Custom components live in an explicitly user-owned area:
 
@@ -347,7 +349,7 @@ Repository:  .agents-pack/user/skills/<name>/
 If a user wants to change an official skill, the preferred operation is:
 
 ```text
-agents-pack fork skill code-review --name my-code-review
+agents-pack fork ap-code-review --name my-code-review
 ```
 
 The new component:
@@ -373,8 +375,12 @@ The pack manifest points at the directory:
 
 ```toml
 [[components]]
-id = "subagent.code-reviewer"
+id = "ap-code-reviewer"
 kind = "subagent"
+title = "Review code"
+summary = "Review a change for high-confidence correctness, security, architecture, regression, and test risks."
+category = "engineering/review"
+selection = "recommended"
 source = "subagents/engineering/ap-code-reviewer"
 targets = ["claude", "codex", "cursor"]
 ```
@@ -480,6 +486,10 @@ The maintenance skill must use the CLI. It should not teach agents to maintain t
 
 ## 8. Configuration and lockfiles
 
+The exact first-version formats and component-selection behavior are specified
+in
+[Agents Pack component selection and state design](./agents-pack-component-selection-design.md).
+
 ### 8.1 Human-readable configuration
 
 Global mode stores configuration in:
@@ -499,20 +509,16 @@ Proposed repository example:
 ```toml
 schema_version = 1
 scope = "repository"
-channel = "stable"
-
-[systems]
-claude = true
-codex = true
-cursor = true
-
+targets = ["claude", "codex", "cursor"]
 components = [
-  "core.workflow",
-  "core.verification",
-  "skill.add-capability",
-  "skill.code-review",
-  "subagent.researcher",
+  "ap-core-instructions",
+  "ap-debug",
+  "ap-code-reviewer",
 ]
+
+[pack]
+id = "agents-pack-core"
+source = "local"
 ```
 
 ### 8.2 Lockfile
@@ -524,7 +530,7 @@ Each scope has a generated `lock.json` that records:
 - source hashes;
 - target adapters and renderer version;
 - generated file paths and hashes; and
-- the last successful update.
+- the digest of the exact installed Base pack.
 
 The lockfile supports reproducibility, drift detection, preview, and rollback. It is not intended for manual editing.
 
@@ -542,7 +548,8 @@ Inspection is read-only.
 
 The user chooses global or repository mode.
 
-The choice is stored and reused by `status`, `update`, `add`, `remove`, and `doctor`.
+The choice is stored and reused by `status`, `update`, `install`, `remove`, and
+`doctor`.
 
 ### Step 3: Choose targets and components
 
@@ -881,13 +888,14 @@ It should:
 
 Global ejection affects the user's agent directories. Repository ejection affects only the current repository.
 
-## 15. Proposed MVP
+## 15. Original lifecycle MVP
 
 The smallest lifecycle MVP has its own implementation specification:
 
 - [Agents Pack lifecycle MVP](./agents-pack-lifecycle-mvp.md)
 
-It deliberately uses one stub instruction and one stub skill. Two local fixture-pack versions exercise the four core commands:
+It deliberately used one stub instruction and one stub skill. Two local
+fixture-pack versions first exercised four lifecycle commands:
 
 ```text
 agents-pack init
@@ -896,9 +904,15 @@ agents-pack update
 agents-pack eject
 ```
 
-This prototype proves scope resolution, target rendering, ownership, managed-block editing, hashing, dry-run, atomic updates, drift detection, and safe removal.
+That prototype proved scope resolution, target rendering, ownership,
+managed-block editing, hashing, dry-run, atomic updates, drift detection, and
+safe removal.
 
-It explicitly defers real content, subagents, commands, custom-component authoring, remote distribution, signing, global Cursor instructions, a desktop UI, and session analysis.
+The implemented component-selection increment now adds the core content pack,
+native subagents, explicit component selection, the shared Base cache, and
+`list`, `install`, and `remove`. User-owned component authoring, remote
+distribution, signing, global Cursor instructions, a desktop UI, and session
+analysis remain deferred.
 
 ## 16. Later product layers
 

@@ -1,4 +1,5 @@
 import { AgentsPackError } from "../core/errors.ts";
+import { resolveComponentSelection } from "../core/selection.ts";
 import type {
 	AgentTarget,
 	DesiredOutput,
@@ -20,12 +21,20 @@ export function renderPack(
 	pack: LoadedPack,
 	scope: Scope,
 	targets: readonly AgentTarget[],
+	componentIds: readonly string[] = pack.manifest.components.map(
+		(component) => component.id,
+	),
 ): RenderedPack {
 	const selectedTargets = validateTargets(scope, targets);
+	const components = resolveComponentSelection(
+		pack.manifest.components,
+		targets,
+		componentIds,
+	);
 	const outputs: DesiredOutput[] = [];
 	const warnings: string[] = [];
 
-	for (const component of pack.manifest.components) {
+	for (const component of components) {
 		if (component.kind === "instruction") {
 			outputs.push(
 				...renderInstruction(pack, component, scope, selectedTargets),
@@ -46,7 +55,7 @@ export function renderPack(
 	outputs.sort(compareOutputs);
 	assertNoOutputCollisions(outputs);
 
-	return { outputs, warnings };
+	return { components, outputs, warnings };
 }
 
 function renderInstruction(

@@ -3,13 +3,20 @@ import { AgentsPackError } from "./errors.ts";
 import { validatePortableRelativePath } from "./paths.ts";
 import type {
 	AgentTarget,
+	ComponentKind,
 	LockFile,
+	LockedComponent,
 	LockedOutput,
 	Scope,
 	ScopeConfig,
 } from "./types.ts";
 
 const AGENT_TARGETS = new Set<AgentTarget>(["claude", "codex", "cursor"]);
+const COMPONENT_KINDS = new Set<ComponentKind>([
+	"instruction",
+	"skill",
+	"subagent",
+]);
 const SCOPES = new Set<Scope>(["global", "repository"]);
 const SHA256 = /^sha256:[a-f0-9]{64}$/;
 const encoder = new TextEncoder();
@@ -20,7 +27,6 @@ export async function loadScopeConfig(
 	configPath: string,
 ): Promise<ScopeConfig> {
 	const source = await readStateFile(configPath, "scope configuration");
-
 	let parsed: unknown;
 
 	try {
@@ -37,7 +43,6 @@ export async function loadScopeConfig(
 
 export async function loadLockFile(lockPath: string): Promise<LockFile> {
 	const source = await readStateFile(lockPath, "lockfile");
-
 	let parsed: unknown;
 
 	try {
@@ -51,14 +56,22 @@ export async function loadLockFile(lockPath: string): Promise<LockFile> {
 
 export function serializeScopeConfig(config: ScopeConfig): Uint8Array {
 	const targets = config.targets.map(quoteTomlString).join(", ");
+	const components = config.components
+		.map((component) => `  ${quoteTomlString(component)},`)
+		.join("\n");
 
 	return encoder.encode(
 		[
 			`schema_version = ${config.schemaVersion}`,
 			`scope = ${quoteTomlString(config.scope)}`,
-			`pack_id = ${quoteTomlString(config.packId)}`,
-			`pack_version = ${quoteTomlString(config.packVersion)}`,
 			`targets = [${targets}]`,
+			"components = [",
+			components,
+			"]",
+			"",
+			"[pack]",
+			`id = ${quoteTomlString(config.pack.id)}`,
+			`source = ${quoteTomlString(config.pack.source)}`,
 			"",
 		].join("\n"),
 	);
@@ -84,12 +97,22 @@ export function parseScopeConfig(
 		throw malformedState(`${source}: scope must be global or repository`);
 	}
 
+	const pack = requireRecord(record.pack, `${source}.pack`);
+	const packSource = requireString(pack.source, "pack.source", source);
+
+	if (packSource !== "local") {
+		throw malformedState(`${source}: pack.source must be local`);
+	}
+
 	return {
 		schemaVersion: 1,
 		scope: scope as Scope,
-		packId: requireString(record.pack_id, "pack_id", source),
-		packVersion: requireString(record.pack_version, "pack_version", source),
 		targets: requireTargets(record.targets, "targets", source),
+		components: requireUniqueStrings(record.components, "components", source),
+		pack: {
+			id: requireString(pack.id, "pack.id", source),
+			source: "local",
+		},
 	};
 }
 
@@ -100,52 +123,79 @@ export function parseLockFile(value: unknown, source = "lockfile"): LockFile {
 		throw malformedState(`${source}: schemaVersion must be 1`);
 	}
 
-	const pack = requireRecord(record.pack, `${source}.pack`);
-	const outputsValue = record.outputs;
+	if (record.rendererVersion !== 1) {
+		throw malformedState(`${source}: rendererVersion must be 1`);
+	}
 
-	if (!Array.isArray(outputsValue) || outputsValue.length === 0) {
+	const pack = requireRecord(record.pack, `${source}.pack`);
+	const packSource = requireRecord(pack.source, `${source}.pack.source`);
+
+	if (packSource.kind !== "local") {
+		throw malformedState(`${source}: pack.source.kind must be local`);
+	}
+
+	if (!Array.isArray(record.components) || record.components.length === 0) {
+		throw malformedState(`${source}: components must be a non-empty array`);
+	}
+
+	const components = record.components.map((component, index) =>
+		parseLockedComponent(component, index, source),
+	);
+	assertUnique(
+		components.map((component) => component.id),
+		`${source}: component id is duplicated`,
+	);
+
+	if (!Array.isArray(record.outputs) || record.outputs.length === 0) {
 		throw malformedState(`${source}: outputs must be a non-empty array`);
 	}
 
-	const outputs = outputsValue.map((output, index) =>
+	const outputs = record.outputs.map((output, index) =>
 		parseLockedOutput(output, index, source),
 	);
-	const identities = new Set<string>();
-	const completeFilePaths = new Set(
-		outputs
-			.filter((output) => output.kind === "file")
-			.map((output) => output.path),
-	);
+	validateOutputIdentities(outputs, source);
+
+	const componentIds = new Set(components.map((component) => component.id));
 
 	for (const output of outputs) {
-		const identity =
-			output.kind === "managed-block"
-				? `${output.path}#${output.blockId}`
-				: output.path;
-
-		if (identities.has(identity)) {
+		if (!componentIds.has(output.componentId)) {
 			throw malformedState(
-				`${source}: output identity is duplicated: ${identity}`,
+				`${source}: output references unlocked component ${output.componentId}`,
 			);
 		}
-
-		if (output.kind === "managed-block" && completeFilePaths.has(output.path)) {
-			throw malformedState(
-				`${source}: a managed block cannot share a path with a complete managed file: ${output.path}`,
-			);
-		}
-
-		identities.add(identity);
 	}
 
 	return {
 		schemaVersion: 1,
+		rendererVersion: 1,
 		pack: {
 			id: requireString(pack.id, "pack.id", source),
 			version: requireString(pack.version, "pack.version", source),
 			sha256: requireHash(pack.sha256, "pack.sha256", source),
+			source: { kind: "local" },
 		},
+		components,
 		outputs,
+	};
+}
+
+function parseLockedComponent(
+	value: unknown,
+	index: number,
+	source: string,
+): LockedComponent {
+	const field = `components[${index}]`;
+	const component = requireRecord(value, `${source}.${field}`);
+	const kind = requireString(component.kind, `${field}.kind`, source);
+
+	if (!COMPONENT_KINDS.has(kind as ComponentKind)) {
+		throw malformedState(`${source}: ${field}.kind is not supported`);
+	}
+
+	return {
+		id: requireString(component.id, `${field}.id`, source),
+		kind: kind as ComponentKind,
+		sha256: requireHash(component.sha256, `${field}.sha256`, source),
 	};
 }
 
@@ -189,10 +239,7 @@ function parseLockedOutput(
 			);
 		}
 
-		return {
-			...base,
-			kind: "file",
-		};
+		return { ...base, kind: "file" };
 	}
 
 	if (kind === "managed-block") {
@@ -215,33 +262,77 @@ function parseLockedOutput(
 	);
 }
 
+function validateOutputIdentities(
+	outputs: readonly LockedOutput[],
+	source: string,
+): void {
+	const identities = new Set<string>();
+	const completeFilePaths = new Set(
+		outputs
+			.filter((output) => output.kind === "file")
+			.map((output) => output.path),
+	);
+
+	for (const output of outputs) {
+		const identity =
+			output.kind === "managed-block"
+				? `${output.path}#${output.blockId}`
+				: output.path;
+
+		if (identities.has(identity)) {
+			throw malformedState(
+				`${source}: output identity is duplicated: ${identity}`,
+			);
+		}
+
+		if (output.kind === "managed-block" && completeFilePaths.has(output.path)) {
+			throw malformedState(
+				`${source}: a managed block cannot share a path with a complete managed file: ${output.path}`,
+			);
+		}
+
+		identities.add(identity);
+	}
+}
+
 function requireTargets(
 	value: unknown,
 	field: string,
 	source: string,
 ): AgentTarget[] {
-	if (!Array.isArray(value) || value.length === 0) {
-		throw malformedState(`${source}: ${field} must be a non-empty array`);
-	}
+	const values = requireUniqueStrings(value, field, source);
 
-	const targets = value.map((target, index) => {
-		if (
-			typeof target !== "string" ||
-			!AGENT_TARGETS.has(target as AgentTarget)
-		) {
+	for (const [index, target] of values.entries()) {
+		if (!AGENT_TARGETS.has(target as AgentTarget)) {
 			throw malformedState(
 				`${source}: ${field}[${index}] is not a supported agent`,
 			);
 		}
-
-		return target as AgentTarget;
-	});
-
-	if (new Set(targets).size !== targets.length) {
-		throw malformedState(`${source}: ${field} must not contain duplicates`);
 	}
 
-	return targets;
+	return values as AgentTarget[];
+}
+
+function requireUniqueStrings(
+	value: unknown,
+	field: string,
+	source: string,
+): string[] {
+	if (!Array.isArray(value) || value.length === 0) {
+		throw malformedState(`${source}: ${field} must be a non-empty array`);
+	}
+
+	const values = value.map((item, index) =>
+		requireString(item, `${field}[${index}]`, source),
+	);
+	assertUnique(values, `${source}: ${field} must not contain duplicates`);
+	return values;
+}
+
+function assertUnique(values: readonly string[], message: string): void {
+	if (new Set(values).size !== values.length) {
+		throw malformedState(message);
+	}
 }
 
 function requireRecord(value: unknown, field: string): UnknownRecord {

@@ -33,9 +33,9 @@ describe("renderPack", () => {
 
 		expect(rendered.outputs.map((output) => output.path)).toEqual([
 			".agents/skills/agents-pack-smoke-test/SKILL.md",
-			".claude/rules/agents-pack/smoke.md",
+			".claude/rules/agents-pack/ap-smoke-instructions.md",
 			".claude/skills/agents-pack-smoke-test/SKILL.md",
-			".cursor/rules/agents-pack/smoke.mdc",
+			".cursor/rules/agents-pack/ap-smoke-instructions.mdc",
 			"AGENTS.md",
 		]);
 		expect(rendered.warnings).toEqual([
@@ -43,7 +43,10 @@ describe("renderPack", () => {
 		]);
 
 		await expectGolden(
-			requireOutput(rendered.outputs, ".claude/rules/agents-pack/smoke.md"),
+			requireOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-smoke-instructions.md",
+			),
 			"claude-smoke.md",
 		);
 		await expectGolden(
@@ -51,7 +54,10 @@ describe("renderPack", () => {
 			"codex-smoke-block.md",
 		);
 		await expectGolden(
-			requireOutput(rendered.outputs, ".cursor/rules/agents-pack/smoke.mdc"),
+			requireOutput(
+				rendered.outputs,
+				".cursor/rules/agents-pack/ap-smoke-instructions.mdc",
+			),
 			"cursor-smoke.mdc",
 		);
 	});
@@ -81,7 +87,7 @@ describe("renderPack", () => {
 			".claude/agents/ap-trend-researcher.md",
 			".claude/agents/ap-ux-enhancer.md",
 			".claude/agents/ap-ux-researcher.md",
-			".claude/rules/agents-pack/core.md",
+			".claude/rules/agents-pack/ap-core-instructions.md",
 			".claude/skills/ap-audit-geo/SKILL.md",
 			".claude/skills/ap-audit-geo/references/geo-audit-checklist.md",
 			".claude/skills/ap-audit-seo/SKILL.md",
@@ -132,10 +138,16 @@ describe("renderPack", () => {
 			".claude/skills/ap-write-database-queries/references/transactions-concurrency-and-testing.md",
 		]);
 		expect(
-			decodeOutput(rendered.outputs, ".claude/rules/agents-pack/core.md"),
+			decodeOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-core-instructions.md",
+			),
 		).toContain("## Clear explanations");
 		expect(
-			decodeOutput(rendered.outputs, ".claude/rules/agents-pack/core.md"),
+			decodeOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-core-instructions.md",
+			),
 		).toContain("concise concrete example or familiar analogy");
 	});
 
@@ -299,18 +311,31 @@ describe("renderPack", () => {
 				components: [
 					...packVersionOne.manifest.components,
 					{
-						id: "custom.smoke",
-						kind: "instruction",
-						source: "instructions/smoke.md",
+						id: "ap-smoke-duplicate",
+						kind: "skill",
+						title: "Duplicate smoke skill",
+						summary: "Create a deliberate output collision.",
+						category: "testing",
+						selection: "optional",
+						source: "skills/agents-pack-smoke-test",
 						targets: ["claude"],
 					},
 				],
 			},
 		};
 
-		expect(() => renderPack(collisionPack, "repository", ["claude"])).toThrow(
-			"render to the same output path",
-		);
+		expect(() =>
+			renderPack(
+				collisionPack,
+				"repository",
+				["claude"],
+				[
+					"ap-smoke-instructions",
+					"agents-pack-smoke-test",
+					"ap-smoke-duplicate",
+				],
+			),
+		).toThrow("render to the same output path");
 	});
 });
 

@@ -26,10 +26,10 @@ describe("CLI help", () => {
 	}
 
 	test("returns a usage error for an unknown command", async () => {
-		const result = await runCli(["install"]);
+		const result = await runCli(["unknown"]);
 
 		expect(result.exitCode).toBe(2);
-		expect(result.stderr).toContain("Unknown command: install");
+		expect(result.stderr).toContain("Unknown command: unknown");
 	});
 
 	test("requires complete init arguments", async () => {

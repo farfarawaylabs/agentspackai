@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 import {
 	assertNoCommandArguments,
 	parseArguments,
+	parseComponentMutationArguments,
 	parseEjectArguments,
 	parseInitArguments,
+	parseListArguments,
 	parseUpdateArguments,
 } from "../../src/cli/arguments.ts";
 
@@ -40,10 +42,10 @@ describe("parseArguments", () => {
 	});
 
 	test("reports an unknown command", () => {
-		expect(parseArguments(["install"])).toEqual({
+		expect(parseArguments(["unknown"])).toEqual({
 			help: false,
 			rest: [],
-			unknownCommand: "install",
+			unknownCommand: "unknown",
 		});
 	});
 });
@@ -58,6 +60,8 @@ describe("parseInitArguments", () => {
 				"claude,codex",
 				"--pack",
 				"./pack",
+				"--components",
+				"recommended",
 				"--yes",
 				"--dry-run",
 			]),
@@ -65,6 +69,7 @@ describe("parseInitArguments", () => {
 			scope: "repository",
 			agents: ["claude", "codex"],
 			packPath: "./pack",
+			components: { kind: "recommended" },
 			yes: true,
 			dryRun: true,
 		});
@@ -83,6 +88,43 @@ describe("parseInitArguments", () => {
 	test("rejects options on status", () => {
 		expect(() => assertNoCommandArguments("status", ["--json"])).toThrow(
 			"does not accept options",
+		);
+	});
+});
+
+describe("component arguments", () => {
+	test("parses install, remove, and list options", () => {
+		expect(
+			parseComponentMutationArguments("install", [
+				"ap-debug",
+				"--yes",
+				"--dry-run",
+			]),
+		).toEqual({
+			componentId: "ap-debug",
+			yes: true,
+			dryRun: true,
+		});
+		expect(parseComponentMutationArguments("remove", ["ap-debug"])).toEqual({
+			componentId: "ap-debug",
+			yes: false,
+			dryRun: false,
+		});
+		expect(parseListArguments(["--available", "--kind", "skill"])).toEqual({
+			status: "available",
+			kind: "skill",
+		});
+	});
+
+	test("rejects missing IDs, duplicate flags, and conflicting filters", () => {
+		expect(() => parseComponentMutationArguments("install", [])).toThrow(
+			"requires a component ID",
+		);
+		expect(() =>
+			parseComponentMutationArguments("remove", ["one", "two"]),
+		).toThrow("exactly one");
+		expect(() => parseListArguments(["--installed", "--available"])).toThrow(
+			"cannot be combined",
 		);
 	});
 });

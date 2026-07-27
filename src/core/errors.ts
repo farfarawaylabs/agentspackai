@@ -4,6 +4,7 @@ export type AgentsPackErrorCode =
 	| "EXECUTION_FAILED"
 	| "INVALID_PACK"
 	| "INVALID_PATH"
+	| "INCOMPATIBLE_COMPONENT"
 	| "MALFORMED_STATE"
 	| "NOT_IMPLEMENTED"
 	| "NOT_INITIALIZED"
@@ -11,6 +12,7 @@ export type AgentsPackErrorCode =
 	| "RECOVERY_FAILED"
 	| "SCOPE_CONFLICT"
 	| "UNSUPPORTED"
+	| "UNKNOWN_COMPONENT"
 	| "USAGE";
 
 export class AgentsPackError extends Error {
