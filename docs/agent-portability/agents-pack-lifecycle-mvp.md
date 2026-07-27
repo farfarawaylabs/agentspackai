@@ -7,6 +7,12 @@
 **Development plan:** [Agents Pack MVP development plan](./agents-pack-mvp-development-plan.md)
 **Final review:** [Agents Pack lifecycle MVP review](./agents-pack-mvp-review.md)
 
+> **Historical scope:** This document specifies the deliberately stub-only
+> lifecycle prototype completed on 2026-07-25. The repository now also contains
+> the real `agents-pack-core` content pack and native subagent rendering. See
+> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md)
+> for the current follow-up milestone.
+
 This is not the first public release. It is an internal lifecycle prototype.
 
 The content will be intentionally fake. We will replace it after the management model works.

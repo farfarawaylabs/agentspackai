@@ -45,7 +45,7 @@ describe("loadPackManifest", () => {
 
 	test("rejects an unsupported schema version", async () => {
 		const packRoot = await createTemporaryPack(`
-schema_version = 2
+schema_version = 3
 id = "invalid"
 version = "1.0.0"
 components = []
@@ -55,6 +55,24 @@ components = []
 			name: "AgentsPackError",
 			code: "INVALID_PACK",
 		});
+	});
+
+	test("requires schema version 2 for subagents", async () => {
+		const packRoot = await createTemporaryPack(`
+schema_version = 1
+id = "invalid"
+version = "1.0.0"
+
+[[components]]
+id = "subagent.reviewer"
+kind = "subagent"
+source = "subagents/reviewer"
+targets = ["claude"]
+`);
+
+		expect(loadPackManifest(packRoot)).rejects.toThrow(
+			"subagent requires schema_version 2",
+		);
 	});
 
 	test("rejects a component source traversal", async () => {

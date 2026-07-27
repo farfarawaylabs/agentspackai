@@ -19,6 +19,7 @@ const PROJECT_ROOT = resolve(import.meta.dir, "../..");
 const CLI_PATH = join(PROJECT_ROOT, "src/cli/main.ts");
 const PACK_V1 = join(PROJECT_ROOT, "fixtures/packs/0.1.0");
 const PACK_V2 = join(PROJECT_ROOT, "fixtures/packs/0.2.0");
+const CORE_PACK = join(PROJECT_ROOT, "content/packs/core");
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
@@ -93,6 +94,169 @@ describe("init CLI", () => {
 				),
 			),
 		).toBe(true);
+	});
+
+	test("installs native subagent definitions from a schema version 2 pack", async () => {
+		const environment = await createEnvironment();
+		const args = initArgsForPack(
+			"repository",
+			"claude,codex,cursor",
+			CORE_PACK,
+		);
+		const first = await runCli(environment, args);
+
+		expect(first.exitCode).toBe(0);
+		expect(first.stdout).toContain("Initialized agents-pack-core@0.24.0");
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".claude/skills/ap-start-dev-session/SKILL.md",
+				),
+				"utf8",
+			),
+		).toContain("name: ap-start-dev-session");
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".agents/skills/ap-start-dev-session/SKILL.md",
+				),
+				"utf8",
+			),
+		).toContain("name: ap-start-dev-session");
+		expect(
+			await readFile(
+				join(environment.repository, ".claude/agents/ap-code-reviewer.md"),
+				"utf8",
+			),
+		).toContain("permissionMode: plan");
+		expect(
+			await readFile(
+				join(environment.repository, ".codex/agents/ap-code-reviewer.toml"),
+				"utf8",
+			),
+		).toContain('sandbox_mode = "read-only"');
+		expect(
+			await readFile(
+				join(environment.repository, ".cursor/agents/ap-code-reviewer.md"),
+				"utf8",
+			),
+		).toContain("readonly: true");
+		expect(
+			await readFile(
+				join(environment.repository, ".claude/agents/ap-trend-researcher.md"),
+				"utf8",
+			),
+		).toContain("permissionMode: plan");
+		expect(
+			await readFile(
+				join(environment.repository, ".codex/agents/ap-trend-researcher.toml"),
+				"utf8",
+			),
+		).toContain('sandbox_mode = "read-only"');
+		expect(
+			await readFile(
+				join(environment.repository, ".cursor/agents/ap-trend-researcher.md"),
+				"utf8",
+			),
+		).toContain("readonly: true");
+		expect(
+			await readFile(
+				join(environment.repository, ".claude/agents/ap-ux-researcher.md"),
+				"utf8",
+			),
+		).toContain("permissionMode: plan");
+		expect(
+			await readFile(
+				join(environment.repository, ".codex/agents/ap-ux-researcher.toml"),
+				"utf8",
+			),
+		).toContain('sandbox_mode = "read-only"');
+		expect(
+			await readFile(
+				join(environment.repository, ".cursor/agents/ap-ux-researcher.md"),
+				"utf8",
+			),
+		).toContain("readonly: true");
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".claude/agents/ap-backend-python-developer.md",
+				),
+				"utf8",
+			),
+		).toContain("permissionMode: default");
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".codex/agents/ap-backend-python-developer.toml",
+				),
+				"utf8",
+			),
+		).toContain('sandbox_mode = "workspace-write"');
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".cursor/agents/ap-backend-python-developer.md",
+				),
+				"utf8",
+			),
+		).toContain("readonly: false");
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".claude/agents/ap-backend-typescript-developer.md",
+				),
+				"utf8",
+			),
+		).toContain("permissionMode: default");
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".codex/agents/ap-backend-typescript-developer.toml",
+				),
+				"utf8",
+			),
+		).toContain('sandbox_mode = "workspace-write"');
+		expect(
+			await readFile(
+				join(
+					environment.repository,
+					".cursor/agents/ap-backend-typescript-developer.md",
+				),
+				"utf8",
+			),
+		).toContain("readonly: false");
+		expect(
+			await readFile(
+				join(environment.repository, ".claude/agents/ap-ux-enhancer.md"),
+				"utf8",
+			),
+		).toContain("permissionMode: default");
+		expect(
+			await readFile(
+				join(environment.repository, ".codex/agents/ap-ux-enhancer.toml"),
+				"utf8",
+			),
+		).toContain('sandbox_mode = "workspace-write"');
+		expect(
+			await readFile(
+				join(environment.repository, ".cursor/agents/ap-ux-enhancer.md"),
+				"utf8",
+			),
+		).toContain("readonly: false");
+
+		const beforeRepeat = await snapshotTree(environment.repository);
+		const repeated = await runCli(environment, args);
+		expect(repeated.exitCode).toBe(0);
+		expect(repeated.stdout).toContain("No changes.");
+		expect(await snapshotTree(environment.repository)).toEqual(beforeRepeat);
 	});
 
 	test("keeps global Claude and Codex output under the configured home", async () => {
@@ -618,6 +782,14 @@ describe("status CLI", () => {
 });
 
 function initArgs(scope: "global" | "repository", agents: string): string[] {
+	return initArgsForPack(scope, agents, PACK_V1);
+}
+
+function initArgsForPack(
+	scope: "global" | "repository",
+	agents: string,
+	pack: string,
+): string[] {
 	return [
 		"init",
 		"--scope",
@@ -625,7 +797,7 @@ function initArgs(scope: "global" | "repository", agents: string): string[] {
 		"--agents",
 		agents,
 		"--pack",
-		PACK_V1,
+		pack,
 		"--yes",
 	];
 }

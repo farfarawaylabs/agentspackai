@@ -1,0 +1,7 @@
+schema_version = 1
+name = "ap-ux-enhancer"
+description = "Implementation specialist for improving an existing user-facing flow. Use after baseline UI functionality exists to remove friction and strengthen clarity, feedback, recovery, accessibility, responsiveness, trust, microcopy, and context-appropriate delight without turning the work into an unsolicited redesign."
+
+[execution]
+filesystem = "workspace-write"
+reasoning_effort = "high"

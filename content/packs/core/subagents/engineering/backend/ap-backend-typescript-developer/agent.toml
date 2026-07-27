@@ -1,0 +1,7 @@
+schema_version = 1
+name = "ap-backend-typescript-developer"
+description = "Implementation specialist for server-side TypeScript. Use to build or change backend APIs, business logic, data access, jobs, integrations, authentication, and backend tests while preserving a clear API to BL to DL architecture."
+
+[execution]
+filesystem = "workspace-write"
+reasoning_effort = "high"

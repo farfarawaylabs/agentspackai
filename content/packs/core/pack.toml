@@ -1,9 +1,177 @@
-schema_version = 1
+schema_version = 2
 id = "agents-pack-core"
-version = "0.1.0"
+version = "0.24.0"
 
 [[components]]
 id = "instruction.core"
 kind = "instruction"
 source = "instructions/core.md"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.frontend-design"
+kind = "skill"
+source = "skills/engineering/frontend/ap-frontend-design"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.frontend-review"
+kind = "skill"
+source = "skills/engineering/frontend/ap-frontend-review"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.test-web-app"
+kind = "skill"
+source = "skills/engineering/testing/ap-test-web-app"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.landing-page"
+kind = "skill"
+source = "skills/marketing/ap-landing-page"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.audit-seo"
+kind = "skill"
+source = "skills/marketing/search/ap-audit-seo"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.audit-geo"
+kind = "skill"
+source = "skills/marketing/search/ap-audit-geo"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.run-market-research"
+kind = "skill"
+source = "skills/product/research/ap-run-market-research"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.create-prd"
+kind = "skill"
+source = "skills/product/planning/ap-create-prd"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.design-data-models"
+kind = "skill"
+source = "skills/engineering/backend/ap-design-data-models"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.develop-apis"
+kind = "skill"
+source = "skills/engineering/backend/ap-develop-apis"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.develop-with-vercel-ai-sdk"
+kind = "skill"
+source = "skills/engineering/ai/ap-develop-with-vercel-ai-sdk"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.handle-errors-reliably"
+kind = "skill"
+source = "skills/engineering/foundations/ap-handle-errors-reliably"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.debug"
+kind = "skill"
+source = "skills/engineering/workflows/debugging/ap-debug"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.compress-todos"
+kind = "skill"
+source = "skills/engineering/documentation/ap-compress-todos"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.refresh-repo-docs"
+kind = "skill"
+source = "skills/engineering/documentation/ap-refresh-repo-docs"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.start-dev-session"
+kind = "skill"
+source = "skills/engineering/workflows/session/ap-start-dev-session"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.clear-dev-context"
+kind = "skill"
+source = "skills/engineering/workflows/session/ap-clear-dev-context"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.continue-dev-session"
+kind = "skill"
+source = "skills/engineering/workflows/session/ap-continue-dev-session"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.review-plan"
+kind = "skill"
+source = "skills/engineering/workflows/planning/ap-review-plan"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.validate-trust-boundaries"
+kind = "skill"
+source = "skills/engineering/foundations/ap-validate-trust-boundaries"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.security-audit"
+kind = "skill"
+source = "skills/engineering/security/ap-security-audit"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "skill.write-database-queries"
+kind = "skill"
+source = "skills/engineering/backend/ap-write-database-queries"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "subagent.code-reviewer"
+kind = "subagent"
+source = "subagents/engineering/ap-code-reviewer"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "subagent.backend-python-developer"
+kind = "subagent"
+source = "subagents/engineering/backend/ap-backend-python-developer"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "subagent.backend-typescript-developer"
+kind = "subagent"
+source = "subagents/engineering/backend/ap-backend-typescript-developer"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "subagent.ux-enhancer"
+kind = "subagent"
+source = "subagents/design/ap-ux-enhancer"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "subagent.trend-researcher"
+kind = "subagent"
+source = "subagents/research/ap-trend-researcher"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "subagent.ux-researcher"
+kind = "subagent"
+source = "subagents/research/ap-ux-researcher"
 targets = ["claude", "codex", "cursor"]
