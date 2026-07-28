@@ -64,7 +64,7 @@ jobs:
 
       - name: Read CLI version
         id: version
-        run: echo "value=$(bun -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
+        run: echo "value=$(bun -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
 
       - name: Compile standalone executable
         run: >-
