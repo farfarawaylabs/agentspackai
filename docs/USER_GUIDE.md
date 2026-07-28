@@ -3,9 +3,11 @@
 Welcome! Agents Pack helps you use the same working practices with Claude Code,
 Codex, and Cursor without maintaining three separate copies of everything.
 
-This guide starts with the simplest setup and then covers every current CLI
-workflow. You do not need to understand the internal file formats to use
-Agents Pack.
+This guide starts with the one-time installation and initialization, then
+shows the recommended way to use Agents Pack: ask your coding agent in normal
+language. It also documents every CLI workflow for users who want direct
+control or automation. You do not need to understand the internal file
+formats to use Agents Pack.
 
 ## Contents
 
@@ -13,6 +15,8 @@ Agents Pack.
 - [Install Agents Pack](#install-agents-pack)
 - [Choose repository or global scope](#choose-repository-or-global-scope)
 - [Initialize Agents Pack](#initialize-agents-pack)
+- [Manage Agents Pack through your coding agent](#manage-agents-pack-through-your-coding-agent)
+- [Use the CLI directly](#use-the-cli-directly)
 - [Understand component selection](#understand-component-selection)
 - [See what Agents Pack installed](#see-what-agents-pack-installed)
 - [Install or remove official components](#install-or-remove-official-components)
@@ -45,6 +49,17 @@ You choose:
 Agents Pack then renders provider-native files for Claude Code, Codex, and
 Cursor. It records exactly what it wrote so future updates can be previewed,
 validated, applied, or rolled back safely.
+
+You normally interact with Agents Pack in two ways:
+
+1. **Ask your coding agent.** This is the recommended day-to-day workflow.
+   Describe what you want in normal language, and the installed Agents Pack
+   management skill guides the agent through the correct CLI operations.
+2. **Run the CLI yourself.** This is useful when you want exact control, are
+   writing automation, or are troubleshooting.
+
+The first initialization is the exception: you run `agents-pack init`
+directly because the management skill is installed by that command.
 
 ## Install Agents Pack
 
@@ -283,6 +298,126 @@ agents-pack init \
 The installation records whether its source is `official` or `local`. A local
 installation never silently switches to the public registry.
 
+## Manage Agents Pack through your coding agent
+
+After initialization, you do not need to memorize Agents Pack commands. Talk
+to Claude Code, Codex, or Cursor about the outcome you want.
+
+Every installation includes the required `ap-manage-agents-pack` skill. It
+teaches your coding agent to:
+
+- inspect the active repository or global installation;
+- check health and managed-file drift;
+- list, install, or remove official components;
+- create and synchronize user-owned subagents;
+- fork official skills or subagents for customization;
+- check for content updates, pin versions, or roll back;
+- preview meaningful changes before applying them; and
+- verify the installation is clean after a change.
+
+The skill also teaches the agent that the CLI is the source of truth. It must
+not work around lifecycle protections or edit generated provider copies
+directly.
+
+### Example requests
+
+You can ask broad questions:
+
+```text
+Check my Agents Pack installation and explain whether everything is healthy.
+Do not change anything.
+```
+
+```text
+Show me which frontend-related components are available and recommend which
+ones fit this project.
+```
+
+Or request a specific change:
+
+```text
+Install the ap-frontend-design skill. Preview the change first and wait for my
+approval before applying it.
+```
+
+```text
+Check whether a new Agents Pack content version is available. Summarize the
+release notes, but do not update anything yet.
+```
+
+```text
+Fork ap-debug into a user-owned skill named my-debug, then show me which
+canonical file I should customize.
+```
+
+```text
+Create a read-only subagent named release-checker that reviews release
+correctness and deployment risk. Make it available to all coding agents
+configured in this repository.
+```
+
+You can also ask the agent to perform routine maintenance:
+
+```text
+Synchronize my user-owned Agents Pack components, then verify that every
+managed file is clean.
+```
+
+### Creating a portable skill in a chat
+
+Every installation also includes the required `ap-create-new-skill` skill.
+When you ask for a new reusable skill, it guides the coding agent through
+creating one canonical user-owned source and synchronizing it for every
+selected provider.
+
+For example:
+
+```text
+Create a reusable Agents Pack skill named deploy-app. It should guide an agent
+through safely deploying this project to staging or production, including
+preflight checks and post-deployment verification.
+```
+
+The agent should clarify important missing details, create the skill through
+Agents Pack, edit the canonical source, synchronize the provider copies, and
+verify the result.
+
+### If the agent does not select the skill automatically
+
+Name it explicitly:
+
+```text
+Use ap-manage-agents-pack to check for available updates and explain what
+would change. Do not apply the update.
+```
+
+For creating a skill:
+
+```text
+Use ap-create-new-skill to create a portable skill for reviewing database
+migrations before deployment.
+```
+
+These are skills, not special chat commands. The exact way your coding agent
+shows or invokes skills may differ, but the natural-language request can stay
+the same across Claude Code, Codex, and Cursor.
+
+See the [complete skill catalog](./SKILLS.md) for every skill, its exact chat
+activation name, a short description, and its source file.
+
+## Use the CLI directly
+
+The management skills use the same public CLI documented below. Running it
+yourself is useful when:
+
+- you want to see or control each exact command;
+- you are scripting setup or maintenance;
+- your coding agent is not available; or
+- you are diagnosing a lifecycle or ownership problem.
+
+The remaining workflow sections show the direct CLI form. You can also give
+the same goal to your coding agent instead of typing the commands yourself.
+
 ## Understand component selection
 
 The core pack labels components as required, recommended, or optional.
@@ -331,7 +466,9 @@ from optional to recommended, it is not automatically added to an existing
 installation. A newly required component may be added during an update, so
 required status is reserved for core management behavior.
 
-The complete current catalog is documented in
+The complete user-facing [skill catalog](./SKILLS.md) lists each skill’s exact
+chat activation name, purpose, and source. The implementation-oriented
+component catalog and source layout are documented in
 [`content/README.md`](../content/README.md).
 
 ## See what Agents Pack installed
@@ -452,7 +589,9 @@ agents-pack status
 ```
 
 The required `ap-create-new-skill` skill can guide a coding agent through this
-same workflow from inside a chat.
+same workflow from inside a chat. That is the recommended approach when you
+want the agent to help design and write the skill rather than only scaffold
+its files.
 
 ### Create a read-only subagent
 
@@ -897,6 +1036,15 @@ the unfinished transaction, creates a fresh plan, and continues safely.
 
 ## Frequently asked questions
 
+### Do I need to memorize the CLI commands?
+
+No. After the first `agents-pack init`, ask your coding agent for the outcome
+you want. The required `ap-manage-agents-pack` skill teaches it how to inspect
+the installation, preview safe operations, use the CLI, and verify the result.
+
+Use direct CLI commands when you prefer them, need automation, or are
+troubleshooting.
+
 ### Will Agents Pack overwrite my existing `AGENTS.md`?
 
 No. Codex instructions are placed inside a clearly marked managed block. Text
@@ -980,6 +1128,7 @@ should not be committed.
 
 ## More documentation
 
+- [Skill catalog](./SKILLS.md)
 - [Core content catalog](../content/README.md)
 - [User-owned component design](./agent-portability/agents-pack-user-components.md)
 - [Updates, pinning, and rollback](./agent-portability/agents-pack-version-control.md)
