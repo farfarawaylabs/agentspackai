@@ -165,6 +165,7 @@ Standalone CLI releases and the installer are documented in
 ### For users
 
 - [Complete user guide](./docs/USER_GUIDE.md)
+- [Skill catalog](./docs/SKILLS.md)
 - [Core content catalog](./content/README.md)
 - [User-owned components](./docs/agent-portability/agents-pack-user-components.md)
 - [Updates, pinning, and rollback](./docs/agent-portability/agents-pack-version-control.md)
