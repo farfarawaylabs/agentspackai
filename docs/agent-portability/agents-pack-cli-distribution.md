@@ -1,6 +1,6 @@
 # Agents Pack CLI distribution
 
-**Status:** Implemented; first live CLI release pending
+**Status:** Implemented and live since CLI 0.1.0
 **Last updated:** 2026-07-27
 
 This document explains how the standalone Agents Pack command is built,
