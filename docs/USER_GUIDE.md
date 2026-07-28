@@ -166,6 +166,12 @@ bun /absolute/path/to/agentspackai/src/cli/main.ts init \
   --dry-run
 ```
 
+When running `agents-pack init` interactively, use the arrow keys to move
+through a menu, Space to toggle agents or components, and Enter to confirm the
+visible selection. Repository scope, all compatible agents, and recommended
+components are selected by default. For non-interactive use, `--agents all` is
+shorthand for `--agents claude,codex,cursor`.
+
 ## Choose repository or global scope
 
 Agents Pack supports two installation scopes.

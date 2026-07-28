@@ -141,6 +141,14 @@ describe("parseInitArguments", () => {
 		});
 	});
 
+	test("accepts all as shorthand for every supported agent", () => {
+		expect(parseInitArguments(["--agents", "all"]).agents).toEqual([
+			"claude",
+			"codex",
+			"cursor",
+		]);
+	});
+
 	test("rejects unknown, duplicate, and missing option values", () => {
 		expect(() => parseInitArguments(["--unknown"])).toThrow(
 			"Unknown init option",

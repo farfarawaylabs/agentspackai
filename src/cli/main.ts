@@ -88,6 +88,10 @@ export async function run(argv: string[]): Promise<number> {
 		return 0;
 	} catch (error) {
 		if (error instanceof AgentsPackError) {
+			if (error.code === "CANCELLED") {
+				return error.exitCode;
+			}
+
 			console.error(`${error.code}: ${error.message}`);
 			return error.exitCode;
 		}

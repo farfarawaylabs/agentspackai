@@ -1,4 +1,11 @@
-import { createInterface } from "node:readline/promises";
+import {
+	cancel as cancelPrompt,
+	confirm,
+	isCancel,
+	multiselect,
+	select,
+	text,
+} from "@clack/prompts";
 import { AgentsPackError } from "../core/errors.ts";
 import {
 	expandComponentChoice,
@@ -6,224 +13,175 @@ import {
 	sortComponentsForDisplay,
 	type ComponentChoice,
 } from "../core/selection.ts";
-import type { AgentTarget, LoadedPack } from "../core/types.ts";
+import type { AgentTarget, LoadedPack, Scope } from "../core/types.ts";
 import type { InitArguments } from "./arguments.ts";
-import { parseInitArguments } from "./arguments.ts";
 
 export async function promptForInitArguments(
 	partial: InitArguments,
 ): Promise<InitArguments> {
-	const readline = createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
+	const scope =
+		partial.scope ??
+		unwrapPrompt(
+			await select<Scope>({
+				message: "Where should Agents Pack be initialized?",
+				options: [
+					{
+						value: "repository",
+						label: "Repository",
+						hint: "this project (recommended)",
+					},
+					{
+						value: "global",
+						label: "Global",
+						hint: "your user account",
+					},
+				],
+				initialValue: "repository",
+			}),
+		);
+	const availableAgents: AgentTarget[] =
+		scope === "global" ? ["claude", "codex"] : ["claude", "codex", "cursor"];
+	const agents =
+		partial.agents ??
+		unwrapPrompt(
+			await multiselect<AgentTarget>({
+				message: "Which agents should Agents Pack configure?",
+				options: [
+					{ value: "claude", label: "Claude Code" },
+					{ value: "codex", label: "Codex" },
+					{
+						value: "cursor",
+						label: "Cursor",
+						...(scope === "global"
+							? {
+									disabled: true,
+									hint: "repository scope only",
+								}
+							: {}),
+					},
+				],
+				initialValues: availableAgents,
+				required: true,
+			}),
+		);
 
-	try {
-		const scope =
-			partial.scope ??
-			parseScope(
-				await readline.question("Scope [repository/global] (repository): "),
-			);
-		const agents =
-			partial.agents ??
-			parseInitArguments([
-				"--agents",
-				(await readline.question("Agents [claude,codex,cursor] (all): ")) ||
-					"claude,codex,cursor",
-			]).agents;
-		return {
-			...partial,
-			scope,
-			agents,
-		};
-	} finally {
-		readline.close();
-	}
+	return {
+		...partial,
+		scope,
+		agents,
+	};
 }
 
 export async function promptForComponentChoice(
 	pack: LoadedPack,
 	targets: readonly AgentTarget[],
 ): Promise<ComponentChoice> {
-	const readline = createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
+	const compatible = sortComponentsForDisplay(
+		pack.manifest.components.filter((component) =>
+			isCompatible(component, targets),
+		),
+	);
+	const recommended = new Set(
+		expandComponentChoice(pack.manifest, targets, { kind: "recommended" }),
+	);
+	const mode = unwrapPrompt(
+		await select<"recommended" | "all" | "custom">({
+			message: "Which components should be installed?",
+			options: [
+				{
+					value: "recommended",
+					label: "Recommended",
+					hint: "required and recommended components",
+				},
+				{
+					value: "all",
+					label: "All",
+					hint: "every compatible component",
+				},
+				{
+					value: "custom",
+					label: "Custom",
+					hint: "choose components individually",
+				},
+			],
+			initialValue: "recommended",
+		}),
+	);
 
-	try {
-		const compatible = sortComponentsForDisplay(
-			pack.manifest.components.filter((component) =>
-				isCompatible(component, targets),
-			),
-		);
-		const recommended = new Set(
-			expandComponentChoice(pack.manifest, targets, { kind: "recommended" }),
-		);
-		const lines = ["", "Available components:"];
-		let lastCategory = "";
-
-		for (const component of compatible) {
-			if (component.category !== lastCategory) {
-				lastCategory = component.category;
-				lines.push(`\n${formatCategory(component.category)}`);
-			}
-
-			const marker =
-				component.selection === "required"
-					? "required"
-					: recommended.has(component.id)
-						? "recommended"
-						: "optional";
-			lines.push(`  ${component.id} [${marker}]\n    ${component.summary}`);
-		}
-
-		process.stdout.write(`${lines.join("\n")}\n\n`);
-		const mode = (
-			await readline.question(
-				"Components [recommended/all/custom] (recommended): ",
-			)
-		)
-			.trim()
-			.toLowerCase();
-
-		if (mode === "" || mode === "recommended") {
-			return { kind: "recommended" };
-		}
-
-		if (mode === "all") {
-			return { kind: "all" };
-		}
-
-		if (mode !== "custom") {
-			throw new AgentsPackError(
-				"USAGE",
-				"Component choice must be recommended, all, or custom.",
-				{ exitCode: 2 },
-			);
-		}
-
-		const selected = new Set(recommended);
-		const required = new Set(
-			compatible
-				.filter((component) => component.selection === "required")
-				.map((component) => component.id),
-		);
-
-		while (true) {
-			const value = (
-				await readline.question(
-					`Selected ${selected.size}/${compatible.length}. Toggle a component ID or category, or type done: `,
-				)
-			).trim();
-
-			if (value === "" || value.toLowerCase() === "done") {
-				return { kind: "explicit", ids: [...selected] };
-			}
-
-			const component = compatible.find((candidate) => candidate.id === value);
-
-			if (component !== undefined) {
-				if (required.has(component.id)) {
-					process.stdout.write(
-						`${component.id} is required and remains selected.\n`,
-					);
-				} else if (selected.has(component.id)) {
-					selected.delete(component.id);
-				} else {
-					selected.add(component.id);
-				}
-				continue;
-			}
-
-			const category = compatible.filter(
-				(candidate) => candidate.category === value,
-			);
-
-			if (category.length > 0) {
-				const removable = category.filter(
-					(candidate) => !required.has(candidate.id),
-				);
-				const allSelected = removable.every((candidate) =>
-					selected.has(candidate.id),
-				);
-
-				for (const candidate of removable) {
-					if (allSelected) {
-						selected.delete(candidate.id);
-					} else {
-						selected.add(candidate.id);
-					}
-				}
-				continue;
-			}
-
-			process.stdout.write(
-				`Unknown component or category: ${value}. Nothing changed.\n`,
-			);
-		}
-	} finally {
-		readline.close();
+	if (mode !== "custom") {
+		return { kind: mode };
 	}
+
+	const required = new Set(
+		compatible
+			.filter((component) => component.selection === "required")
+			.map((component) => component.id),
+	);
+	const selected = new Set(
+		unwrapPrompt(
+			await multiselect<string>({
+				message: "Select components",
+				options: compatible.map((component) => {
+					const marker =
+						component.selection === "required"
+							? "required"
+							: recommended.has(component.id)
+								? "recommended"
+								: "optional";
+
+					return {
+						value: component.id,
+						label: component.id,
+						hint: `${marker} · ${formatCategory(component.category)} · ${component.summary}`,
+						disabled: required.has(component.id),
+					};
+				}),
+				initialValues: compatible
+					.filter(
+						(component) =>
+							recommended.has(component.id) && !required.has(component.id),
+					)
+					.map((component) => component.id),
+				required: false,
+			}),
+		),
+	);
+
+	return {
+		kind: "explicit",
+		ids: compatible
+			.map((component) => component.id)
+			.filter((id) => required.has(id) || selected.has(id)),
+	};
 }
 
 export async function confirmApply(): Promise<boolean> {
-	const readline = createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	try {
-		const answer = (await readline.question("Apply this plan? [y/N] "))
-			.trim()
-			.toLowerCase();
-		return answer === "y" || answer === "yes";
-	} finally {
-		readline.close();
-	}
+	return unwrapPrompt(
+		await confirm({
+			message: "Apply this plan?",
+			initialValue: false,
+		}),
+	);
 }
 
 export async function promptForPackPath(): Promise<string> {
-	const readline = createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	try {
-		return (await readline.question("Local pack path: ")).trim();
-	} finally {
-		readline.close();
-	}
+	return unwrapPrompt(
+		await text({
+			message: "Local pack path",
+			validate: (value) =>
+				value === undefined || value.trim() === ""
+					? "A local pack path is required."
+					: undefined,
+		}),
+	).trim();
 }
 
 export async function promptForComponentDescription(): Promise<string> {
-	const readline = createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	try {
-		return (
-			await readline.question(
-				"Description (what it does and when it should be used): ",
-			)
-		).trim();
-	} finally {
-		readline.close();
-	}
-}
-
-function parseScope(value: string): "global" | "repository" {
-	const normalized = value.trim().toLowerCase();
-
-	if (normalized === "" || normalized === "repository") {
-		return "repository";
-	}
-
-	if (normalized === "global") {
-		return "global";
-	}
-
-	return parseInitArguments(["--scope", normalized]).scope ?? "repository";
+	return unwrapPrompt(
+		await text({
+			message: "Description (what it does and when it should be used)",
+		}),
+	).trim();
 }
 
 function formatCategory(category: string): string {
@@ -231,4 +189,13 @@ function formatCategory(category: string): string {
 		.split("/")
 		.map((segment) => segment[0]?.toUpperCase() + segment.slice(1))
 		.join(" / ");
+}
+
+function unwrapPrompt<Value>(value: Value | symbol): Value {
+	if (isCancel(value)) {
+		cancelPrompt("Cancelled. No files changed.");
+		throw new AgentsPackError("CANCELLED", "Cancelled.", { exitCode: 0 });
+	}
+
+	return value;
 }

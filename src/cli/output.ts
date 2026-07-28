@@ -54,7 +54,7 @@ ${COMMAND_SUMMARIES.init}
 
 Options:
   --scope <scope>  Install in repository or global scope.
-  --agents <list>  Comma-separated claude,codex,cursor selection.
+  --agents <list>  Comma-separated claude,codex,cursor selection, or all.
   --pack <path>    Use a local content-pack directory instead of the official pack.
   --components <choice>
                    recommended, all, or comma-separated component IDs.
