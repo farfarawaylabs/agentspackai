@@ -10,6 +10,9 @@ const COMMAND_SUMMARIES: Record<CommandName, string> = {
 	fork: "Copy an official component into user ownership.",
 	sync: "Render user-owned components for selected agents.",
 	update: "Preview or apply a content-pack update.",
+	pin: "Keep the currently installed pack version.",
+	unpin: "Allow forward content-pack updates again.",
+	rollback: "Restore an older pack version from the local cache.",
 	eject: "Remove managed Agents Pack content safely.",
 };
 
@@ -29,6 +32,9 @@ Commands:
   fork      ${COMMAND_SUMMARIES.fork}
   sync      ${COMMAND_SUMMARIES.sync}
   update    ${COMMAND_SUMMARIES.update}
+  pin       ${COMMAND_SUMMARIES.pin}
+  unpin     ${COMMAND_SUMMARIES.unpin}
+  rollback  ${COMMAND_SUMMARIES.rollback}
   eject     ${COMMAND_SUMMARIES.eject}
 
 Run agents-pack <command> --help for command-specific help.
@@ -40,14 +46,14 @@ export function commandHelp(command: CommandName): string {
 		return `Agents Pack: init
 
 Usage:
-  agents-pack init --scope <repository|global> --agents <list> --pack <path> --components <choice> [--yes] [--dry-run]
+  agents-pack init --scope <repository|global> --agents <list> --components <choice> [--pack <path>] [--yes] [--dry-run]
 
 ${COMMAND_SUMMARIES.init}
 
 Options:
   --scope <scope>  Install in repository or global scope.
   --agents <list>  Comma-separated claude,codex,cursor selection.
-  --pack <path>    Local content-pack directory.
+  --pack <path>    Use a local content-pack directory instead of the official pack.
   --components <choice>
                    recommended, all, or comma-separated component IDs.
   --yes            Apply without an interactive confirmation.
@@ -100,14 +106,43 @@ Options:
 		return `Agents Pack: update
 
 Usage:
-  agents-pack update --pack <path> [--yes] [--dry-run]
+  agents-pack update --check [--pack <path>]
+  agents-pack update [--pack <path>] [--yes] [--dry-run]
 
 ${COMMAND_SUMMARIES.update}
 
 Options:
-  --pack <path>  Proposed local content-pack directory.
+  --pack <path>  Use a local candidate instead of the official registry.
+  --check        Show version and release information without writing.
   --yes          Apply without an interactive confirmation.
   --dry-run      Print the update plan without writing.
+`;
+	}
+
+	if (command === "pin" || command === "unpin") {
+		return `Agents Pack: ${command}
+
+Usage:
+  agents-pack ${command}
+
+${COMMAND_SUMMARIES[command]}
+`;
+	}
+
+	if (command === "rollback") {
+		return `Agents Pack: rollback
+
+Usage:
+  agents-pack rollback [version] [--yes] [--dry-run]
+
+${COMMAND_SUMMARIES.rollback}
+
+Without a version, rollback chooses the newest cached version older than the
+installed version. A successful rollback pins that version.
+
+Options:
+  --yes      Apply without an interactive confirmation.
+  --dry-run  Print the rollback plan without writing.
 `;
 	}
 

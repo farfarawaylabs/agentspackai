@@ -5,8 +5,10 @@ content. Git provides its history; source folders are not duplicated by
 version.
 
 Each pack is self-contained under `packs/`. Its `pack.toml` declares the pack
-version and canonical components. Published pack versions will become immutable
-release artifacts outside this source tree.
+version, release-notes path, and canonical components. `RELEASE_NOTES.md`
+describes only that pack version. Published pack versions are built as GitHub
+Release artifacts outside this source tree, and the static registry under
+`registry/` points clients to the current artifact.
 
 Canonical skills are organized by responsibility in the source tree while
 their leaf directory names remain globally unique. Agent adapters install them

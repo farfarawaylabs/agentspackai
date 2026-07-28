@@ -1,6 +1,11 @@
 export type Scope = "global" | "repository";
 
 export type AgentTarget = "claude" | "codex" | "cursor";
+export type PackSourceKind = "local" | "official";
+
+export interface PackSource {
+	kind: PackSourceKind;
+}
 
 export interface PathContext {
 	cwd: string;
@@ -12,6 +17,7 @@ export interface PackManifest {
 	id: string;
 	version: string;
 	title: string;
+	releaseNotesPath?: string;
 	components: PackComponent[];
 }
 
@@ -40,6 +46,8 @@ export interface LoadedPack {
 	manifest: PackManifest;
 	files: PackFile[];
 	sha256: string;
+	source: PackSource;
+	releaseNotes?: string;
 }
 
 export interface ScopeConfig {
@@ -49,7 +57,8 @@ export interface ScopeConfig {
 	components: string[];
 	pack: {
 		id: string;
-		source: "local";
+		source: PackSourceKind;
+		pinnedVersion?: string;
 	};
 }
 
@@ -57,9 +66,7 @@ export interface LockedPack {
 	id: string;
 	version: string;
 	sha256: string;
-	source: {
-		kind: "local";
-	};
+	source: PackSource;
 }
 
 export interface LockedComponent {
@@ -192,6 +199,9 @@ export interface ChangePlan {
 		| "create"
 		| "fork"
 		| "sync"
+		| "pin"
+		| "unpin"
+		| "rollback"
 		| "eject";
 	scope: Scope;
 	operations: ChangeOperation[];

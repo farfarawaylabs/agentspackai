@@ -152,6 +152,9 @@ async function readLockRecord(path: string): Promise<LockRecord | undefined> {
 				value.command !== "create" &&
 				value.command !== "fork" &&
 				value.command !== "sync" &&
+				value.command !== "pin" &&
+				value.command !== "unpin" &&
+				value.command !== "rollback" &&
 				value.command !== "eject") ||
 			(value.scope !== "global" && value.scope !== "repository")
 		) {

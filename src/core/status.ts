@@ -9,6 +9,7 @@ import { loadLockFileIfExists } from "./state.ts";
 import type {
 	AgentTarget,
 	InspectedOutput,
+	PackSourceKind,
 	PathContext,
 	Scope,
 } from "./types.ts";
@@ -27,6 +28,8 @@ export type StatusReport =
 			scope: Scope;
 			packId: string;
 			packVersion: string;
+			packSource: PackSourceKind;
+			pinnedVersion?: string;
 			targets: AgentTarget[];
 			components: string[];
 			userComponents: string[];
@@ -98,6 +101,10 @@ export async function getStatusReport(
 		scope: state.config.scope,
 		packId: state.config.pack.id,
 		packVersion: state.lock.pack.version,
+		packSource: state.config.pack.source,
+		...(state.config.pack.pinnedVersion === undefined
+			? {}
+			: { pinnedVersion: state.config.pack.pinnedVersion }),
 		targets: state.config.targets,
 		components: state.config.components,
 		userComponents:
@@ -154,6 +161,8 @@ export function formatStatusReport(report: StatusReport): string {
 		"",
 		`Scope: ${report.scope}`,
 		`Pack: ${report.packId}@${report.packVersion}`,
+		`Source: ${report.packSource}`,
+		`Pin: ${report.pinnedVersion ?? "none"}`,
 		`Agents: ${report.targets.join(", ")}`,
 		`Official components: ${report.components.join(", ")}`,
 		`User components: ${report.userComponents.join(", ") || "none"}`,
@@ -281,7 +290,7 @@ async function statusWarnings(
 
 	if (!(await exists(getBaseCachePath(userHome, packHash)))) {
 		warnings.push(
-			"The installed Base is missing; install and remove require the exact pack to be restored.",
+			"The installed Base is missing; install, remove, and rollback require cached pack content.",
 		);
 	}
 

@@ -27,6 +27,7 @@ describe("loadPackManifest", () => {
 			id: "agents-pack-smoke",
 			version: "0.1.0",
 			title: "Agents Pack Smoke Test",
+			releaseNotesPath: "RELEASE_NOTES.md",
 			components: [
 				{
 					id: "ap-smoke-instructions",
@@ -62,6 +63,29 @@ components = []
 
 		expect(loadPackManifest(packRoot)).rejects.toMatchObject({
 			name: "AgentsPackError",
+			code: "INVALID_PACK",
+		});
+	});
+
+	test("rejects a non-semantic official pack version", async () => {
+		const packRoot = await createTemporaryPack(`
+schema_version = 1
+id = "invalid-version"
+version = "latest"
+title = "Invalid version"
+
+[[components]]
+id = "ap-invalid"
+kind = "instruction"
+title = "Invalid"
+summary = "Invalid version fixture."
+category = "testing"
+selection = "required"
+source = "instructions/invalid.md"
+targets = ["claude"]
+`);
+
+		expect(loadPackManifest(packRoot)).rejects.toMatchObject({
 			code: "INVALID_PACK",
 		});
 	});
@@ -147,10 +171,12 @@ describe("loadPack", () => {
 
 		expect(pack.manifest.version).toBe("0.1.0");
 		expect(pack.files.map((file) => file.path)).toEqual([
+			"RELEASE_NOTES.md",
 			"instructions/smoke.md",
 			"pack.toml",
 			"skills/agents-pack-smoke-test/SKILL.md",
 		]);
+		expect(pack.releaseNotes).toContain("Introduce the smoke-test");
 		expect(pack.files.every((file) => isSha256(file.sha256))).toBe(true);
 		expect(isSha256(pack.sha256)).toBe(true);
 	});

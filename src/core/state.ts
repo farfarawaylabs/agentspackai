@@ -7,6 +7,7 @@ import type {
 	LockFile,
 	LockedComponent,
 	LockedOutput,
+	PackSourceKind,
 	Scope,
 	ScopeConfig,
 } from "./types.ts";
@@ -18,6 +19,7 @@ const COMPONENT_KINDS = new Set<ComponentKind>([
 	"subagent",
 ]);
 const SCOPES = new Set<Scope>(["global", "repository"]);
+const PACK_SOURCE_KINDS = new Set<PackSourceKind>(["local", "official"]);
 const SHA256 = /^sha256:[a-f0-9]{64}$/;
 const encoder = new TextEncoder();
 
@@ -96,6 +98,9 @@ export function serializeScopeConfig(config: ScopeConfig): Uint8Array {
 			"[pack]",
 			`id = ${quoteTomlString(config.pack.id)}`,
 			`source = ${quoteTomlString(config.pack.source)}`,
+			...(config.pack.pinnedVersion === undefined
+				? []
+				: [`pinned_version = ${quoteTomlString(config.pack.pinnedVersion)}`]),
 			"",
 		].join("\n"),
 	);
@@ -124,8 +129,8 @@ export function parseScopeConfig(
 	const pack = requireRecord(record.pack, `${source}.pack`);
 	const packSource = requireString(pack.source, "pack.source", source);
 
-	if (packSource !== "local") {
-		throw malformedState(`${source}: pack.source must be local`);
+	if (!PACK_SOURCE_KINDS.has(packSource as PackSourceKind)) {
+		throw malformedState(`${source}: pack.source must be local or official`);
 	}
 
 	return {
@@ -135,7 +140,16 @@ export function parseScopeConfig(
 		components: requireUniqueStrings(record.components, "components", source),
 		pack: {
 			id: requireString(pack.id, "pack.id", source),
-			source: "local",
+			source: packSource as PackSourceKind,
+			...("pinned_version" in pack
+				? {
+						pinnedVersion: requireString(
+							pack.pinned_version,
+							"pack.pinned_version",
+							source,
+						),
+					}
+				: {}),
 		},
 	};
 }
@@ -154,8 +168,13 @@ export function parseLockFile(value: unknown, source = "lockfile"): LockFile {
 	const pack = requireRecord(record.pack, `${source}.pack`);
 	const packSource = requireRecord(pack.source, `${source}.pack.source`);
 
-	if (packSource.kind !== "local") {
-		throw malformedState(`${source}: pack.source.kind must be local`);
+	if (
+		typeof packSource.kind !== "string" ||
+		!PACK_SOURCE_KINDS.has(packSource.kind as PackSourceKind)
+	) {
+		throw malformedState(
+			`${source}: pack.source.kind must be local or official`,
+		);
 	}
 
 	if (!Array.isArray(record.components) || record.components.length === 0) {
@@ -196,7 +215,7 @@ export function parseLockFile(value: unknown, source = "lockfile"): LockFile {
 			id: requireString(pack.id, "pack.id", source),
 			version: requireString(pack.version, "pack.version", source),
 			sha256: requireHash(pack.sha256, "pack.sha256", source),
-			source: { kind: "local" },
+			source: { kind: packSource.kind as PackSourceKind },
 		},
 		components,
 		outputs,

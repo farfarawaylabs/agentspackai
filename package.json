@@ -12,6 +12,7 @@
 		"format": "biome format --write .",
 		"format:check": "biome format .",
 		"lint": "biome lint .",
+		"pack:build": "bun scripts/build-pack.ts",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit"
 	},

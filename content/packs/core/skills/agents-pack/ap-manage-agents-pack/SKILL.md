@@ -30,10 +30,20 @@ eject, or switch scope unless the user asks.
 | Create a user-owned subagent | `agents-pack create subagent <name> --description "<trigger description>"` |
 | Customize an official skill or subagent | `agents-pack fork <ap-name> --name <user-name>` |
 | Regenerate provider copies after editing canonical user content | `agents-pack sync` |
+| Check the official registry for an update | `agents-pack update --check` |
+| Check a local candidate pack | `agents-pack update --check --pack <path>` |
+| Keep the installed official version | `agents-pack pin` |
+| Allow forward official updates | `agents-pack unpin` |
+| Restore a cached older official version | `agents-pack rollback [version]` |
 | Preview any mutation | Add `--dry-run` |
 
 Official `ap-` components remain controlled by the installed pack. User-owned
 names must not use the reserved `ap-` prefix.
+
+Update checks are read-only and should show the proposed version, pin state,
+and release notes. A pinned installation rejects a different update until the
+user explicitly unpins it. Rollback uses only locally cached versions and pins
+the restored version; it never rolls back canonical user-owned content.
 
 ## Create or change user-owned content
 

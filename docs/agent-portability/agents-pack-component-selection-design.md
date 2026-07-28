@@ -8,6 +8,12 @@ component selection; official component installation and removal
 > **Later increment:** User-owned skills, subagents, and forking are now
 > implemented with separate canonical source and lock state. See
 > [Agents Pack user-owned components](./agents-pack-user-components.md).
+> Pack release notes, pinning, and cached rollback were implemented in the
+> following increment. See
+> [Agents Pack version control](./agents-pack-version-control.md).
+> Official registry resolution and GitHub Release packaging are also now
+> implemented. See
+> [Agents Pack content distribution](./agents-pack-distribution.md).
 
 ## 1. Goal
 
@@ -318,7 +324,7 @@ components = [
 
 [pack]
 id = "agents-pack-core"
-source = "local"
+source = "official"
 ```
 
 ### 7.1 Configuration responsibilities
@@ -334,19 +340,18 @@ The configuration records durable user intent:
 It does not record the installed pack version. Version and hashes belong in the
 lockfile.
 
-The first implementation accepts `source = "local"`. Remote distribution can
-later add an official source and channel without storing machine-specific
-absolute paths:
+Official initialization records the public registry source:
 
 ```toml
 [pack]
 id = "agents-pack-core"
 source = "official"
-channel = "stable"
 ```
 
-Do not store a local absolute pack path. It would make repository configuration
-machine-specific and leak developer paths into committed state.
+Initialization with `--pack` records `source = "local"` instead and requires an
+explicit local candidate for updates. Neither mode stores a local absolute pack
+path. That would make repository configuration machine-specific and leak
+developer paths into committed state.
 
 ### 7.2 Determinism
 
@@ -408,7 +413,7 @@ The generated lockfile records the exact realized installation:
 The lockfile records:
 
 - exact immutable pack version and digest;
-- resolved source kind and channel when one applies;
+- resolved source kind;
 - renderer format version;
 - exact selected components and their source digests; and
 - every rendered file or managed region and its installed digest.
@@ -799,7 +804,6 @@ The following decisions belong to later increments:
 - official versus third-party publisher identity;
 - deletion and renaming of user-owned components;
 - component renames or replacement metadata;
-- pack pinning and rollback history;
 - restoring a missing Base automatically;
 - executable-component permissions; and
 - desktop presentation.

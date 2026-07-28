@@ -53,7 +53,13 @@ describe("scope configuration", () => {
 	});
 
 	test("serializes deterministic TOML that round-trips", () => {
-		const config = validConfig();
+		const config = {
+			...validConfig(),
+			pack: {
+				...validConfig().pack,
+				pinnedVersion: "0.1.0",
+			},
+		};
 		const bytes = serializeScopeConfig(config);
 
 		expect(new TextDecoder().decode(bytes)).toBe(
@@ -69,6 +75,7 @@ describe("scope configuration", () => {
 				"[pack]",
 				'id = "agents-pack-smoke"',
 				'source = "local"',
+				'pinned_version = "0.1.0"',
 				"",
 			].join("\n"),
 		);

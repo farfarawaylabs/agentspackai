@@ -12,6 +12,7 @@ import { formatChangePlan } from "../core/format-plan.ts";
 import { loadPack } from "../core/pack.ts";
 import { planInit } from "../core/plan.ts";
 import { resolveScopePaths } from "../core/paths.ts";
+import { loadOfficialPack, OFFICIAL_CORE_PACK_ID } from "../core/registry.ts";
 import {
 	expandComponentChoice,
 	type ComponentChoice,
@@ -35,6 +36,9 @@ export interface InitCommandDependencies {
 		targets: readonly AgentTarget[],
 	) => Promise<ComponentChoice>;
 	confirm?: () => Promise<boolean>;
+	loadOfficialPack?: (
+		packId: string,
+	) => Promise<Awaited<ReturnType<typeof loadPack>>>;
 }
 
 export async function runInit(
@@ -52,7 +56,7 @@ export async function runInit(
 		if (!interactive) {
 			throw new AgentsPackError(
 				"USAGE",
-				"Non-interactive init requires --scope, --agents, --pack, and --components.",
+				"Non-interactive init requires --scope, --agents, and --components.",
 				{ exitCode: 2 },
 			);
 		}
@@ -64,7 +68,12 @@ export async function runInit(
 
 	const options = requireCompleteArguments(parsed);
 	const context: PathContext = { cwd, userHome };
-	const pack = await loadPack(resolve(cwd, options.packPath));
+	const pack =
+		options.packPath === undefined
+			? await (dependencies.loadOfficialPack ?? loadOfficialPack)(
+					OFFICIAL_CORE_PACK_ID,
+				)
+			: await loadPack(resolve(cwd, options.packPath));
 	const choice =
 		options.components ??
 		(await (dependencies.promptForComponents ?? promptForComponentChoice)(
@@ -197,7 +206,6 @@ function hasMissingRequiredArguments(options: InitArguments): boolean {
 	return (
 		options.scope === undefined ||
 		options.agents === undefined ||
-		options.packPath === undefined ||
 		options.components === undefined
 	);
 }
@@ -205,20 +213,15 @@ function hasMissingRequiredArguments(options: InitArguments): boolean {
 function requireCompleteArguments(options: InitArguments): {
 	scope: Scope;
 	agents: AgentTarget[];
-	packPath: string;
+	packPath?: string;
 	components?: ComponentChoice;
 	yes: boolean;
 	dryRun: boolean;
 } {
-	if (
-		options.scope === undefined ||
-		options.agents === undefined ||
-		options.packPath === undefined ||
-		options.packPath.trim().length === 0
-	) {
+	if (options.scope === undefined || options.agents === undefined) {
 		throw new AgentsPackError(
 			"USAGE",
-			"Init requires a scope, at least one agent, and a local pack path.",
+			"Init requires a scope and at least one agent.",
 			{ exitCode: 2 },
 		);
 	}
@@ -226,7 +229,7 @@ function requireCompleteArguments(options: InitArguments): {
 	return {
 		scope: options.scope,
 		agents: options.agents,
-		packPath: options.packPath,
+		...(options.packPath === undefined ? {} : { packPath: options.packPath }),
 		components: options.components,
 		yes: options.yes,
 		dryRun: options.dryRun,

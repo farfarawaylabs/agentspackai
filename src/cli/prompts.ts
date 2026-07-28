@@ -31,14 +31,10 @@ export async function promptForInitArguments(
 				(await readline.question("Agents [claude,codex,cursor] (all): ")) ||
 					"claude,codex,cursor",
 			]).agents;
-		const packPath =
-			partial.packPath ?? (await readline.question("Local pack path: ")).trim();
-
 		return {
 			...partial,
 			scope,
 			agents,
-			packPath,
 		};
 	} finally {
 		readline.close();

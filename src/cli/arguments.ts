@@ -11,6 +11,9 @@ export const COMMAND_NAMES = [
 	"fork",
 	"sync",
 	"update",
+	"pin",
+	"unpin",
+	"rollback",
 	"eject",
 ] as const;
 
@@ -34,6 +37,13 @@ export interface InitArguments {
 
 export interface UpdateArguments {
 	packPath?: string;
+	check: boolean;
+	yes: boolean;
+	dryRun: boolean;
+}
+
+export interface RollbackArguments {
+	version?: string;
 	yes: boolean;
 	dryRun: boolean;
 }
@@ -390,7 +400,7 @@ export function parseSyncArguments(args: readonly string[]): SyncArguments {
 }
 
 export function parseUpdateArguments(args: readonly string[]): UpdateArguments {
-	const parsed: UpdateArguments = { yes: false, dryRun: false };
+	const parsed: UpdateArguments = { check: false, yes: false, dryRun: false };
 
 	for (let index = 0; index < args.length; index += 1) {
 		const argument = args[index];
@@ -405,14 +415,66 @@ export function parseUpdateArguments(args: readonly string[]): UpdateArguments {
 				index += 1;
 				break;
 			case "--yes":
+				if (parsed.yes) {
+					throw usage("--yes may be provided only once.");
+				}
 				parsed.yes = true;
 				break;
 			case "--dry-run":
+				if (parsed.dryRun) {
+					throw usage("--dry-run may be provided only once.");
+				}
 				parsed.dryRun = true;
+				break;
+			case "--check":
+				if (parsed.check) {
+					throw usage("--check may be provided only once.");
+				}
+				parsed.check = true;
 				break;
 			default:
 				throw usage(`Unknown update option: ${argument ?? ""}`);
 		}
+	}
+
+	if (parsed.check && (parsed.yes || parsed.dryRun)) {
+		throw usage("--check cannot be combined with --yes or --dry-run.");
+	}
+
+	return parsed;
+}
+
+export function parseRollbackArguments(
+	args: readonly string[],
+): RollbackArguments {
+	const parsed: RollbackArguments = { yes: false, dryRun: false };
+
+	for (const argument of args) {
+		if (argument === "--yes") {
+			if (parsed.yes) {
+				throw usage("--yes may be provided only once.");
+			}
+			parsed.yes = true;
+			continue;
+		}
+
+		if (argument === "--dry-run") {
+			if (parsed.dryRun) {
+				throw usage("--dry-run may be provided only once.");
+			}
+			parsed.dryRun = true;
+			continue;
+		}
+
+		if (argument.startsWith("--")) {
+			throw usage(`Unknown rollback option: ${argument}`);
+		}
+
+		if (parsed.version !== undefined) {
+			throw usage("rollback accepts at most one version.");
+		}
+
+		parsed.version = argument;
 	}
 
 	return parsed;
