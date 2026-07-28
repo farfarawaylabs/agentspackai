@@ -1,8 +1,9 @@
-# Agents Pack CLI 0.1.0
+# Agents Pack CLI 0.1.1
 
-- Add the first standalone Agents Pack command-line release.
-- Support macOS and Linux on ARM64 and x64.
-- Add a checksum-verifying installer that defaults to `~/.local/bin`.
-- Add an explicit CLI release registry so content-pack releases cannot be
-  mistaken for CLI releases.
-- Keep the Bun runtime bundled so users do not need Bun, Node.js, or npm.
+- Add arrow-key menus for interactive scope and component selection.
+- Add Space-to-toggle multi-select menus for agents and custom components.
+- Make repository scope, compatible agents, and recommended components visible
+  defaults.
+- Prevent incompatible global Cursor selection in the interactive flow.
+- Accept `--agents all` in non-interactive commands.
+- Handle interactive cancellation cleanly without reporting a usage error.
