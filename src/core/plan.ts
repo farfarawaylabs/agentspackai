@@ -19,6 +19,7 @@ import {
 	serializeLockFile,
 	serializeScopeConfig,
 } from "./state.ts";
+import { compareVersions } from "./versions.ts";
 import type {
 	AgentTarget,
 	ChangeOperation,
@@ -33,6 +34,7 @@ import type {
 	Scope,
 	ScopeConfig,
 	ScopePaths,
+	PackSourceKind,
 } from "./types.ts";
 import type { ScopeState } from "./inspect.ts";
 
@@ -59,6 +61,16 @@ export interface ComponentPlanOptions {
 
 export interface EjectPlanOptions {
 	context: PathContext;
+}
+
+export interface RollbackPlanOptions {
+	pack: LoadedPack;
+	context: PathContext;
+}
+
+export interface PinPlanOptions {
+	context: PathContext;
+	pinned: boolean;
 }
 
 export async function planInit(options: InitPlanOptions): Promise<ChangePlan> {
@@ -119,6 +131,19 @@ export async function planInit(options: InitPlanOptions): Promise<ChangePlan> {
 export async function planUpdate(
 	options: UpdatePlanOptions,
 ): Promise<ChangePlan> {
+	return planForwardUpdate(options, true);
+}
+
+export async function planUpdateCheck(
+	options: UpdatePlanOptions,
+): Promise<ChangePlan> {
+	return planForwardUpdate(options, false);
+}
+
+async function planForwardUpdate(
+	options: UpdatePlanOptions,
+	respectPin: boolean,
+): Promise<ChangePlan> {
 	const state = await detectInstalledScope(options.context);
 	const { config, lock, paths } = requireInstalledState(state);
 
@@ -139,6 +164,29 @@ export async function planUpdate(
 		);
 	}
 
+	const versionComparison = compareVersions(
+		options.pack.manifest.version,
+		lock.pack.version,
+	);
+
+	if (versionComparison < 0) {
+		throw new AgentsPackError(
+			"USAGE",
+			`Update cannot move backward from ${lock.pack.version} to ${options.pack.manifest.version}; use agents-pack rollback.`,
+		);
+	}
+
+	if (
+		respectPin &&
+		config.pack.pinnedVersion !== undefined &&
+		options.pack.manifest.version !== config.pack.pinnedVersion
+	) {
+		throw new AgentsPackError(
+			"PINNED",
+			`Agents Pack is pinned to ${config.pack.pinnedVersion}. Run agents-pack unpin before updating.`,
+		);
+	}
+
 	return reconcileInstalled(
 		"update",
 		options.pack,
@@ -146,6 +194,93 @@ export async function planUpdate(
 		lock,
 		paths,
 		config.components,
+		config.pack.pinnedVersion,
+	);
+}
+
+export async function planRollback(
+	options: RollbackPlanOptions,
+): Promise<ChangePlan> {
+	const state = await detectInstalledScope(options.context);
+	const { config, lock, paths } = requireInstalledState(state);
+
+	if (options.pack.manifest.id !== config.pack.id) {
+		throw new AgentsPackError(
+			"INVALID_PACK",
+			`Installed pack ${config.pack.id} cannot roll back to ${options.pack.manifest.id}.`,
+		);
+	}
+
+	if (compareVersions(options.pack.manifest.version, lock.pack.version) >= 0) {
+		throw new AgentsPackError(
+			"USAGE",
+			`Rollback requires an older version than ${lock.pack.version}.`,
+		);
+	}
+
+	const available = new Set(
+		options.pack.manifest.components.map((component) => component.id),
+	);
+	const retained = config.components.filter((component) =>
+		available.has(component),
+	);
+	const removed = config.components.filter(
+		(component) => !available.has(component),
+	);
+	const plan = await reconcileInstalled(
+		"rollback",
+		options.pack,
+		config,
+		lock,
+		paths,
+		retained,
+		options.pack.manifest.version,
+	);
+
+	return {
+		...plan,
+		warnings: [
+			...plan.warnings,
+			...removed.map(
+				(component) =>
+					`Selected component ${component} does not exist in ${options.pack.manifest.version} and will be removed.`,
+			),
+			`The installation will be pinned to ${options.pack.manifest.version} after rollback.`,
+		],
+	};
+}
+
+export async function planPin(options: PinPlanOptions): Promise<ChangePlan> {
+	const state = await detectInstalledScope(options.context);
+	const { config, lock, paths } = requireInstalledState(state);
+	const inspected = await inspectLockedOutputs(paths.root, config.scope, lock);
+	assertOutputsClean(inspected, options.pinned ? "pin" : "unpin");
+	const pinnedVersion = options.pinned ? lock.pack.version : undefined;
+
+	if (config.pack.pinnedVersion === pinnedVersion) {
+		return createPlan(options.pinned ? "pin" : "unpin", config.scope, [], []);
+	}
+
+	const newConfig: ScopeConfig = {
+		...config,
+		pack: {
+			id: config.pack.id,
+			source: config.pack.source,
+			...(pinnedVersion === undefined ? {} : { pinnedVersion }),
+		},
+	};
+
+	return createPlan(
+		options.pinned ? "pin" : "unpin",
+		config.scope,
+		[
+			{
+				kind: "replace-file",
+				path: toPortablePath(paths.root, paths.configPath),
+				bytes: serializeScopeConfig(newConfig),
+			},
+		],
+		[],
 	);
 }
 
@@ -177,6 +312,7 @@ export async function planInstall(
 		lock,
 		paths,
 		components,
+		config.pack.pinnedVersion,
 	);
 }
 
@@ -211,6 +347,7 @@ export async function planRemove(
 		lock,
 		paths,
 		config.components.filter((id) => id !== options.componentId),
+		config.pack.pinnedVersion,
 	);
 }
 
@@ -279,12 +416,13 @@ export async function planEject(
 }
 
 async function reconcileInstalled(
-	command: "update" | "install" | "remove",
+	command: "update" | "install" | "remove" | "rollback",
 	pack: LoadedPack,
 	config: ScopeConfig,
 	lock: LockFile,
 	paths: ScopePaths,
 	componentIds: readonly string[],
+	pinnedVersion?: string,
 ): Promise<ChangePlan> {
 	const inspected = await inspectLockedOutputs(paths.root, config.scope, lock);
 	assertOutputsClean(inspected, command);
@@ -300,8 +438,15 @@ async function reconcileInstalled(
 		pack,
 		config.targets,
 		selectedIds,
+		pinnedVersion,
+		config.pack.source,
 	);
-	const newLock = createLockFile(pack, rendered, lockedOutputs);
+	const newLock = createLockFile(
+		pack,
+		rendered,
+		lockedOutputs,
+		config.pack.source,
+	);
 
 	if (!scopeConfigsEqual(config, newConfig)) {
 		operations.push({
@@ -513,6 +658,8 @@ function createScopeConfig(
 	pack: LoadedPack,
 	targets: AgentTarget[],
 	components: string[],
+	pinnedVersion?: string,
+	source: PackSourceKind = pack.source.kind,
 ): ScopeConfig {
 	return {
 		schemaVersion: 1,
@@ -521,7 +668,8 @@ function createScopeConfig(
 		components,
 		pack: {
 			id: pack.manifest.id,
-			source: "local",
+			source,
+			...(pinnedVersion === undefined ? {} : { pinnedVersion }),
 		},
 	};
 }
@@ -530,6 +678,7 @@ export function createLockFile(
 	pack: LoadedPack,
 	rendered: RenderedPack,
 	outputs: LockedOutput[],
+	source: PackSourceKind = pack.source.kind,
 ): LockFile {
 	return {
 		schemaVersion: 1,
@@ -538,7 +687,7 @@ export function createLockFile(
 			id: pack.manifest.id,
 			version: pack.manifest.version,
 			sha256: pack.sha256,
-			source: { kind: "local" },
+			source: { kind: source },
 		},
 		components: rendered.components.map((component) => ({
 			id: component.id,
@@ -580,6 +729,7 @@ function assertRepeatedInitMatches(
 ): void {
 	if (
 		config.pack.id !== pack.manifest.id ||
+		config.pack.source !== pack.source.kind ||
 		lock.pack.version !== pack.manifest.version ||
 		lock.pack.sha256 !== pack.sha256 ||
 		!arraysEqual(config.targets, targets) ||
@@ -831,6 +981,7 @@ function scopeConfigsEqual(left: ScopeConfig, right: ScopeConfig): boolean {
 		left.scope === right.scope &&
 		left.pack.id === right.pack.id &&
 		left.pack.source === right.pack.source &&
+		left.pack.pinnedVersion === right.pack.pinnedVersion &&
 		arraysEqual(left.targets, right.targets) &&
 		arraysEqual(left.components, right.components)
 	);

@@ -8,6 +8,7 @@ import {
 	parseForkArguments,
 	parseInitArguments,
 	parseListArguments,
+	parseRollbackArguments,
 	parseSyncArguments,
 	parseUpdateArguments,
 } from "../../src/cli/arguments.ts";
@@ -187,8 +188,15 @@ describe("parseUpdateArguments", () => {
 			parseUpdateArguments(["--pack", "./pack", "--yes", "--dry-run"]),
 		).toEqual({
 			packPath: "./pack",
+			check: false,
 			yes: true,
 			dryRun: true,
+		});
+		expect(parseUpdateArguments(["--check", "--pack", "./pack"])).toEqual({
+			packPath: "./pack",
+			check: true,
+			yes: false,
+			dryRun: false,
 		});
 	});
 
@@ -199,6 +207,32 @@ describe("parseUpdateArguments", () => {
 		expect(() =>
 			parseUpdateArguments(["--pack", "one", "--pack", "two"]),
 		).toThrow("--pack may be provided only once");
+		expect(() => parseUpdateArguments(["--check", "--yes"])).toThrow(
+			"cannot be combined",
+		);
+	});
+});
+
+describe("version-control arguments", () => {
+	test("parses rollback options", () => {
+		expect(parseRollbackArguments(["0.1.0", "--yes"])).toEqual({
+			version: "0.1.0",
+			yes: true,
+			dryRun: false,
+		});
+		expect(parseRollbackArguments(["--dry-run"])).toEqual({
+			yes: false,
+			dryRun: true,
+		});
+	});
+
+	test("rejects invalid rollback options", () => {
+		expect(() => parseRollbackArguments(["0.1.0", "0.2.0"])).toThrow(
+			"at most one version",
+		);
+		expect(() => parseRollbackArguments(["--force"])).toThrow(
+			"Unknown rollback option",
+		);
 	});
 });
 

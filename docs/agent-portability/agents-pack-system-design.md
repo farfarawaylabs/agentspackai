@@ -454,7 +454,7 @@ Agents Pack installs two required maintenance skills:
 There are two different operations and the CLI should name them differently:
 
 1. **Install an official catalog component.** The component already exists in
-   the selected Agents Pack channel:
+   the installed Agents Pack version:
 
    ```text
    agents-pack install ap-debug
@@ -529,7 +529,7 @@ components = [
 
 [pack]
 id = "agents-pack-core"
-source = "local"
+source = "official"
 ```
 
 ### 8.2 Lockfile
@@ -610,7 +610,8 @@ After confirmation, the CLI writes temporary files, validates them, and moves th
 
 ### Step 6: Validate and summarize
 
-The final report lists installed components, exact file paths, warnings, and the selected update channel.
+The final report lists installed components, exact file paths, warnings, and
+whether the pack source is official or local.
 
 Repository mode recommends committing the result.
 
@@ -635,33 +636,40 @@ Content packs should be:
 
 - versioned;
 - immutable after publication;
-- integrity-checked;
 - cached locally;
 - accompanied by release notes; and
-- resolved through a stable or preview channel.
+- structurally validated before planning.
 
-Signing and a hosted registry can be added with distribution, but the local package and lockfile model should not depend on a specific registry implementation.
+The lifecycle implements release notes, exact-version pins, rollback from the
+verified Base cache, and official resolution through a static registry backed
+by GitHub Release assets. Stable and preview channels plus published checksum,
+attestation, or signature enforcement remain later work. The package and
+lockfile model does not depend on a specific hosting provider.
 
 ### 10.3 Update process
 
-Running:
+The official flow uses:
 
 ```text
+agents-pack update --check
 agents-pack update
 ```
 
-should:
+The update flow:
 
-1. check the configured channel;
-2. download or resolve the proposed pack;
-3. show release notes and the exact files that would change;
-4. compare current managed files and blocks with their recorded hashes;
-5. classify each item as clean, missing, or locally modified;
-6. ask for approval;
-7. update clean official content;
-8. render and validate all selected targets;
-9. update the lockfile only after success; and
-10. retain enough previous state to roll back.
+1. fetch the official registry and proposed immutable pack artifact;
+2. show release notes and the exact files that would change;
+3. compare current managed files and blocks with their recorded hashes;
+4. classify each item as clean, missing, or locally modified;
+5. ask for approval;
+6. update clean official content;
+7. render and validate all selected targets;
+8. update the lockfile only after success; and
+9. retain the previous Base in the local cache.
+
+`--pack <candidate-path>` performs the same lifecycle with an explicit local
+candidate. Installations initialized from local packs continue requiring that
+override and never switch to the official registry implicitly.
 
 ### 10.4 Handling local edits to managed content
 
@@ -686,7 +694,6 @@ Users should be able to inspect an update without changing anything:
 ```text
 agents-pack update --check
 agents-pack update --dry-run
-agents-pack diff
 ```
 
 The preview should include:
@@ -706,22 +713,18 @@ The exact command names may evolve, but the first coherent surface is:
 ```text
 agents-pack init
 agents-pack status
-agents-pack update
-agents-pack update --dry-run
-agents-pack diff
-agents-pack doctor
-agents-pack validate
-
 agents-pack list
 agents-pack install <component>
 agents-pack remove <component>
-
 agents-pack create skill <name>
 agents-pack create subagent <name>
-agents-pack create command <name>
-agents-pack fork <kind> <name>
-agents-pack pin <component-or-pack>@<version>
-
+agents-pack fork <official-component> --name <name>
+agents-pack sync
+agents-pack update --check
+agents-pack update
+agents-pack pin
+agents-pack unpin
+agents-pack rollback [version]
 agents-pack eject
 ```
 
@@ -921,9 +924,10 @@ safe removal.
 
 The implemented component-selection increment now adds the core content pack,
 native subagents, explicit component selection, the shared Base cache, and
-`list`, `install`, and `remove`. User-owned component authoring, remote
-distribution, signing, global Cursor instructions, a desktop UI, and session
-analysis remain deferred.
+`list`, `install`, and `remove`. User-owned component authoring plus official
+GitHub Release distribution are also implemented. Published signature
+enforcement, global Cursor instructions, a desktop UI, and session analysis
+remain deferred.
 
 ## 16. Later product layers
 
@@ -991,18 +995,18 @@ Symlinks reduce duplication but may behave differently on Windows, in archives, 
 
 The skill format can remain close to the Agent Skills standard. Subagents need a minimal neutral capability vocabulary that distinguishes required from preferred behavior.
 
-### 17.5 Content distribution
+### 17.5 Published integrity enforcement
 
-The content model should support immutable versions and hashes, but the first source could be a release archive, npm package, Git repository, or a small dedicated registry.
+The official source is now a static registry backed by GitHub Release assets.
+When should the CLI additionally require a published checksum, GitHub
+attestation, or independent signature rather than relying on HTTPS, GitHub
+release immutability, and the artifact's internal hashes?
 
-### 17.6 Engine implementation
+### 17.6 Application packaging
 
-We still need to choose the first implementation:
-
-- Bun and TypeScript for fastest iteration and shared UI code; or
-- Rust for a small standalone binary, stricter filesystem behavior, and a natural Tauri desktop path.
-
-This decision does not change the content-pack format or ownership model.
+The lifecycle engine is implemented in TypeScript on Bun. The remaining
+packaging decision is how to distribute a simple cross-platform executable and
+later share the engine with a possible desktop control center.
 
 ### 17.7 Existing configuration adoption
 

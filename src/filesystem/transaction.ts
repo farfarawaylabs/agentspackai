@@ -724,6 +724,9 @@ function parseJournal(
 			record.command !== "create" &&
 			record.command !== "fork" &&
 			record.command !== "sync" &&
+			record.command !== "pin" &&
+			record.command !== "unpin" &&
+			record.command !== "rollback" &&
 			record.command !== "eject") ||
 		(record.state !== "prepared" &&
 			record.state !== "applying" &&

@@ -1,17 +1,22 @@
 import { homedir } from "node:os";
 import { resolve } from "node:path";
-import {
-	parseUpdateArguments,
-	type UpdateArguments,
-} from "../cli/arguments.ts";
-import { confirmApply, promptForPackPath } from "../cli/prompts.ts";
+import { parseUpdateArguments } from "../cli/arguments.ts";
+import { confirmApply } from "../cli/prompts.ts";
 import { cachePack } from "../core/base-cache.ts";
 import { AgentsPackError } from "../core/errors.ts";
 import { formatChangePlan } from "../core/format-plan.ts";
 import { detectInstalledScope } from "../core/inspect.ts";
 import { loadPack } from "../core/pack.ts";
-import { planUpdate } from "../core/plan.ts";
-import type { ChangePlan, ExecutorEvent, PathContext } from "../core/types.ts";
+import { planUpdate, planUpdateCheck } from "../core/plan.ts";
+import { loadOfficialPack } from "../core/registry.ts";
+import type {
+	ChangePlan,
+	ExecutorEvent,
+	LockFile,
+	PathContext,
+	ScopeConfig,
+} from "../core/types.ts";
+import { compareVersions } from "../core/versions.ts";
 import { runMutation } from "../filesystem/transaction.ts";
 
 export interface UpdateCommandDependencies {
@@ -19,9 +24,11 @@ export interface UpdateCommandDependencies {
 	userHome?: string;
 	interactive?: boolean;
 	write?: (text: string) => void;
-	promptForPackPath?: () => Promise<string>;
 	confirm?: () => Promise<boolean>;
 	onExecutorEvent?: (event: ExecutorEvent) => void | Promise<void>;
+	loadOfficialPack?: (
+		packId: string,
+	) => Promise<Awaited<ReturnType<typeof loadPack>>>;
 }
 
 export async function runUpdate(
@@ -33,13 +40,8 @@ export async function runUpdate(
 	const interactive = dependencies.interactive ?? Boolean(process.stdin.isTTY);
 	const write =
 		dependencies.write ?? ((text: string) => process.stdout.write(text));
-	const parsed = await completeArguments(
-		parseUpdateArguments(args),
-		interactive,
-		dependencies,
-	);
+	const parsed = parseUpdateArguments(args);
 	const context: PathContext = { cwd, userHome };
-	const pack = await loadPack(resolve(cwd, parsed.packPath));
 	const state = await detectInstalledScope(context);
 
 	if (state.status !== "installed") {
@@ -47,6 +49,22 @@ export async function runUpdate(
 			"NOT_INITIALIZED",
 			"Agents Pack is not initialized.",
 		);
+	}
+
+	const pack =
+		parsed.packPath === undefined
+			? await resolveInstalledOfficialPack(state.config, dependencies)
+			: await loadPack(resolve(cwd, parsed.packPath));
+
+	if (parsed.check) {
+		const report = formatUpdateCheck(state.config, state.lock, pack);
+
+		if (compareVersions(pack.manifest.version, state.lock.pack.version) >= 0) {
+			await planUpdateCheck({ pack, context });
+		}
+
+		write(report);
+		return;
 	}
 
 	const apply = (approvedPlan?: ChangePlan) =>
@@ -77,6 +95,7 @@ export async function runUpdate(
 
 	if (parsed.yes && !parsed.dryRun) {
 		const approvedPlan = await planUpdate({ pack, context });
+		write(formatCandidateRelease(state.lock, pack));
 		write(formatChangePlan(approvedPlan));
 		await cachePack(userHome, pack);
 		const result = await apply(approvedPlan);
@@ -85,6 +104,7 @@ export async function runUpdate(
 	}
 
 	const approvedPlan = await planUpdate({ pack, context });
+	write(formatCandidateRelease(state.lock, pack));
 	write(formatChangePlan(approvedPlan));
 
 	if (parsed.dryRun) {
@@ -116,30 +136,85 @@ export async function runUpdate(
 	writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
 }
 
-async function completeArguments(
-	parsed: UpdateArguments,
-	interactive: boolean,
+async function resolveInstalledOfficialPack(
+	config: ScopeConfig,
 	dependencies: UpdateCommandDependencies,
-): Promise<Required<UpdateArguments>> {
-	let packPath = parsed.packPath;
-
-	if (packPath === undefined && interactive) {
-		packPath = await (dependencies.promptForPackPath ?? promptForPackPath)();
-	}
-
-	if (packPath === undefined || packPath.trim().length === 0) {
+): Promise<Awaited<ReturnType<typeof loadPack>>> {
+	if (config.pack.source !== "official") {
 		throw new AgentsPackError(
 			"USAGE",
-			"Update requires --pack in non-interactive mode.",
+			"This installation uses a local pack. Provide --pack with the next local pack version.",
 			{ exitCode: 2 },
 		);
 	}
 
-	return {
-		packPath,
-		yes: parsed.yes,
-		dryRun: parsed.dryRun,
-	};
+	return (dependencies.loadOfficialPack ?? loadOfficialPack)(config.pack.id);
+}
+
+function formatCandidateRelease(
+	lock: LockFile,
+	pack: Awaited<ReturnType<typeof loadPack>>,
+): string {
+	return [
+		`Update: ${lock.pack.version} -> ${pack.manifest.version}`,
+		"",
+		"Release notes:",
+		pack.releaseNotes ?? "No release notes were supplied for this version.",
+		"",
+	].join("\n");
+}
+
+function formatUpdateCheck(
+	config: ScopeConfig,
+	lock: LockFile,
+	pack: Awaited<ReturnType<typeof loadPack>>,
+): string {
+	if (pack.manifest.id !== config.pack.id) {
+		throw new AgentsPackError(
+			"INVALID_PACK",
+			`Installed pack ${config.pack.id} cannot be checked against ${pack.manifest.id}.`,
+		);
+	}
+
+	if (
+		pack.manifest.version === lock.pack.version &&
+		pack.sha256 !== lock.pack.sha256
+	) {
+		throw new AgentsPackError(
+			"INVALID_PACK",
+			`Pack version ${lock.pack.version} has different content; published pack versions are immutable.`,
+		);
+	}
+
+	const comparison = compareVersions(pack.manifest.version, lock.pack.version);
+	let status: string;
+
+	if (comparison === 0) {
+		status = "Already current.";
+	} else if (comparison < 0) {
+		status =
+			"Candidate is older; use agents-pack rollback for cached versions.";
+	} else if (config.pack.pinnedVersion !== undefined) {
+		status = `Update available, but this installation is pinned to ${config.pack.pinnedVersion}.`;
+	} else {
+		status = "Update available.";
+	}
+
+	const releaseNotes =
+		pack.releaseNotes ?? "No release notes were supplied for this version.";
+
+	return [
+		"Agents Pack update check",
+		"",
+		`Current: ${lock.pack.id}@${lock.pack.version}`,
+		`Candidate: ${pack.manifest.id}@${pack.manifest.version}`,
+		`Pin: ${config.pack.pinnedVersion ?? "none"}`,
+		`Status: ${status}`,
+		"",
+		"Release notes:",
+		releaseNotes,
+		"",
+	].join("\n");
 }
 
 function writeMutationResult(

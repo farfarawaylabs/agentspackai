@@ -73,6 +73,16 @@ export async function inspectScopeState(
 		);
 	}
 
+	if (
+		config.pack.pinnedVersion !== undefined &&
+		config.pack.pinnedVersion !== lock.pack.version
+	) {
+		throw new AgentsPackError(
+			"MALFORMED_STATE",
+			"Scope configuration pins a version that is not currently installed.",
+		);
+	}
+
 	const lockedComponents = lock.components.map((component) => component.id);
 
 	if (

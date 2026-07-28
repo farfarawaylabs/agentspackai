@@ -139,7 +139,15 @@ Forking:
 3. changes its canonical identity to the new user name;
 4. records it in the user manifest;
 5. renders it for every selected agent; and
-6. removes it from official update ownership.
+6. leaves the original official component installed and update-owned.
+
+The user-owned copy is independent and is never overwritten by official
+updates. If the original is optional and is no longer wanted, remove it
+separately after forking:
+
+```text
+agents-pack remove ap-debug --yes
+```
 
 Instructions cannot be forked as components. Repository-specific instruction
 customization belongs in user-owned instruction files outside Agents Pack's
@@ -173,7 +181,7 @@ installation can synchronize the user's canonical content again.
 
 ## 9. Always-installed management skills
 
-Core pack `0.25.0` adds two required skills:
+The core pack includes two required skills, introduced in `0.25.0`:
 
 - `ap-manage-agents-pack` chooses and safely runs lifecycle commands; and
 - `ap-create-new-skill` authors or updates one canonical portable skill from
@@ -191,7 +199,6 @@ This increment does not add:
 - third-party publishers;
 - executable-component permission declarations;
 - automatic three-way merging of canonical sources;
-- remote official pack resolution; or
 - a desktop editor.
 
 Those features should build on the separate source and lock model rather than

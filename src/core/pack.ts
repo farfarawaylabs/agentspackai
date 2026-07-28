@@ -13,7 +13,9 @@ import type {
 	PackComponent,
 	PackFile,
 	PackManifest,
+	PackSource,
 } from "./types.ts";
+import { isSemanticVersion } from "./versions.ts";
 
 const AGENT_TARGETS = new Set<AgentTarget>(["claude", "codex", "cursor"]);
 const COMPONENT_KINDS = new Set<PackComponent["kind"]>([
@@ -37,12 +39,13 @@ export async function loadPack(packRoot: string): Promise<LoadedPack> {
 	const manifest = await loadPackManifest(root);
 	await validateComponentSources(root, manifest);
 	const files = await collectPackFiles(root);
-	const pack = {
+	const pack = attachReleaseNotes({
 		root,
 		manifest,
 		files,
 		sha256: hashPackFiles(files),
-	};
+		source: { kind: "local" },
+	});
 	validateLoadedPackSources(pack);
 	return pack;
 }
@@ -83,6 +86,7 @@ export async function loadPackManifest(
 export function loadPackFromFiles(
 	files: readonly PackFile[],
 	rootLabel: string,
+	source: PackSource = { kind: "local" },
 ): LoadedPack {
 	const canonicalFiles = files
 		.map((file) => ({
@@ -111,12 +115,13 @@ export function loadPackFromFiles(
 		throw invalidPack("Unable to parse cached pack manifest.", { cause });
 	}
 
-	const pack: LoadedPack = {
+	const pack = attachReleaseNotes({
 		root: rootLabel,
 		manifest: validateManifest(parsed, `${rootLabel}/pack.toml`),
 		files: canonicalFiles,
 		sha256: hashPackFiles(canonicalFiles),
-	};
+		source,
+	});
 	validateLoadedPackSources(pack);
 	return pack;
 }
@@ -438,12 +443,39 @@ function validateManifest(value: unknown, manifestPath: string): PackManifest {
 	const id = requireNonEmptyString(value.id, "id", manifestPath);
 	const version = requireNonEmptyString(value.version, "version", manifestPath);
 	const title = requireNonEmptyString(value.title, "title", manifestPath);
+	const releaseNotesPath =
+		value.release_notes === undefined
+			? undefined
+			: requireNonEmptyString(
+					value.release_notes,
+					"release_notes",
+					manifestPath,
+				);
 
 	if (!SAFE_SLUG.test(id)) {
 		throw invalidManifest(
 			manifestPath,
 			"id must use lowercase letters, numbers, and hyphens",
 		);
+	}
+
+	if (
+		!isSemanticVersion(version) &&
+		!(id === "agents-pack-user" && version === "local")
+	) {
+		throw invalidManifest(manifestPath, "version must use semantic versioning");
+	}
+
+	if (releaseNotesPath !== undefined) {
+		try {
+			validatePortableRelativePath(releaseNotesPath, "release_notes");
+		} catch (cause) {
+			throw invalidManifest(
+				manifestPath,
+				"release_notes must be a safe relative path",
+				cause,
+			);
+		}
 	}
 
 	if (!Array.isArray(value.components) || value.components.length === 0) {
@@ -471,8 +503,39 @@ function validateManifest(value: unknown, manifestPath: string): PackManifest {
 		id,
 		version,
 		title,
+		...(releaseNotesPath === undefined ? {} : { releaseNotesPath }),
 		components,
 	};
+}
+
+function attachReleaseNotes(pack: LoadedPack): LoadedPack {
+	const path = pack.manifest.releaseNotesPath;
+
+	if (path === undefined) {
+		return pack;
+	}
+
+	const file = pack.files.find((candidate) => candidate.path === path);
+
+	if (file === undefined) {
+		throw invalidPack(`Release notes file does not exist: ${path}`);
+	}
+
+	let releaseNotes: string;
+
+	try {
+		releaseNotes = new TextDecoder("utf-8", { fatal: true }).decode(file.bytes);
+	} catch (cause) {
+		throw invalidPack(`Release notes file is not valid UTF-8: ${path}`, {
+			cause,
+		});
+	}
+
+	if (releaseNotes.trim().length === 0) {
+		throw invalidPack(`Release notes file is empty: ${path}`);
+	}
+
+	return { ...pack, releaseNotes: releaseNotes.trimEnd() };
 }
 
 function validateComponent(

@@ -6,6 +6,7 @@ import { runInit } from "../commands/init.ts";
 import { runList } from "../commands/list.ts";
 import { runStatus } from "../commands/status.ts";
 import { runUpdate } from "../commands/update.ts";
+import { runPin, runRollback, runUnpin } from "../commands/version-control.ts";
 import { runCreate, runFork, runSync } from "../commands/user-components.ts";
 import { AgentsPackError } from "../core/errors.ts";
 import { parseArguments } from "./arguments.ts";
@@ -58,6 +59,15 @@ export async function run(argv: string[]): Promise<number> {
 				break;
 			case "update":
 				await runUpdate(parsed.rest);
+				break;
+			case "pin":
+				await runPin(parsed.rest);
+				break;
+			case "unpin":
+				await runUnpin(parsed.rest);
+				break;
+			case "rollback":
+				await runRollback(parsed.rest);
 				break;
 			case "eject":
 				await runEject(parsed.rest);

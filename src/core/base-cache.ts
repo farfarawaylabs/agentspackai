@@ -1,12 +1,13 @@
-import { lstat, mkdir, readFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { atomicWriteFile } from "../filesystem/atomic-write.ts";
 import { AgentsPackError } from "./errors.ts";
 import { hashBytes } from "./hash.ts";
 import { loadPackFromFiles } from "./pack.ts";
-import type { BaseCache, LoadedPack, PackFile } from "./types.ts";
+import type { BaseCache, LoadedPack, PackFile, PackSource } from "./types.ts";
 
 const SHA256 = /^sha256:([a-f0-9]{64})$/;
+const PACK_SOURCE_KINDS = new Set<PackSource["kind"]>(["local", "official"]);
 const encoder = new TextEncoder();
 
 export function getBaseCachePath(userHome: string, packHash: string): string {
@@ -26,6 +27,46 @@ export function getBaseCachePath(userHome: string, packHash: string): string {
 		"packs",
 		`${match[1]}.pack`,
 	);
+}
+
+export async function listCachedPacks(
+	userHome: string,
+	packId: string,
+): Promise<LoadedPack[]> {
+	const directory = join(resolve(userHome), ".agents-pack", "cache", "packs");
+	let entries: string[];
+
+	try {
+		entries = await readdir(directory);
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			"code" in error &&
+			(error as NodeJS.ErrnoException).code === "ENOENT"
+		) {
+			return [];
+		}
+
+		throw error;
+	}
+
+	const packs: LoadedPack[] = [];
+
+	for (const entry of entries.sort()) {
+		const match = entry.match(/^([a-f0-9]{64})\.pack$/);
+
+		if (match === null) {
+			continue;
+		}
+
+		const pack = await loadCachedPack(userHome, `sha256:${match[1]}`);
+
+		if (pack.manifest.id === packId) {
+			packs.push(pack);
+		}
+	}
+
+	return packs;
 }
 
 export async function cachePack(
@@ -55,7 +96,9 @@ export async function cachePack(
 	}
 
 	await mkdir(resolve(cachePath, ".."), { recursive: true, mode: 0o700 });
-	await atomicWriteFile(cachePath, serializeBase(pack), { mode: 0o600 });
+	await atomicWriteFile(cachePath, serializePackArtifact(pack), {
+		mode: 0o600,
+	});
 	await loadCachedPack(userHome, pack.sha256);
 	return cachePath;
 }
@@ -77,21 +120,10 @@ export async function loadCachedPack(
 		);
 	}
 
-	let value: unknown;
-
-	try {
-		value = JSON.parse(source);
-	} catch (cause) {
-		throw invalidBase(`Unable to parse Base cache entry: ${cachePath}`, cause);
-	}
-
-	const base = parseBase(value, cachePath);
-	const files: PackFile[] = base.files.map((file) => ({
-		path: file.path,
-		sha256: file.sha256,
-		bytes: new Uint8Array(Buffer.from(file.contentBase64, "base64")),
-	}));
-	const pack = loadPackFromFiles(files, cachePath);
+	const { archive: base, pack } = loadPackArtifact(
+		encoder.encode(source),
+		cachePath,
+	);
 
 	if (
 		pack.sha256 !== packHash ||
@@ -107,14 +139,17 @@ export async function loadCachedPack(
 	return pack;
 }
 
-function serializeBase(pack: LoadedPack): Uint8Array {
+export function serializePackArtifact(
+	pack: LoadedPack,
+	source: PackSource = pack.source,
+): Uint8Array {
 	const base: BaseCache = {
 		schemaVersion: 1,
 		pack: {
 			id: pack.manifest.id,
 			version: pack.manifest.version,
 			sha256: pack.sha256,
-			source: { kind: "local" },
+			source,
 		},
 		files: pack.files.map((file) => ({
 			path: file.path,
@@ -126,6 +161,39 @@ function serializeBase(pack: LoadedPack): Uint8Array {
 	return encoder.encode(`${JSON.stringify(base, null, 2)}\n`);
 }
 
+export function loadPackArtifact(
+	bytes: Uint8Array,
+	sourceLabel: string,
+): { archive: BaseCache; pack: LoadedPack } {
+	let value: unknown;
+
+	try {
+		value = JSON.parse(new TextDecoder().decode(bytes));
+	} catch (cause) {
+		throw invalidBase(`Unable to parse pack artifact: ${sourceLabel}`, cause);
+	}
+
+	const archive = parseBase(value, sourceLabel);
+	const files: PackFile[] = archive.files.map((file) => ({
+		path: file.path,
+		sha256: file.sha256,
+		bytes: new Uint8Array(Buffer.from(file.contentBase64, "base64")),
+	}));
+	const pack = loadPackFromFiles(files, sourceLabel, archive.pack.source);
+
+	if (
+		archive.pack.sha256 !== pack.sha256 ||
+		archive.pack.id !== pack.manifest.id ||
+		archive.pack.version !== pack.manifest.version
+	) {
+		throw invalidBase(
+			`Pack artifact digest or identity does not match: ${sourceLabel}`,
+		);
+	}
+
+	return { archive, pack };
+}
+
 function parseBase(value: unknown, source: string): BaseCache {
 	if (!isRecord(value) || value.schemaVersion !== 1) {
 		throw invalidBase(`${source}: schemaVersion must be 1`);
@@ -135,8 +203,11 @@ function parseBase(value: unknown, source: string): BaseCache {
 		throw invalidBase(`${source}: pack metadata is malformed`);
 	}
 
-	if (value.pack.source.kind !== "local") {
-		throw invalidBase(`${source}: pack.source.kind must be local`);
+	if (
+		typeof value.pack.source.kind !== "string" ||
+		!PACK_SOURCE_KINDS.has(value.pack.source.kind as PackSource["kind"])
+	) {
+		throw invalidBase(`${source}: pack.source.kind must be local or official`);
 	}
 
 	if (!Array.isArray(value.files) || value.files.length === 0) {
@@ -172,7 +243,7 @@ function parseBase(value: unknown, source: string): BaseCache {
 			id: requireString(value.pack.id, `${source}.pack.id`),
 			version: requireString(value.pack.version, `${source}.pack.version`),
 			sha256: requireHash(value.pack.sha256, `${source}.pack.sha256`),
-			source: { kind: "local" },
+			source: { kind: value.pack.source.kind as PackSource["kind"] },
 		},
 		files,
 	};
