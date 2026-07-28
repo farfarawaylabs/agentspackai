@@ -22,6 +22,7 @@ export type CommandName = (typeof COMMAND_NAMES)[number];
 export interface ParsedArguments {
 	command?: CommandName;
 	help: boolean;
+	version?: boolean;
 	rest: string[];
 	unknownCommand?: string;
 }
@@ -90,6 +91,10 @@ export function parseArguments(argv: string[]): ParsedArguments {
 
 	if (first === undefined || first === "--help" || first === "-h") {
 		return { help: true, rest };
+	}
+
+	if (first === "--version" || first === "-V") {
+		return { help: false, version: true, rest };
 	}
 
 	if (!isCommandName(first)) {

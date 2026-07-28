@@ -5,12 +5,28 @@ instructions, skills, and subagents. You choose the agents and components you
 want once; Agents Pack renders the right files for each provider and keeps
 track of what it owns.
 
-> **Pre-release status:** The CLI and first core content pack are implemented,
-> but there is no public installer or live official pack release yet. Until the
-> first release is published, run the CLI from this repository and use the
-> local core pack as shown below.
-
 **New here? Start with the [Agents Pack user guide](./docs/USER_GUIDE.md).**
+
+## Install
+
+Agents Pack supports macOS and Linux on ARM64 and x64. The installer downloads
+one standalone executable, verifies its SHA-256 checksum, and places it under
+`~/.local/bin` without `sudo`:
+
+```sh
+curl -fsSL https://farfarawaylabs.github.io/agentspackai/install.sh | sh
+```
+
+Then verify the command:
+
+```sh
+agents-pack --version
+```
+
+If `~/.local/bin` is not already on your `PATH`, the installer prints the exact
+line to add. See the [installation guide](./docs/USER_GUIDE.md#install-agents-pack)
+for custom directories, exact-version installation, upgrades, and source
+development.
 
 ## Why Agents Pack?
 
@@ -30,6 +46,7 @@ once, then synchronize them across every selected agent.
 ## What is implemented
 
 - Repository-wide or global installation.
+- Standalone macOS and Linux executables with a checksum-verifying installer.
 - Interactive selection of agents and components.
 - One core instruction set, 24 portable skills, and six native subagents.
 - Provider-specific rendering for Claude Code, Codex, and Cursor.
@@ -58,44 +75,16 @@ Generated provider files are not the editable source. Agents Pack records their
 hashes and refuses to overwrite unexpected edits, missing files, malformed
 managed blocks, or path conflicts.
 
-## Try the current development build
+## Initialize a project
 
-First clone the repository and install its development dependencies:
-
-```sh
-git clone https://github.com/farfarawaylabs/agentspackai.git
-cd agentspackai
-bun install
-```
-
-Then move to the repository you want to initialize. Run the Agents Pack source
-CLI by absolute path so the current working directory remains your target
-repository:
+Move into the project you want to configure, then start the interactive setup:
 
 ```sh
 cd /path/to/your-project
-
-bun /path/to/agentspackai/src/cli/main.ts init \
-  --scope repository \
-  --agents claude,codex,cursor \
-  --components recommended \
-  --pack /path/to/agentspackai/content/packs/core \
-  --dry-run
+agents-pack init
 ```
 
-Review the plan, then apply it:
-
-```sh
-bun /path/to/agentspackai/src/cli/main.ts init \
-  --scope repository \
-  --agents claude,codex,cursor \
-  --components recommended \
-  --pack /path/to/agentspackai/content/packs/core \
-  --yes
-```
-
-After the public CLI and first official pack are released, the equivalent
-command will be:
+Or initialize non-interactively:
 
 ```sh
 agents-pack init \
@@ -105,7 +94,7 @@ agents-pack init \
   --yes
 ```
 
-The missing `--pack` tells Agents Pack to use the official registry.
+Without `--pack`, Agents Pack downloads the current official content pack.
 
 ## Commands at a glance
 
@@ -157,6 +146,7 @@ The project currently uses Bun and TypeScript:
 bun install
 bun run check
 bun run cli --help
+bun run cli:build
 ```
 
 Build the current official pack artifact locally with:
@@ -167,6 +157,8 @@ bun run pack:build
 
 The release process and one-time GitHub setup are documented in
 [Agents Pack content distribution](./docs/agent-portability/agents-pack-distribution.md).
+Standalone CLI releases and the installer are documented in
+[Agents Pack CLI distribution](./docs/agent-portability/agents-pack-cli-distribution.md).
 
 ## Documentation
 
@@ -184,6 +176,7 @@ The release process and one-time GitHub setup are documented in
 - [MVP development plan](./docs/agent-portability/agents-pack-mvp-development-plan.md)
 - [Component selection and state design](./docs/agent-portability/agents-pack-component-selection-design.md)
 - [Official pack distribution and publishing](./docs/agent-portability/agents-pack-distribution.md)
+- [CLI distribution and installer](./docs/agent-portability/agents-pack-cli-distribution.md)
 
 ### Validation reports
 

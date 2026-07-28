@@ -1,4 +1,5 @@
 import type { CommandName } from "./arguments.ts";
+import { CLI_VERSION } from "../version.ts";
 
 const COMMAND_SUMMARIES: Record<CommandName, string> = {
 	init: "Initialize Agents Pack in global or repository scope.",
@@ -17,10 +18,11 @@ const COMMAND_SUMMARIES: Record<CommandName, string> = {
 };
 
 export function generalHelp(): string {
-	return `Agents Pack
+	return `Agents Pack ${CLI_VERSION}
 
 Usage:
   agents-pack <command> [options]
+  agents-pack --version
 
 Commands:
   init      ${COMMAND_SUMMARIES.init}

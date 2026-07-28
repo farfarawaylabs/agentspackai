@@ -29,6 +29,19 @@ describe("parseArguments", () => {
 		});
 	});
 
+	test("recognizes the global version flag", () => {
+		expect(parseArguments(["--version"])).toEqual({
+			help: false,
+			version: true,
+			rest: [],
+		});
+		expect(parseArguments(["-V"])).toEqual({
+			help: false,
+			version: true,
+			rest: [],
+		});
+	});
+
 	test("preserves command arguments for later phases", () => {
 		expect(
 			parseArguments([
