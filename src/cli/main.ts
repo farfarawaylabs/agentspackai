@@ -6,6 +6,7 @@ import { runInit } from "../commands/init.ts";
 import { runList } from "../commands/list.ts";
 import { runStatus } from "../commands/status.ts";
 import { runUpdate } from "../commands/update.ts";
+import { runCreate, runFork, runSync } from "../commands/user-components.ts";
 import { AgentsPackError } from "../core/errors.ts";
 import { parseArguments } from "./arguments.ts";
 import { commandHelp, generalHelp } from "./output.ts";
@@ -45,6 +46,15 @@ export async function run(argv: string[]): Promise<number> {
 				break;
 			case "remove":
 				await runRemove(parsed.rest);
+				break;
+			case "create":
+				await runCreate(parsed.rest);
+				break;
+			case "fork":
+				await runFork(parsed.rest);
+				break;
+			case "sync":
+				await runSync(parsed.rest);
 				break;
 			case "update":
 				await runUpdate(parsed.rest);

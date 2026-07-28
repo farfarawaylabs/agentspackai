@@ -17,6 +17,9 @@ the same logical component across content revisions.
 
 ```text
 packs/core/skills/
+├── agents-pack/
+│   ├── ap-create-new-skill/
+│   └── ap-manage-agents-pack/
 ├── engineering/
 │   ├── ai/
 │   │   └── ap-develop-with-vercel-ai-sdk/
@@ -94,6 +97,9 @@ expresses only portable intent such as read-only access and reasoning effort.
 The current core pack contains:
 
 - durable cross-agent project instructions;
+- required `ap-manage-agents-pack` and `ap-create-new-skill` workflows for
+  safely managing Agents Pack and creating one canonical portable skill from
+  inside a coding-agent conversation;
 - `ap-frontend-design`, including the shared `DESIGN.md` contract;
 - `ap-frontend-review`, including an evidence-based visual QA checklist;
 - `ap-design-data-models`, including conceptual, relational, document,
@@ -182,7 +188,8 @@ Claude Code exposes the portable action skills as slash commands, including
 `/ap-create-prd`, `/ap-review-plan`, `/ap-debug`, `/ap-test-web-app`,
 `/ap-security-audit`, `/ap-audit-seo`, `/ap-audit-geo`,
 `/ap-compress-todos`, `/ap-refresh-repo-docs`, and
-`/ap-run-market-research`. Agents Pack does not generate duplicate legacy
+`/ap-run-market-research`, `/ap-manage-agents-pack`, and
+`/ap-create-new-skill`. Agents Pack does not generate duplicate legacy
 `.claude/commands/` files.
 
 Test-only historical packs remain under `fixtures/`.

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
 	loadLockFile,
+	loadLockFileIfExists,
 	loadScopeConfig,
 	parseLockFile,
 	parseScopeConfig,
@@ -104,6 +105,22 @@ describe("lockfile", () => {
 				id: "agents-pack-smoke",
 				version: "0.1.0",
 			},
+		});
+	});
+
+	test("loads an optional user lock only when it exists", async () => {
+		const directory = await createTemporaryDirectory();
+		const path = join(directory, "user-lock.json");
+
+		expect(await loadLockFileIfExists(path)).toBeUndefined();
+		await writeFile(path, JSON.stringify(validLock()));
+		expect(await loadLockFileIfExists(path)).toMatchObject({
+			pack: { id: "agents-pack-smoke" },
+		});
+		await rm(path);
+		await mkdir(path);
+		expect(loadLockFileIfExists(path)).rejects.toMatchObject({
+			code: "MALFORMED_STATE",
 		});
 	});
 

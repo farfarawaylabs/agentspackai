@@ -1,7 +1,7 @@
 # Agents Pack system design
 
 **Status:** Living design draft  
-**Last updated:** 2026-07-23  
+**Last updated:** 2026-07-27
 **Purpose:** Explain, in straightforward language, how Agents Pack should install and maintain shared guidance, skills, subagents, and commands for Claude Code, Codex, and Cursor.
 
 This document records our current product decisions while we continue designing the system. It distinguishes between:
@@ -344,7 +344,13 @@ Custom components live in an explicitly user-owned area:
 ```text
 Global:      ~/.agents-pack/user/skills/<name>/
 Repository:  .agents-pack/user/skills/<name>/
+Subagents:   <scope-root>/.agents-pack/user/subagents/<name>/
 ```
+
+The implemented local user pack stores its catalog in
+`.agents-pack/user/pack.toml` and generated-output state in the separate
+`.agents-pack/user-lock.json`. See
+[Agents Pack user-owned components](./agents-pack-user-components.md).
 
 If a user wants to change an official skill, the preferred operation is:
 
@@ -438,7 +444,12 @@ Until that behavior is verified, the CLI must report potential duplicates rather
 
 ## 7. Adding capabilities after installation
 
-Agents Pack should install a small maintenance skill that teaches any supported agent how to use the CLI.
+Agents Pack installs two required maintenance skills:
+
+- `ap-manage-agents-pack` teaches any supported agent to choose and safely run
+  the lifecycle CLI; and
+- `ap-create-new-skill` creates or updates one user-owned portable skill from
+  inside a coding-agent conversation.
 
 There are two different operations and the CLI should name them differently:
 
@@ -474,12 +485,12 @@ the active agent should:
 5. report any target-specific limitations; and
 6. leave the canonical definition as the editable source of truth.
 
-Equivalent CLI operations should be available directly:
+Equivalent CLI operations are available directly:
 
 ```text
 agents-pack create skill deploy-app
 agents-pack create subagent researcher
-agents-pack create command review-pr
+agents-pack sync
 ```
 
 The maintenance skill must use the CLI. It should not teach agents to maintain three independent copies by hand.

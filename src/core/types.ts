@@ -113,6 +113,9 @@ export interface ScopePaths {
 	stateDirectory: string;
 	configPath: string;
 	lockPath: string;
+	userDirectory: string;
+	userManifestPath: string;
+	userLockPath: string;
 	operationLockPath: string;
 	transactionsDirectory: string;
 }
@@ -181,7 +184,15 @@ export type ChangeOperation =
 	| { kind: "remove-empty-directory"; path: string };
 
 export interface ChangePlan {
-	command: "init" | "update" | "install" | "remove" | "eject";
+	command:
+		| "init"
+		| "update"
+		| "install"
+		| "remove"
+		| "create"
+		| "fork"
+		| "sync"
+		| "eject";
 	scope: Scope;
 	operations: ChangeOperation[];
 	warnings: string[];

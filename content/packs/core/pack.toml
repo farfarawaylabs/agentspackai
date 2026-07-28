@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.24.0"
+version = "0.25.0"
 title = "Agents Pack Core"
 
 [[components]]
@@ -11,6 +11,26 @@ summary = "Project orientation, independent judgment, investigation, quality, an
 category = "core"
 selection = "required"
 source = "instructions/core.md"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-manage-agents-pack"
+kind = "skill"
+title = "Manage Agents Pack"
+summary = "Manage official and user-owned cross-agent components through the safe lifecycle CLI."
+category = "agents-pack/management"
+selection = "required"
+source = "skills/agents-pack/ap-manage-agents-pack"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-create-new-skill"
+kind = "skill"
+title = "Create a new cross-agent skill"
+summary = "Create or update one canonical user-owned skill and synchronize it across selected agents."
+category = "agents-pack/management"
+selection = "required"
+source = "skills/agents-pack/ap-create-new-skill"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]

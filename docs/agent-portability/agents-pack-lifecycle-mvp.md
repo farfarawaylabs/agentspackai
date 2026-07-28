@@ -10,8 +10,10 @@
 > **Historical scope:** This document specifies the deliberately stub-only
 > lifecycle prototype completed on 2026-07-25. The repository now also contains
 > the real `agents-pack-core` content pack and native subagent rendering. See
-> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md)
-> for the current follow-up milestone.
+> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md),
+> [component-selection conformance](./agents-pack-component-selection-conformance-2026-07-27.md),
+> and [user-owned components](./agents-pack-user-components.md) for the
+> completed follow-up milestones.
 
 This is not the first public release. It is an internal lifecycle prototype.
 

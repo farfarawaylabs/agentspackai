@@ -6,6 +6,7 @@ import { AgentsPackError } from "../core/errors.ts";
 import { detectInstalledScope } from "../core/inspect.ts";
 import { isCompatible, sortComponentsForDisplay } from "../core/selection.ts";
 import type { PathContext } from "../core/types.ts";
+import { loadUserPack } from "../core/user-components.ts";
 
 export interface ListCommandDependencies {
 	cwd?: string;
@@ -32,6 +33,7 @@ export async function runList(
 	}
 
 	const pack = await loadCachedPack(context.userHome, state.lock.pack.sha256);
+	const userPack = await loadUserPack(state.paths);
 	const selected = new Set(state.config.components);
 	const components = sortComponentsForDisplay(
 		pack.manifest.components.filter((component) => {
@@ -74,7 +76,29 @@ export async function runList(
 		);
 	}
 
-	if (components.length === 0) {
+	const userComponents =
+		options.status === "available"
+			? []
+			: sortComponentsForDisplay(
+					(userPack?.manifest.components ?? []).filter(
+						(component) =>
+							options.kind === undefined || component.kind === options.kind,
+					),
+				);
+
+	for (const component of userComponents) {
+		if (component.category !== category) {
+			category = component.category;
+			lines.push("", formatCategory(category));
+		}
+
+		lines.push(
+			`  ${component.id}  user-owned, installed, ${component.kind}`,
+			`    ${component.summary}`,
+		);
+	}
+
+	if (components.length === 0 && userComponents.length === 0) {
 		lines.push("", "No components match these filters.");
 	}
 

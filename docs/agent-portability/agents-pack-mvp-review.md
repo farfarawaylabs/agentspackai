@@ -6,11 +6,12 @@
 **Public-release decision:** No-go
 
 > **Subsequent status — 2026-07-27:** The Git baseline, real first-party core
-> content, pack schema v2, native subagent rendering, and representative
-> real-agent conformance are now complete. Component selection, user-owned
-> component state, drift-resolution choices, remote immutable resolution, and
-> release packaging remain future work. See
-> [core content conformance](./agents-pack-core-content-conformance-2026-07-27.md).
+> content, final schema version 1, native subagent rendering, component
+> selection, separate user-owned component state, and representative real-agent
+> conformance are now complete. Drift-resolution choices beyond forking,
+> remote immutable resolution, and release packaging remain future work. See
+> [component-selection conformance](./agents-pack-component-selection-conformance-2026-07-27.md)
+> and [user-owned components](./agents-pack-user-components.md).
 
 ## 1. Outcome
 

@@ -116,7 +116,7 @@ describe("init CLI", () => {
 		const first = await runCli(environment, args);
 
 		expect(first.exitCode).toBe(0);
-		expect(first.stdout).toContain("Initialized agents-pack-core@0.24.0");
+		expect(first.stdout).toContain("Initialized agents-pack-core@0.25.0");
 		expect(
 			await readFile(
 				join(

@@ -721,6 +721,9 @@ function parseJournal(
 			record.command !== "update" &&
 			record.command !== "install" &&
 			record.command !== "remove" &&
+			record.command !== "create" &&
+			record.command !== "fork" &&
+			record.command !== "sync" &&
 			record.command !== "eject") ||
 		(record.state !== "prepared" &&
 			record.state !== "applying" &&
@@ -1013,6 +1016,7 @@ function assertManagedTransactionPath(
 	const exactPaths = new Set([
 		stateConfig,
 		".agents-pack/lock.json",
+		".agents-pack/user-lock.json",
 		scope === "global" ? ".codex/AGENTS.md" : "AGENTS.md",
 	]);
 	const prefixes = [
@@ -1025,9 +1029,13 @@ function assertManagedTransactionPath(
 		".cursor/rules/agents-pack/",
 		".cursor/skills/",
 	];
+	const userSource =
+		path.startsWith(".agents-pack/user/") &&
+		(kind === "create-file" || kind === "replace-file" || kind === "snapshot");
 
 	if (
 		!exactPaths.has(path) &&
+		!userSource &&
 		!prefixes.some((prefix) => path.startsWith(prefix))
 	) {
 		throw new AgentsPackError(
@@ -1041,7 +1049,8 @@ function isStateOperation(operation: ChangeOperation): boolean {
 	return (
 		operation.path === ".agents-pack/pack.toml" ||
 		operation.path === ".agents-pack/config.toml" ||
-		operation.path === ".agents-pack/lock.json"
+		operation.path === ".agents-pack/lock.json" ||
+		operation.path === ".agents-pack/user-lock.json"
 	);
 }
 

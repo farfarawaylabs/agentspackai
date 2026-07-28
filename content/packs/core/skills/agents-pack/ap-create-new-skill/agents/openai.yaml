@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create New Skill"
+  short_description: "Create one portable cross-agent skill"
+  default_prompt: "Use $ap-create-new-skill to create a reusable skill for this project."

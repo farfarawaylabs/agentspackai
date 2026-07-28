@@ -118,6 +118,9 @@ describe("resolveScopePaths", () => {
 			stateDirectory: join(repository, ".agents-pack"),
 			configPath: join(repository, ".agents-pack/pack.toml"),
 			lockPath: join(repository, ".agents-pack/lock.json"),
+			userDirectory: join(repository, ".agents-pack/user"),
+			userManifestPath: join(repository, ".agents-pack/user/pack.toml"),
+			userLockPath: join(repository, ".agents-pack/user-lock.json"),
 			operationLockPath: join(repository, ".agents-pack.operation.lock"),
 			transactionsDirectory: join(repository, ".agents-pack/transactions"),
 		});
