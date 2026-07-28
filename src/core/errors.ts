@@ -1,4 +1,5 @@
 export type AgentsPackErrorCode =
+	| "CANCELLED"
 	| "CONCURRENT_OPERATION"
 	| "DRIFT"
 	| "EXECUTION_FAILED"

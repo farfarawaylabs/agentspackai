@@ -522,6 +522,10 @@ export function assertNoCommandArguments(
 }
 
 function parseAgents(value: string): ("claude" | "codex" | "cursor")[] {
+	if (value === "all") {
+		return ["claude", "codex", "cursor"];
+	}
+
 	const values = value.split(",");
 
 	if (values.some((agent) => agent.length === 0)) {

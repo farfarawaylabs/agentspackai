@@ -84,12 +84,17 @@ cd /path/to/your-project
 agents-pack init
 ```
 
+Use the arrow keys to move through each menu. Press Space to toggle agents or
+components, and Enter to confirm the visible selection. Repository scope,
+all compatible agents, and the recommended component set are selected by
+default.
+
 Or initialize non-interactively:
 
 ```sh
 agents-pack init \
   --scope repository \
-  --agents claude,codex,cursor \
+  --agents all \
   --components recommended \
   --yes
 ```
