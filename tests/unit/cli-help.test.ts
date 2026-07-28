@@ -14,6 +14,22 @@ describe("CLI help", () => {
 		expect(result.stderr).toBe("");
 	});
 
+	test("shows the CLI version", async () => {
+		const result = await runCli(["--version"]);
+
+		expect(result.exitCode).toBe(0);
+		expect(result.stdout).toBe("agents-pack 0.1.0\n");
+		expect(result.stderr).toBe("");
+	});
+
+	test("rejects extra arguments after the CLI version flag", async () => {
+		const result = await runCli(["--version", "extra"]);
+
+		expect(result.exitCode).toBe(2);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toContain("does not accept additional arguments");
+	});
+
 	for (const command of COMMAND_NAMES) {
 		test(`shows help for ${command}`, async () => {
 			const result = await runCli([command, "--help"]);

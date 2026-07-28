@@ -7,17 +7,11 @@ This guide starts with the simplest setup and then covers every current CLI
 workflow. You do not need to understand the internal file formats to use
 Agents Pack.
 
-> **Pre-release note:** The CLI and core pack are implemented, but the public
-> installer and first official pack release are not live yet. Commands in this
-> guide use `agents-pack` for readability. See
-> [Run the current development build](#run-the-current-development-build) for
-> the command prefix and local pack arguments needed before publication.
-
 ## Contents
 
 - [The basic idea](#the-basic-idea)
+- [Install Agents Pack](#install-agents-pack)
 - [Choose repository or global scope](#choose-repository-or-global-scope)
-- [Run the current development build](#run-the-current-development-build)
 - [Initialize Agents Pack](#initialize-agents-pack)
 - [Understand component selection](#understand-component-selection)
 - [See what Agents Pack installed](#see-what-agents-pack-installed)
@@ -51,6 +45,111 @@ You choose:
 Agents Pack then renders provider-native files for Claude Code, Codex, and
 Cursor. It records exactly what it wrote so future updates can be previewed,
 validated, applied, or rolled back safely.
+
+## Install Agents Pack
+
+The public installer supports:
+
+- macOS 13 or newer on Apple Silicon or Intel;
+- Linux with glibc on ARM64 or x64.
+
+It installs a standalone executable, so Bun, Node.js, and npm are not required.
+
+Run:
+
+```sh
+curl -fsSL https://farfarawaylabs.github.io/agentspackai/install.sh | sh
+```
+
+The installer:
+
+1. reads the explicit Agents Pack CLI registry;
+2. selects the correct macOS or Linux release for your machine;
+3. downloads the release archive and checksum file;
+4. verifies the archive’s SHA-256 checksum;
+5. checks the archive layout and starts the downloaded executable; and
+6. installs it atomically at `~/.local/bin/agents-pack`.
+
+It does not use `sudo`.
+
+Verify the installation:
+
+```sh
+agents-pack --version
+```
+
+### Add the command to your PATH
+
+If `~/.local/bin` is not on your `PATH`, the installer prints the line to add:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add that line to your shell configuration, such as `~/.zshrc`, then open a new
+terminal or reload the file.
+
+### Install somewhere else
+
+Provide an absolute destination:
+
+```sh
+AGENTS_PACK_INSTALL_DIR=/absolute/path/to/bin \
+  sh -c "$(curl -fsSL https://farfarawaylabs.github.io/agentspackai/install.sh)"
+```
+
+### Install an exact CLI version
+
+The normal installer uses the registry’s current version. To install or
+reinstall a specific published version:
+
+```sh
+AGENTS_PACK_VERSION=0.1.0 \
+  sh -c "$(curl -fsSL https://farfarawaylabs.github.io/agentspackai/install.sh)"
+```
+
+### Upgrade the CLI
+
+Run the same installer again. It safely replaces the existing regular file
+after verifying the new download:
+
+```sh
+curl -fsSL https://farfarawaylabs.github.io/agentspackai/install.sh | sh
+```
+
+CLI versions and content-pack versions are independent. Reinstalling the CLI
+does not change the instructions, skills, or subagents in an initialized
+scope. Use `agents-pack update` for content updates.
+
+### Run from source for development
+
+Clone the repository and install its development dependencies:
+
+```sh
+git clone https://github.com/farfarawaylabs/agentspackai.git
+cd agentspackai
+bun install
+```
+
+From another project, keep that project as the working directory and invoke
+the source CLI by absolute path:
+
+```sh
+cd /path/to/your-project
+bun /absolute/path/to/agentspackai/src/cli/main.ts init
+```
+
+Use a local content pack only when you intentionally want to test unpublished
+content:
+
+```sh
+bun /absolute/path/to/agentspackai/src/cli/main.ts init \
+  --scope repository \
+  --agents claude,codex,cursor \
+  --components recommended \
+  --pack /absolute/path/to/agentspackai/content/packs/core \
+  --dry-run
+```
 
 ## Choose repository or global scope
 
@@ -104,56 +203,6 @@ reports a scope conflict instead of guessing which one should win.
 
 Start with repository scope if you are unsure. It is easier to inspect, commit,
 and remove without affecting unrelated projects.
-
-## Run the current development build
-
-There is no public installer yet. To try the current implementation, clone the
-repository and install its dependencies:
-
-```sh
-git clone https://github.com/farfarawaylabs/agentspackai.git
-cd agentspackai
-bun install
-```
-
-In the examples below, replace:
-
-```text
-agents-pack
-```
-
-with:
-
-```text
-bun /absolute/path/to/agentspackai/src/cli/main.ts
-```
-
-Run that command while your shell is inside the project you want to manage.
-This matters because Agents Pack uses the current working directory to find the
-repository.
-
-Until the first official pack release is live, add this local pack override to
-`init` and `update` commands:
-
-```text
---pack /absolute/path/to/agentspackai/content/packs/core
-```
-
-For example:
-
-```sh
-cd /path/to/your-project
-
-bun /absolute/path/to/agentspackai/src/cli/main.ts init \
-  --scope repository \
-  --agents claude,codex,cursor \
-  --components recommended \
-  --pack /absolute/path/to/agentspackai/content/packs/core \
-  --dry-run
-```
-
-Once the public CLI and official pack exist, you will be able to use the
-shorter commands shown throughout the rest of this guide.
 
 ## Initialize Agents Pack
 
@@ -220,7 +269,7 @@ cache.
 ### Use an explicit local pack
 
 `init` normally uses the official registry. For development, private content,
-air-gapped work, or the current pre-release build, pass a directory:
+or air-gapped work, pass a directory:
 
 ```sh
 agents-pack init \
@@ -820,9 +869,9 @@ agents-pack update --pack /path/to/new-local-pack --dry-run
 ### `REMOTE_ERROR`
 
 Agents Pack could not load the official registry or release artifact. Check
-your network connection and try again. During the current pre-release period,
-the official registry is not live; use the local core pack override documented
-above.
+your network connection and try again. If GitHub or GitHub Pages is
+temporarily unavailable, wait and retry. Use `--pack` only when you
+intentionally have a local candidate.
 
 ### `PINNED`
 
@@ -907,8 +956,20 @@ checks and downloads require network access.
 
 ### Does `update` update the Agents Pack CLI?
 
-No. It updates the content pack only. CLI self-update behavior has not been
-implemented yet.
+No. It updates the content pack only. Rerun the public installer to upgrade or
+reinstall the CLI.
+
+### How do I uninstall the CLI?
+
+Remove the standalone executable:
+
+```sh
+rm "$HOME/.local/bin/agents-pack"
+```
+
+This does not eject managed project or global content. Run
+`agents-pack eject --dry-run` and `agents-pack eject --yes` before removing the
+CLI if you also want to remove an initialized scope.
 
 ### Should repository-generated files be committed?
 

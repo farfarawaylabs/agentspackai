@@ -9,6 +9,7 @@ import { runUpdate } from "../commands/update.ts";
 import { runPin, runRollback, runUnpin } from "../commands/version-control.ts";
 import { runCreate, runFork, runSync } from "../commands/user-components.ts";
 import { AgentsPackError } from "../core/errors.ts";
+import { CLI_VERSION } from "../version.ts";
 import { parseArguments } from "./arguments.ts";
 import { commandHelp, generalHelp } from "./output.ts";
 
@@ -19,6 +20,16 @@ export async function run(argv: string[]): Promise<number> {
 		console.error(`Unknown command: ${parsed.unknownCommand}\n`);
 		console.error(generalHelp());
 		return 2;
+	}
+
+	if (parsed.version) {
+		if (parsed.rest.length > 0) {
+			console.error("--version does not accept additional arguments.");
+			return 2;
+		}
+
+		console.log(`agents-pack ${CLI_VERSION}`);
+		return 0;
 	}
 
 	if (parsed.command === undefined) {

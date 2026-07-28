@@ -42,6 +42,10 @@ https://farfarawaylabs.github.io/agentspackai/registry/v1/index.json
 The CLI does not scan Git tags or guess which GitHub Release is the content
 release. It fetches this explicit registry.
 
+The Pages site also publishes the separate CLI registry and public installer.
+Both release workflows deploy the complete `registry/` tree so publishing one
+release type cannot remove the other.
+
 ## 3. User flow
 
 Without `--pack`, initialization resolves `agents-pack-core` from the official
@@ -141,7 +145,7 @@ The tag-triggered workflow:
 4. builds the official `.pack` artifact;
 5. creates a draft GitHub Release and attaches the artifact;
 6. publishes the release; and only then
-7. deploys the tagged registry through GitHub Pages.
+7. deploys the tagged registries and installer through GitHub Pages.
 
 Advancing the registry last prevents users from seeing a version whose asset
 is not available. Release and registry publishing are separate jobs, so a

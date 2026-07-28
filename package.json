@@ -1,6 +1,6 @@
 {
 	"name": "agents-pack",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"private": true,
 	"type": "module",
 	"bin": {
@@ -9,6 +9,7 @@
 	"scripts": {
 		"check": "bun run format:check && bun run lint && bun run typecheck && bun test",
 		"cli": "bun src/cli/main.ts",
+		"cli:build": "bun scripts/build-cli.ts",
 		"format": "biome format --write .",
 		"format:check": "biome format .",
 		"lint": "biome lint .",
