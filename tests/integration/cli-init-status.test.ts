@@ -116,7 +116,7 @@ describe("init CLI", () => {
 		const first = await runCli(environment, args);
 
 		expect(first.exitCode).toBe(0);
-		expect(first.stdout).toContain("Initialized agents-pack-core@0.26.0");
+		expect(first.stdout).toContain("Initialized agents-pack-core@0.26.1");
 		expect(
 			await readFile(
 				join(
@@ -125,7 +125,7 @@ describe("init CLI", () => {
 				),
 				"utf8",
 			),
-		).toContain("name: ap-start-dev-session");
+		).toContain("default to a dedicated");
 		expect(
 			await readFile(
 				join(
