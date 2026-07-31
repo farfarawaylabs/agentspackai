@@ -132,8 +132,9 @@ The current core pack contains:
   canonical placement, link repair, and evidence-based verification;
 - `ap-start-dev-session`, `ap-clear-dev-context`, and
   `ap-continue-dev-session`, which
-  orient new work, produce a verified context handoff, and safely reconcile that
-  handoff with repository state and available memory;
+  orient new work in an isolated Git worktree and branch, produce a verified
+  context handoff, and safely reconcile that handoff with repository state and
+  available memory;
 - `ap-review-plan`, which grounds a plan in the repository, runs an independent
   parallel review when subagents are available, challenges architecture,
   sequencing, risk, and verification, and returns a corrected plan;

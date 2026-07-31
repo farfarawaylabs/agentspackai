@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.26.0"
+version = "0.26.1"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -188,7 +188,7 @@ targets = ["claude", "codex", "cursor"]
 id = "ap-start-dev-session"
 kind = "skill"
 title = "Start a development session"
-summary = "Orient a new session from the project's requirements, technical choices, and current work."
+summary = "Orient a new session and isolate mutable local work in a dedicated Git worktree."
 category = "engineering/workflows"
 selection = "recommended"
 source = "skills/engineering/workflows/session/ap-start-dev-session"
