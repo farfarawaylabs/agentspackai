@@ -128,8 +128,9 @@ The current core pack contains:
   preservation of active work and decisions, milestone summarization,
   uncertainty handling, and loss-aware compaction;
 - `ap-refresh-repo-docs`, including documentation inventory, authority mapping,
-  code and configuration reconciliation, preservation of future intent,
-  canonical placement, link repair, and evidence-based verification;
+  change-driven maintenance, code and configuration reconciliation,
+  preservation of future intent, feature-local decision rationale, a fallback
+  documentation structure, link repair, and evidence-based verification;
 - `ap-start-dev-session`, `ap-clear-dev-context`, and
   `ap-continue-dev-session`, which
   orient new work in an isolated Git worktree and branch, produce a verified
@@ -162,8 +163,8 @@ The current core pack contains:
   sizing, counterevidence, strategic implications, and a dated repository
   report;
 - the read-only `ap-code-reviewer` subagent, which reviews the actual change for
-  high-confidence correctness, security, regression, architecture, and test
-  risks without modifying the worktree;
+  high-confidence correctness, security, regression, architecture,
+  documentation, and test risks without modifying the worktree;
 - the write-capable `ap-backend-python-developer` subagent, which implements
   server-side Python using repository-aware architecture, thin transport
   boundaries, simple API/BL/DL tiers, focused files, modern but

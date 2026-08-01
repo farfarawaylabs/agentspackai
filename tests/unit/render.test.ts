@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.26.1");
+		expect(corePack.manifest.version).toBe("0.26.2");
 		expect(rendered.outputs.map((output) => output.path)).toEqual([
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
@@ -126,6 +126,7 @@ describe("renderPack", () => {
 			".claude/skills/ap-manage-agents-pack/SKILL.md",
 			".claude/skills/ap-manage-agents-pack/agents/openai.yaml",
 			".claude/skills/ap-refresh-repo-docs/SKILL.md",
+			".claude/skills/ap-refresh-repo-docs/references/feature-and-subsystem-documentation.md",
 			".claude/skills/ap-review-plan/SKILL.md",
 			".claude/skills/ap-run-market-research/SKILL.md",
 			".claude/skills/ap-run-market-research/references/report-structure.md",
@@ -153,6 +154,18 @@ describe("renderPack", () => {
 				".claude/rules/agents-pack/ap-core-instructions.md",
 			),
 		).toContain("concise concrete example or familiar analogy");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-core-instructions.md",
+			),
+		).toContain("Treat documentation as part of completing a material change");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-core-instructions.md",
+			),
+		).toContain("separate decision log");
 	});
 
 	test("always renders the Agents Pack management skills", () => {
