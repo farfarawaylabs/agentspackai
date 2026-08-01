@@ -1,6 +1,6 @@
 ---
 name: ap-refresh-repo-docs
-description: Audit and update repository documentation so it agrees with the implemented code, configuration, commands, architecture, and current product intent. Use when the user asks to refresh, reconcile, reorganize, or verify docs; fix documentation drift; update a README, PRD, technical requirements, API guide, architecture document, or onboarding guide; validate examples and commands; repair links after moves; or establish a concise documentation source of truth. Use ap-compress-todos instead when the primary task is reducing or restructuring a TODO file.
+description: Maintain, audit, and update repository documentation so it agrees with the implemented code, configuration, commands, architecture, and current product intent. Use when a feature or subsystem change needs documentation; the user asks to refresh, reconcile, reorganize, or verify docs; documentation has drifted; a README, PRD, technical requirements, API guide, architecture document, or onboarding guide needs work; examples, commands, or links need validation; or the repository needs a concise documentation source of truth. Use ap-compress-todos instead when the primary task is reducing or restructuring a TODO file.
 ---
 
 # Refresh Repository Documentation
@@ -13,9 +13,11 @@ obsolete material for its own sake.
 1. Read the repository instructions and relevant `PRD.md`,
    `TECHNICAL_REQUIREMENTS.md`, `TODOs.md`, `DESIGN.md`, README, documentation
    index, and contributor guidance when they exist.
-2. Determine whether the request targets particular documents or requires a
-   repository-wide audit. Do not expand a focused correction into an
-   unsolicited documentation reorganization.
+2. Determine whether this is change-driven maintenance for a feature or
+   subsystem, a focused correction, or a repository-wide audit. For
+   change-driven maintenance, begin with the task and current diff and limit the
+   documentation scope to the behavior and decisions they affect. Do not expand
+   focused work into an unsolicited documentation reorganization.
 3. For a multi-document refresh, write a short plan covering discovery,
    reconciliation, edits, and verification. A small isolated correction does
    not need a ceremonial plan.
@@ -36,6 +38,25 @@ Code is not automatically authoritative for requirements, public contracts, or
 deliberate future plans. When authorities conflict and intent is unclear, do
 not silently choose a winner. Preserve the distinction and report the decision
 needed.
+
+## Maintain documentation with the change
+
+Treat documentation as part of completing a material implementation change. A
+new feature is material by default. Update the canonical documentation in the
+same change when work affects:
+
+- user-visible behavior or supported workflows;
+- public or internal contracts, schemas, configuration, or compatibility;
+- architecture, subsystem boundaries, dependencies, or data flow;
+- data models, migrations, or persistence behavior;
+- deployment, operation, observability, recovery, or failure handling;
+- security, privacy, authorization, or trust assumptions; or
+- non-obvious constraints that future developers and agents must preserve.
+
+An internal refactor, test-only change, or local cleanup may not need a
+documentation edit when it changes none of those surfaces. Verify that
+conclusion rather than creating meaningless churn. Before finishing, report the
+documents updated or the concrete reason no documentation change was needed.
 
 ## Inventory the documentation
 
@@ -88,11 +109,18 @@ behavior.
 
 - Correct false or stale claims and fill gaps that materially affect use,
   development, integration, or operations.
+- Follow the repository's established documentation structure and naming. Do
+  not reorganize it merely to match the Agents Pack fallback.
 - Keep root orientation docs concise. Move detailed explanations to the
   repository's established documentation area and link to them when doing so
   improves navigation.
 - Prefer one canonical explanation. Replace useful duplicates with a short
   pointer; do not leave competing copies.
+- Keep important decisions, rationale, alternatives, tradeoffs, and
+  reconsideration conditions in the feature or subsystem document that owns
+  them. Put a cross-cutting decision in the architecture document that owns the
+  shared concern. Do not create a separate decision log unless the repository
+  already uses that convention.
 - Preserve important rationale and constraints. Remove changelog-like history
   from frequently loaded context unless it still changes decisions.
 - Use consistent terminology and status language across the documentation set.
@@ -106,6 +134,11 @@ behavior.
 Do not create a new document for every module. Add documentation when it has a
 clear audience and durable value; otherwise improve the nearest canonical
 document.
+
+When a repository has no clear documentation structure, read
+[references/feature-and-subsystem-documentation.md](references/feature-and-subsystem-documentation.md)
+and use its small fallback structure and document template. Do not introduce
+the fallback when an established structure already exists.
 
 ## Maintain PRDs and recognize TODO drift
 
@@ -144,4 +177,5 @@ Summarize:
 - the important implementation or product facts reconciled;
 - verification performed and its result;
 - ambiguity, authority conflicts, and assumptions; and
-- remaining documentation gaps or decisions requiring a maintainer.
+- remaining documentation gaps or decisions requiring a maintainer; and
+- when no documentation changed, the verified reason it was unnecessary.

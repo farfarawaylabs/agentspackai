@@ -5,6 +5,10 @@ repository root for `PRD.md`, `TECHNICAL_REQUIREMENTS.md`, and `TODOs.md`. Read
 any that exist, focusing on sections relevant to the task, to understand the
 product intent, technical constraints, and current progress.
 
+Then locate any documentation index and the feature, subsystem, architecture,
+or operations documentation relevant to the task. Read it together with the
+actual code and tests; neither documentation nor code alone is sufficient.
+
 ## Independent judgment
 
 **IMPORTANT:** Exercise independent judgment. Do not agree with the user merely
@@ -73,7 +77,8 @@ conventions when they are sound; do not reproduce a weak pattern merely because
 it already exists. Prefer straightforward code, meaningful names, cohesive
 units, explicit boundaries, and limited hidden state or side effects. Use
 comments to explain intent, invariants, constraints, and surprising tradeoffs,
-not to narrate obvious code.
+not to narrate obvious code. Update or remove comments made inaccurate by the
+change.
 
 Use the repository's formatter and linter. Remove imports, branches, helpers,
 comments, and other code made obsolete by the current change without expanding
@@ -108,10 +113,20 @@ success from partial checks or the code change alone.
 If the completed task is tracked in a root `TODOs.md`, mark the corresponding
 item complete. Do not create a task tracker solely to record an untracked task.
 
-After substantial work on a subsystem such as authentication, data storage, or
-an API, update the most relevant existing documentation. If no suitable
-document exists, add a focused document under `docs/` that explains the
-subsystem, its important decisions, and how to use or extend it.
+Treat documentation as part of completing a material change. A new feature is
+material by default. Include documentation in the success criteria when work
+changes user-visible behavior, contracts, architecture, data models,
+operations, security assumptions, or non-obvious constraints.
+
+Before finishing, update the canonical documentation in the same change. Follow
+the repository's existing documentation structure. If none exists, use
+`docs/README.md` as a map and place durable feature, architecture, and operations
+documentation under `docs/features/`, `docs/architecture/`, and
+`docs/operations/`. Record important decisions, rationale, alternatives, and
+tradeoffs in the feature or subsystem document that owns the subject, rather
+than in a separate decision log. Create a new document only when the topic has
+durable value and no suitable canonical home. Report which documentation
+changed, or why none was needed.
 
 Before finishing substantial work, consider whether it revealed a reusable
 project-specific technique or an avoidable mistake. If so, surface it to the

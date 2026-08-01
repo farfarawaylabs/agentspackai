@@ -32,10 +32,10 @@ describe("remote official packs", () => {
 		const versionOne = await loadPack(CORE_PACK);
 		const versionTwo = await loadPack(nextPackRoot);
 		const artifacts = new Map([
-			["0.26.1", serializePackArtifact(versionOne, { kind: "official" })],
+			["0.26.2", serializePackArtifact(versionOne, { kind: "official" })],
 			["0.27.0", serializePackArtifact(versionTwo, { kind: "official" })],
 		]);
-		let latest = "0.26.1";
+		let latest = "0.26.2";
 		let baseUrl = "";
 		const server = Bun.serve({
 			hostname: "127.0.0.1",
@@ -88,7 +88,7 @@ describe("remote official packs", () => {
 		]);
 
 		expect(initialized.exitCode).toBe(0);
-		expect(initialized.stdout).toContain("agents-pack-core@0.26.1");
+		expect(initialized.stdout).toContain("agents-pack-core@0.26.2");
 		expect((await loadScopeConfig(environment.configPath)).pack.source).toBe(
 			"official",
 		);
@@ -154,7 +154,7 @@ async function createNextCorePack(): Promise<string> {
 	const manifest = await readFile(manifestPath, "utf8");
 	await writeFile(
 		manifestPath,
-		manifest.replace('version = "0.26.1"', 'version = "0.27.0"'),
+		manifest.replace('version = "0.26.2"', 'version = "0.27.0"'),
 	);
 	await writeFile(
 		join(directory, "RELEASE_NOTES.md"),

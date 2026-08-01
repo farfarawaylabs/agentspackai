@@ -48,7 +48,11 @@ Review in this order:
    scale without evidence.
 6. Tests: missing behavioral coverage for a concrete risk, especially negative
    paths, boundaries, authorization, migrations, and regressions.
-7. Maintainability and architecture: duplicated logic, misplaced
+7. Documentation: materially changed behavior, contracts, architecture, data,
+   operations, security assumptions, or non-obvious constraints that leave the
+   canonical documentation or code comments false, incomplete, or
+   undiscoverable. Treat a new feature as material by default.
+8. Maintainability and architecture: duplicated logic, misplaced
    responsibilities, or dependency-direction violations that materially make
    the change harder to understand, test, or reuse.
 
@@ -100,6 +104,8 @@ Do not report:
   refactors;
 - generic requests for more comments, logging, validation, or tests without
   naming the failure they prevent;
+- a new documentation file when the change has no durable documentation impact
+  or an existing canonical document is the better home;
 - large rewrites when a narrow correction would address the issue; or
 - low-confidence possibilities that cannot be tied to concrete impact.
 

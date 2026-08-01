@@ -2,9 +2,12 @@
 	"schema_version": 1,
 	"packs": {
 		"agents-pack-core": {
-			"latest": "0.26.1",
+			"latest": "0.26.2",
 			"tag_prefix": "pack-core-v",
 			"versions": {
+				"0.26.2": {
+					"url": "https://github.com/farfarawaylabs/agentspackai/releases/download/pack-core-v0.26.2/agents-pack-core-0.26.2.pack"
+				},
 				"0.26.1": {
 					"url": "https://github.com/farfarawaylabs/agentspackai/releases/download/pack-core-v0.26.1/agents-pack-core-0.26.1.pack"
 				},
