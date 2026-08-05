@@ -21,7 +21,10 @@ the same logical component across content revisions.
 packs/core/skills/
 ├── agents-pack/
 │   ├── ap-create-new-skill/
-│   └── ap-manage-agents-pack/
+│   ├── ap-manage-agents-pack/
+│   ├── ap-maintain-memory/
+│   ├── ap-recall-memory/
+│   └── ap-save-memory/
 ├── engineering/
 │   ├── ai/
 │   │   └── ap-develop-with-vercel-ai-sdk/
@@ -102,6 +105,10 @@ The current core pack contains:
 - required `ap-manage-agents-pack` and `ap-create-new-skill` workflows for
   safely managing Agents Pack and creating one canonical portable skill from
   inside a coding-agent conversation;
+- required `ap-recall-memory` and `ap-save-memory` workflows for automatically
+  using repository-owned shared and project-local memory through ordinary
+  Markdown and filesystem tools, plus the explicitly invoked
+  `ap-maintain-memory` workflow for conservative corpus maintenance;
 - `ap-frontend-design`, including the shared `DESIGN.md` contract;
 - `ap-frontend-review`, including an evidence-based visual QA checklist;
 - `ap-design-data-models`, including conceptual, relational, document,
@@ -193,7 +200,8 @@ Claude Code exposes the portable action skills as slash commands, including
 `/ap-security-audit`, `/ap-audit-seo`, `/ap-audit-geo`,
 `/ap-compress-todos`, `/ap-refresh-repo-docs`, and
 `/ap-run-market-research`, `/ap-manage-agents-pack`, and
-`/ap-create-new-skill`. Agents Pack does not generate duplicate legacy
+`/ap-create-new-skill`, `/ap-recall-memory`, `/ap-save-memory`, and
+`/ap-maintain-memory`. Agents Pack does not generate duplicate legacy
 `.claude/commands/` files.
 
 Test-only historical packs remain under `fixtures/`.

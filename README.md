@@ -7,6 +7,14 @@ track of what it owns.
 
 **New here? Start with the [Agents Pack user guide](./docs/USER_GUIDE.md).**
 
+## NEW: Portable project memory
+
+Claude Code, Codex, and Cursor can now recall and save the same project
+knowledge as ordinary Markdown under `.agents-pack/memory/`. Shared memory is
+reviewable in Git by default, project-local preferences stay ignored, and
+cleanup runs only when you explicitly request it. [Learn how portable project
+memory works](./docs/agent-portability/agents-pack-portable-memory.md).
+
 ## Install
 
 Agents Pack supports macOS and Linux on ARM64 and x64. The installer downloads
@@ -48,7 +56,9 @@ once, then synchronize them across every selected agent.
 - Repository-wide or global installation.
 - Standalone macOS and Linux executables with a checksum-verifying installer.
 - Interactive selection of agents and components.
-- One core instruction set, 24 portable skills, and six native subagents.
+- One core instruction set, 27 portable skills, and six native subagents.
+- Automatic recall and capture of repository-owned memory across supported
+  coding agents, plus user-invoked maintenance.
 - Provider-specific rendering for Claude Code, Codex, and Cursor.
 - Safe component installation and removal after initialization.
 - Canonical user-owned skills and subagents.
@@ -172,6 +182,7 @@ Standalone CLI releases and the installer are documented in
 - [Complete user guide](./docs/USER_GUIDE.md)
 - [Skill catalog](./docs/SKILLS.md)
 - [Core content catalog](./content/README.md)
+- [Portable project memory](./docs/agent-portability/agents-pack-portable-memory.md)
 - [User-owned components](./docs/agent-portability/agents-pack-user-components.md)
 - [Updates, pinning, and rollback](./docs/agent-portability/agents-pack-version-control.md)
 

@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.26.2"
+version = "0.27.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -32,6 +32,36 @@ summary = "Create or update one canonical user-owned skill and synchronize it ac
 category = "agents-pack/management"
 selection = "required"
 source = "skills/agents-pack/ap-create-new-skill"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-recall-memory"
+kind = "skill"
+title = "Recall portable project memory"
+summary = "Recall relevant shared and local repository knowledge safely."
+category = "agents-pack/memory"
+selection = "required"
+source = "skills/agents-pack/ap-recall-memory"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-save-memory"
+kind = "skill"
+title = "Save portable project memory"
+summary = "Save verified durable knowledge as shared or local repository Markdown."
+category = "agents-pack/memory"
+selection = "required"
+source = "skills/agents-pack/ap-save-memory"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-maintain-memory"
+kind = "skill"
+title = "Maintain portable project memory"
+summary = "Explicitly audit, consolidate, and repair repository memory without erasing useful history."
+category = "agents-pack/memory"
+selection = "required"
+source = "skills/agents-pack/ap-maintain-memory"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]

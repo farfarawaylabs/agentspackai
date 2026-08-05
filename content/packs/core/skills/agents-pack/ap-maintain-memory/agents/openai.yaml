@@ -1,0 +1,6 @@
+interface:
+  display_name: "Maintain Project Memory"
+  short_description: "Consolidate and repair project memory"
+  default_prompt: "Use $ap-maintain-memory to audit, consolidate, and repair this repository's portable memory."
+policy:
+  allow_implicit_invocation: false

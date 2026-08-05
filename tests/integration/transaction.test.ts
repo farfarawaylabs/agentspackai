@@ -80,8 +80,24 @@ describe("transaction success", () => {
 	test("applies eject while preserving user-owned shared content", async () => {
 		const environment = await createEnvironment();
 		const agentsPath = join(environment.repository, "AGENTS.md");
+		const sharedMemoryPath = join(
+			environment.repository,
+			".agents-pack/memory/shared/2026-08-04-test-memory.md",
+		);
+		const localMemoryPath = join(
+			environment.repository,
+			".agents-pack/memory/local/2026-08-04-local-memory.md",
+		);
 		await writeFile(agentsPath, "# User instructions\n");
 		await initialize(environment, ["claude", "codex", "cursor"]);
+		await mkdir(join(environment.repository, ".agents-pack/memory/shared"), {
+			recursive: true,
+		});
+		await mkdir(join(environment.repository, ".agents-pack/memory/local"), {
+			recursive: true,
+		});
+		await writeFile(sharedMemoryPath, "shared memory\n");
+		await writeFile(localMemoryPath, "local memory\n");
 
 		const result = await runMutation({
 			paths: environment.paths,
@@ -91,7 +107,11 @@ describe("transaction success", () => {
 
 		expect(result.appliedOperations).toBe(11);
 		expect(await readFile(agentsPath, "utf8")).toBe("# User instructions\n");
-		expect(await exists(environment.paths.stateDirectory)).toBe(false);
+		expect(await readFile(sharedMemoryPath, "utf8")).toBe("shared memory\n");
+		expect(await readFile(localMemoryPath, "utf8")).toBe("local memory\n");
+		expect(await exists(environment.paths.configPath)).toBe(false);
+		expect(await exists(environment.paths.lockPath)).toBe(false);
+		expect(await exists(environment.paths.stateDirectory)).toBe(true);
 		expect(
 			await exists(
 				join(

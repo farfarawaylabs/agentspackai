@@ -1,12 +1,17 @@
-# Agents Pack Core 0.26.2
+# Agents Pack Core 0.27.0
 
-- Make living documentation part of completing material feature and subsystem
-  changes.
-- Read task-relevant feature, architecture, and operations documentation
-  together with the actual code and tests.
-- Keep design decisions and rationale with the feature or subsystem they
-  govern, while following an existing repository documentation structure.
-- Add an Agents Pack fallback documentation map and focused feature or subsystem
-  template for repositories without an established structure.
-- Review changes for concrete documentation drift without demanding
-  low-value comments or unnecessary new files.
+- Add portable, repository-owned project memory shared by Claude Code, Codex,
+  and Cursor.
+- Add required `ap-recall-memory` and `ap-save-memory` skills that use ordinary
+  Markdown and filesystem tools instead of a memory CLI or provider-private
+  storage.
+- Add the required, explicitly invoked `ap-maintain-memory` skill for
+  conservative deduplication, consolidation, supersession, repair, and shared
+  index maintenance, including detection of local memories that are already
+  tracked by Git.
+- Recall relevant project memory and save verified durable learning
+  automatically through concise Core instructions.
+- Default memories to Git-reviewable shared knowledge while keeping clearly
+  user-, machine-, and checkout-specific memory in an ignored local directory.
+- Preserve memory as user-owned repository data across Core updates, rollback,
+  and ejection.

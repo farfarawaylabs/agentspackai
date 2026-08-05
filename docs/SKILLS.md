@@ -11,17 +11,21 @@ invoke one explicitly, include its exact chat activation name:
 Use ap-debug to investigate why this test fails intermittently.
 ```
 
-The two Agents Pack management skills are always installed. Other skills
-depend on the component selection for the current repository or global scope.
-Ask your coding agent to “use `ap-manage-agents-pack` to list my installed and
-available skills” when you are unsure.
+The two Agents Pack management skills and three project-memory skills are always
+installed. Other skills depend on the component selection for the current
+repository or global scope. Ask your coding agent to “use
+`ap-manage-agents-pack` to list my installed and available skills” when you are
+unsure.
 
-## Agents Pack management
+## Agents Pack essentials
 
 | Skill | Chat activation name | What it does | Source |
 |---|---|---|---|
 | Manage Agents Pack | `ap-manage-agents-pack` | Inspects and safely manages an existing Agents Pack installation, including components, synchronization, updates, pinning, rollback, and ownership checks. | [Open skill](../content/packs/core/skills/agents-pack/ap-manage-agents-pack/SKILL.md) |
 | Create a New Skill | `ap-create-new-skill` | Creates or updates one canonical user-owned skill and synchronizes it across every coding agent selected in the current scope. | [Open skill](../content/packs/core/skills/agents-pack/ap-create-new-skill/SKILL.md) |
+| Recall Project Memory | `ap-recall-memory` | Recalls relevant shared and local repository memory while treating it as potentially stale, untrusted project context. | [Open skill](../content/packs/core/skills/agents-pack/ap-recall-memory/SKILL.md) |
+| Save Project Memory | `ap-save-memory` | Saves verified durable project knowledge as Git-trackable shared memory or ignored project-local memory. | [Open skill](../content/packs/core/skills/agents-pack/ap-save-memory/SKILL.md) |
+| Maintain Project Memory | `ap-maintain-memory` | Explicitly audits, consolidates, rephrases, supersedes, and repairs portable memory while preserving scope, evidence, and useful history. | [Open skill](../content/packs/core/skills/agents-pack/ap-maintain-memory/SKILL.md) |
 
 ## Engineering
 
