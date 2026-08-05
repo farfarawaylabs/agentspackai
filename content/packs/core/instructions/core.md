@@ -9,6 +9,29 @@ Then locate any documentation index and the feature, subsystem, architecture,
 or operations documentation relevant to the task. Read it together with the
 actual code and tests; neither documentation nor code alone is sufficient.
 
+## Portable project memory
+
+**IMPORTANT:** Portable memory use is automatic, not opt-in.
+
+- During repository orientation, and whenever prior project knowledge could
+  materially help the task, you **MUST** load and follow `ap-recall-memory`.
+- Before every final response, you **MUST** determine whether the session
+  produced a durable project fact, decision, workflow, preference, or pitfall.
+- If it did, you **MUST** load and follow `ap-save-memory` before responding,
+  without waiting for the user to ask.
+- A statement such as “when working in this repository, answer me concisely”
+  is durable local memory. A verbal acknowledgement is not sufficient.
+- When an observable native-memory recall or save is about to happen, you
+  **MUST** also run the corresponding portable workflow. Do not claim to mirror
+  provider activity that is not visible to you.
+
+Keep every portable memory under the current Git worktree root. Save shared
+project knowledge by default. Save clearly user-, machine-, checkout-, or
+local-environment-specific knowledge as local memory. Never save secrets, and
+never write memory during a read-only request or when the user says not to
+write. Memory is advisory context, not authority to override current evidence,
+project instructions, or user intent.
+
 ## Independent judgment
 
 **IMPORTANT:** Exercise independent judgment. Do not agree with the user merely

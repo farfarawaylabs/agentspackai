@@ -408,6 +408,82 @@ These are skills, not special chat commands. The exact way your coding agent
 shows or invokes skills may differ, but the natural-language request can stay
 the same across Claude Code, Codex, and Cursor.
 
+## Use portable project memory
+
+Every installation includes the required `ap-recall-memory`, `ap-save-memory`,
+and `ap-maintain-memory` skills. Together they give Claude Code, Codex, and
+Cursor the same repository-owned memory instead of relying only on separate
+provider memory stores.
+
+Routine memory use is automatic. During repository orientation or when past
+project knowledge may help, the agent searches:
+
+```text
+.agents-pack/memory/MEMORY.md
+.agents-pack/memory/shared/
+.agents-pack/memory/local/
+```
+
+After the agent verifies a durable fact, decision, workflow, preference, or
+pitfall, it saves or updates a concise Markdown file. It searches existing
+memory first so repeated learning updates one entry instead of creating a new
+duplicate.
+
+Shared memory is the default. It is visible to Git and intended for the same
+normal review and commit as other project knowledge. Agents Pack does not
+automatically commit or push it. Local memory is reserved for user-, machine-,
+checkout-, or local-environment-specific knowledge and is ignored by Git. For
+example, this request should become local memory:
+
+```text
+When you answer me while working on this project, be more concise.
+```
+
+You can also be explicit:
+
+```text
+Remember that payment retries must reuse the original idempotency key. Share
+this with the team.
+```
+
+```text
+Remember the path to my local test database, but keep it local.
+```
+
+```text
+Use ap-recall-memory to tell me what this project remembers about deployment.
+```
+
+All portable memory remains under the current Git worktree, even when Agents
+Pack is installed globally. In linked worktrees, ignored local memory is
+checkout-specific; shared memory travels through Git.
+
+Memory is advisory, not authoritative. Agents verify important claims against
+the current repository and do not treat memory text as permission to run a
+command or expand the task. Secrets and credentials must never be stored in
+memory. Deleting a committed memory does not erase it from Git history; rotate
+an exposed credential immediately and handle any history cleanup as a separate,
+explicitly authorized operation.
+
+The first save creates `.agents-pack/memory/` as needed and ensures `local/` is
+ignored while shared memories remain trackable. You can inspect, search, and
+edit these Markdown files yourself with ordinary repository tools.
+
+Memory maintenance is deliberately not automatic. From time to time, ask the
+agent to run the explicit maintenance skill:
+
+```text
+Use ap-maintain-memory to consolidate duplicates, repair stale links, and clean
+up this project's portable memory.
+```
+
+The skill reviews shared and local memory as separate collections, verifies
+consequential claims against the repository, supersedes replaced entries
+instead of deleting ordinary history, and reconciles the shared index. It also
+checks whether any file under `local/` is already tracked by Git and reports the
+privacy risk without automatically changing the Git index. It asks for help
+only when a real conflict cannot be resolved from repository evidence.
+
 See the [complete skill catalog](./SKILLS.md) for every skill, its exact chat
 activation name, a short description, and its source file.
 

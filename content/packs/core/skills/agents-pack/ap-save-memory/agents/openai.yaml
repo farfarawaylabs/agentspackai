@@ -1,0 +1,4 @@
+interface:
+  display_name: "Save Project Memory"
+  short_description: "Save durable repository knowledge"
+  default_prompt: "Use $ap-save-memory to save or update durable portable memory for this repository."

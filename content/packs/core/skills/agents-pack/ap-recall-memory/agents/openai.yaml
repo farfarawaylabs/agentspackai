@@ -1,0 +1,4 @@
+interface:
+  display_name: "Recall Project Memory"
+  short_description: "Recall portable repository knowledge"
+  default_prompt: "Use $ap-recall-memory to find relevant portable memory for this repository."

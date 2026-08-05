@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.26.2");
+		expect(corePack.manifest.version).toBe("0.27.0");
 		expect(rendered.outputs.map((output) => output.path)).toEqual([
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
@@ -123,13 +123,19 @@ describe("renderPack", () => {
 			".claude/skills/ap-landing-page/SKILL.md",
 			".claude/skills/ap-landing-page/references/pre-publish-checklist.md",
 			".claude/skills/ap-landing-page/references/search-and-citation.md",
+			".claude/skills/ap-maintain-memory/SKILL.md",
+			".claude/skills/ap-maintain-memory/agents/openai.yaml",
 			".claude/skills/ap-manage-agents-pack/SKILL.md",
 			".claude/skills/ap-manage-agents-pack/agents/openai.yaml",
+			".claude/skills/ap-recall-memory/SKILL.md",
+			".claude/skills/ap-recall-memory/agents/openai.yaml",
 			".claude/skills/ap-refresh-repo-docs/SKILL.md",
 			".claude/skills/ap-refresh-repo-docs/references/feature-and-subsystem-documentation.md",
 			".claude/skills/ap-review-plan/SKILL.md",
 			".claude/skills/ap-run-market-research/SKILL.md",
 			".claude/skills/ap-run-market-research/references/report-structure.md",
+			".claude/skills/ap-save-memory/SKILL.md",
+			".claude/skills/ap-save-memory/agents/openai.yaml",
 			".claude/skills/ap-security-audit/SKILL.md",
 			".claude/skills/ap-security-audit/references/audit-surfaces.md",
 			".claude/skills/ap-security-audit/references/finding-validation-and-reporting.md",
@@ -166,9 +172,54 @@ describe("renderPack", () => {
 				".claude/rules/agents-pack/ap-core-instructions.md",
 			),
 		).toContain("separate decision log");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-core-instructions.md",
+			),
+		).toContain("Portable memory use is automatic");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/skills/ap-recall-memory/SKILL.md",
+			),
+		).toContain("rg --hidden --no-ignore");
+		expect(
+			decodeOutput(rendered.outputs, ".claude/skills/ap-save-memory/SKILL.md"),
+		).toContain("Default to `shared`");
+		expect(
+			decodeOutput(rendered.outputs, ".claude/skills/ap-save-memory/SKILL.md"),
+		).toContain("git check-ignore -v");
+		expect(
+			decodeOutput(rendered.outputs, ".claude/skills/ap-save-memory/SKILL.md"),
+		).not.toContain("git ls-files -- .agents-pack/memory/local");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/skills/ap-maintain-memory/SKILL.md",
+			),
+		).toContain("Run this workflow only after an explicit user request");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/skills/ap-maintain-memory/SKILL.md",
+			),
+		).toContain("git ls-files -- .agents-pack/memory/local");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/skills/ap-maintain-memory/agents/openai.yaml",
+			),
+		).toContain("allow_implicit_invocation: false");
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/rules/agents-pack/ap-core-instructions.md",
+			),
+		).not.toContain("ap-maintain-memory");
 	});
 
-	test("always renders the Agents Pack management skills", () => {
+	test("always renders the required Agents Pack skills", () => {
 		const rendered = renderPack(
 			corePack,
 			"repository",
@@ -179,12 +230,19 @@ describe("renderPack", () => {
 
 		expect(paths).toContain(".claude/skills/ap-manage-agents-pack/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-create-new-skill/SKILL.md");
+		expect(paths).toContain(".claude/skills/ap-recall-memory/SKILL.md");
+		expect(paths).toContain(".claude/skills/ap-save-memory/SKILL.md");
+		expect(paths).toContain(".claude/skills/ap-maintain-memory/SKILL.md");
 		expect(
 			corePack.manifest.components
 				.filter((component) =>
-					["ap-manage-agents-pack", "ap-create-new-skill"].includes(
-						component.id,
-					),
+					[
+						"ap-manage-agents-pack",
+						"ap-create-new-skill",
+						"ap-recall-memory",
+						"ap-save-memory",
+						"ap-maintain-memory",
+					].includes(component.id),
 				)
 				.every((component) => component.selection === "required"),
 		).toBe(true);
@@ -218,6 +276,8 @@ describe("renderPack", () => {
 				"ap-refresh-repo-docs",
 				"skills/engineering/documentation/ap-refresh-repo-docs",
 			],
+			["ap-recall-memory", "skills/agents-pack/ap-recall-memory"],
+			["ap-maintain-memory", "skills/agents-pack/ap-maintain-memory"],
 			[
 				"ap-review-plan",
 				"skills/engineering/workflows/planning/ap-review-plan",
@@ -226,6 +286,7 @@ describe("renderPack", () => {
 				"ap-run-market-research",
 				"skills/product/research/ap-run-market-research",
 			],
+			["ap-save-memory", "skills/agents-pack/ap-save-memory"],
 			["ap-security-audit", "skills/engineering/security/ap-security-audit"],
 			[
 				"ap-start-dev-session",
