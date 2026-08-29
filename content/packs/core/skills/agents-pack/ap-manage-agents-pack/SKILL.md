@@ -27,6 +27,7 @@ eject, or switch scope unless the user asks.
 | Install an official component | `agents-pack install <ap-name>` |
 | Remove an optional official component | `agents-pack remove <ap-name>` |
 | Create a new user-owned skill | Use `ap-create-new-skill` |
+| Add, inspect, or remove a machine-level remote MCP server | Use `ap-add-mcp` |
 | Create a user-owned subagent | `agents-pack create subagent <name> --description "<trigger description>"` |
 | Customize an official skill or subagent | `agents-pack fork <ap-name> --name <user-name>` |
 | Regenerate provider copies after editing canonical user content | `agents-pack sync` |

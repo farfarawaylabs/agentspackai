@@ -6,13 +6,15 @@ import { AgentsPackError } from "../core/errors.ts";
 import type { ChangePlan, ScopePaths } from "../core/types.ts";
 import { syncDirectory } from "./atomic-write.ts";
 
+export type OperationCommand = ChangePlan["command"] | "mcp-add" | "mcp-remove";
+
 interface LockRecord {
 	schemaVersion: 1;
 	id: string;
 	pid: number;
 	hostname: string;
 	scope: ScopePaths["scope"];
-	command: ChangePlan["command"];
+	command: OperationCommand;
 	startedAt: string;
 }
 
@@ -29,7 +31,7 @@ export interface OperationLockDependencies {
 
 export async function acquireOperationLock(
 	paths: ScopePaths,
-	command: ChangePlan["command"],
+	command: OperationCommand,
 	dependencies: OperationLockDependencies = {},
 ): Promise<AcquiredOperationLock> {
 	const createId = dependencies.createId ?? randomUUID;
@@ -155,7 +157,9 @@ async function readLockRecord(path: string): Promise<LockRecord | undefined> {
 				value.command !== "pin" &&
 				value.command !== "unpin" &&
 				value.command !== "rollback" &&
-				value.command !== "eject") ||
+				value.command !== "eject" &&
+				value.command !== "mcp-add" &&
+				value.command !== "mcp-remove") ||
 			(value.scope !== "global" && value.scope !== "repository")
 		) {
 			return undefined;

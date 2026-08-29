@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add an MCP Server"
+  short_description: "Manage remote MCP servers across agents"
+  default_prompt: "Use $ap-add-mcp to add a remote MCP server to all my coding agents."

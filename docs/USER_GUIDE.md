@@ -17,6 +17,7 @@ formats to use Agents Pack.
 - [Initialize Agents Pack](#initialize-agents-pack)
 - [Manage Agents Pack through your coding agent](#manage-agents-pack-through-your-coding-agent)
 - [Use the CLI directly](#use-the-cli-directly)
+- [Manage remote MCP servers](#manage-remote-mcp-servers)
 - [Understand component selection](#understand-component-selection)
 - [See what Agents Pack installed](#see-what-agents-pack-installed)
 - [Install or remove official components](#install-or-remove-official-components)
@@ -325,6 +326,11 @@ The skill also teaches the agent that the CLI is the source of truth. It must
 not work around lifecycle protections or edit generated provider copies
 directly.
 
+Every installation also includes `ap-add-mcp`. Ask your coding agent to use it
+when you want to add, inspect, or remove a user-level remote MCP server across
+Claude Code, Codex, and Cursor. Unlike content management, this machine-wide
+workflow does not require `agents-pack init`.
+
 ### Example requests
 
 You can ask broad questions:
@@ -340,6 +346,11 @@ ones fit this project.
 ```
 
 Or request a specific change:
+
+```text
+Use ap-add-mcp to add the remote MCP server named docs at
+https://example.com/mcp to Claude Code, Codex, and Cursor.
+```
 
 ```text
 Install the ap-frontend-design skill. Preview the change first and wait for my
@@ -499,6 +510,75 @@ yourself is useful when:
 
 The remaining workflow sections show the direct CLI form. You can also give
 the same goal to your coding agent instead of typing the commands yourself.
+
+## Manage remote MCP servers
+
+Agents Pack can add one user-level remote MCP server to Claude Code, Codex,
+and Cursor in a single operation. This workflow is machine-wide and does not
+require `agents-pack init` in a repository.
+
+Preview the change, then apply it:
+
+```sh
+agents-pack mcp add docs \
+  --url https://example.com/mcp \
+  --dry-run
+
+agents-pack mcp add docs \
+  --url https://example.com/mcp \
+  --yes
+```
+
+All three providers are selected by default. To target a subset:
+
+```sh
+agents-pack mcp add docs \
+  --url https://example.com/mcp \
+  --agents claude,codex \
+  --yes
+```
+
+The first release supports remote MCP endpoints over HTTP, including
+Streamable HTTP. It does not add local stdio servers or deprecated remote SSE
+configuration. HTTPS is recommended for non-local endpoints.
+
+### Authentication remains provider-specific
+
+The add command writes server configuration but never copies or stores OAuth
+credentials. If the server requires OAuth, authenticate it separately in each
+selected provider:
+
+```sh
+codex mcp login docs
+claude mcp login docs
+agent mcp login docs
+```
+
+Cursor can also complete authentication through its MCP settings. Provider
+login behavior can change independently, so use the current
+[Codex MCP documentation](https://developers.openai.com/codex/mcp),
+[Claude Code MCP documentation](https://code.claude.com/docs/en/mcp), and
+[Cursor MCP documentation](https://cursor.com/docs/mcp) when a provider asks
+for a different login flow.
+
+### Check status and remove a server
+
+```sh
+agents-pack mcp status
+agents-pack mcp status docs
+agents-pack mcp remove docs --dry-run
+agents-pack mcp remove docs --yes
+```
+
+MCP status is read-only. It reports each provider as clean, missing, drifted,
+unmanaged, malformed, or unavailable. Agents Pack records only the server URL,
+original provider targets, and creation time in
+`~/.agents-pack/mcp-lock.json`; it never records authentication secrets.
+
+Remove operates only on entries that Agents Pack previously added. It refuses
+to adopt or delete an existing unmanaged entry, and it stops on drift instead
+of overwriting a provider change. Add and remove use snapshots and an
+operation journal so a later mutation can recover an interrupted transaction.
 
 ## Understand component selection
 
@@ -1037,6 +1117,23 @@ agents-pack eject [--yes] [--dry-run]
 ```
 
 Removes managed output while preserving canonical user-owned source.
+
+### `mcp`
+
+```text
+agents-pack mcp add <name> \
+  --url <http-or-https-url> \
+  [--agents <claude,codex,cursor|all>] \
+  [--yes] \
+  [--dry-run]
+
+agents-pack mcp status [name]
+agents-pack mcp remove <name> [--yes] [--dry-run]
+```
+
+`mcp add` defaults to all three providers. These commands always operate on
+user-level provider configuration and are independent of repository or global
+Agents Pack content scope. `mcp status` is always read-only.
 
 ## Troubleshooting
 

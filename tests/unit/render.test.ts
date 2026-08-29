@@ -79,8 +79,16 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.27.0");
-		expect(rendered.outputs.map((output) => output.path)).toEqual([
+		expect(corePack.manifest.version).toBe("0.30.0");
+		const outputPaths = rendered.outputs.map((output) => output.path);
+		const reactOutputPaths = outputPaths.filter((path) =>
+			path.startsWith(".claude/skills/ap-react-"),
+		);
+		expect(
+			outputPaths.filter(
+				(path) => !path.startsWith(".claude/skills/ap-react-"),
+			),
+		).toEqual([
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
 			".claude/agents/ap-code-reviewer.md",
@@ -88,6 +96,8 @@ describe("renderPack", () => {
 			".claude/agents/ap-ux-enhancer.md",
 			".claude/agents/ap-ux-researcher.md",
 			".claude/rules/agents-pack/ap-core-instructions.md",
+			".claude/skills/ap-add-mcp/SKILL.md",
+			".claude/skills/ap-add-mcp/agents/openai.yaml",
 			".claude/skills/ap-audit-geo/SKILL.md",
 			".claude/skills/ap-audit-geo/references/geo-audit-checklist.md",
 			".claude/skills/ap-audit-seo/SKILL.md",
@@ -140,6 +150,16 @@ describe("renderPack", () => {
 			".claude/skills/ap-security-audit/references/audit-surfaces.md",
 			".claude/skills/ap-security-audit/references/finding-validation-and-reporting.md",
 			".claude/skills/ap-start-dev-session/SKILL.md",
+			".claude/skills/ap-subagent-driven-development/LICENSE.md",
+			".claude/skills/ap-subagent-driven-development/SKILL.md",
+			".claude/skills/ap-subagent-driven-development/agents/openai.yaml",
+			".claude/skills/ap-subagent-driven-development/final-reviewer-prompt.md",
+			".claude/skills/ap-subagent-driven-development/implementer-prompt.md",
+			".claude/skills/ap-subagent-driven-development/re-review-prompt.md",
+			".claude/skills/ap-subagent-driven-development/scripts/review-package",
+			".claude/skills/ap-subagent-driven-development/scripts/sdd-workspace",
+			".claude/skills/ap-subagent-driven-development/scripts/task-brief",
+			".claude/skills/ap-subagent-driven-development/task-reviewer-prompt.md",
 			".claude/skills/ap-test-web-app/SKILL.md",
 			".claude/skills/ap-validate-trust-boundaries/SKILL.md",
 			".claude/skills/ap-validate-trust-boundaries/references/files-text-and-structured-input.md",
@@ -148,6 +168,29 @@ describe("renderPack", () => {
 			".claude/skills/ap-write-database-queries/references/query-correctness-and-security.md",
 			".claude/skills/ap-write-database-queries/references/transactions-concurrency-and-testing.md",
 		]);
+		expect(reactOutputPaths).toEqual(
+			corePack.files
+				.filter(
+					(file) =>
+						file.path.startsWith(
+							"skills/engineering/frontend/ap-react-best-practices/",
+						) ||
+						file.path.startsWith(
+							"skills/engineering/frontend/ap-react-composition-patterns/",
+						),
+				)
+				.map((file) =>
+					file.path.replace("skills/engineering/frontend/", ".claude/skills/"),
+				)
+				.sort(),
+		);
+		expect(reactOutputPaths).toHaveLength(80);
+		expect(reactOutputPaths).toContain(
+			".claude/skills/ap-react-best-practices/references/async-parallel.md",
+		);
+		expect(reactOutputPaths).toContain(
+			".claude/skills/ap-react-composition-patterns/references/react19-no-forwardref.md",
+		);
 		expect(
 			decodeOutput(
 				rendered.outputs,
@@ -219,17 +262,77 @@ describe("renderPack", () => {
 		).not.toContain("ap-maintain-memory");
 	});
 
+	test("renders optional skills only when selected for every provider", () => {
+		const selected = [
+			"ap-core-instructions",
+			"ap-react-best-practices",
+			"ap-react-composition-patterns",
+			"ap-subagent-driven-development",
+		];
+		const recommended = corePack.manifest.components
+			.filter((component) => component.selection !== "optional")
+			.map((component) => component.id);
+
+		for (const [target, root] of [
+			["claude", ".claude"],
+			["codex", ".agents"],
+			["cursor", ".cursor"],
+		] as const) {
+			const paths = renderPack(
+				corePack,
+				"repository",
+				[target],
+				selected,
+			).outputs.map((output) => output.path);
+			const recommendedPaths = renderPack(
+				corePack,
+				"repository",
+				[target],
+				recommended,
+			).outputs.map((output) => output.path);
+
+			for (const name of [
+				"ap-react-best-practices",
+				"ap-react-composition-patterns",
+				"ap-subagent-driven-development",
+			]) {
+				expect(paths).toContain(`${root}/skills/${name}/SKILL.md`);
+				expect(recommendedPaths).not.toContain(
+					`${root}/skills/${name}/SKILL.md`,
+				);
+			}
+
+			const policyPath = `${root}/skills/ap-subagent-driven-development/agents/openai.yaml`;
+			expect(paths).toContain(policyPath);
+			expect(
+				decodeOutput(
+					renderPack(corePack, "repository", [target], selected).outputs,
+					policyPath,
+				),
+			).toContain("allow_implicit_invocation: false");
+		}
+	});
+
 	test("always renders the required Agents Pack skills", () => {
 		const rendered = renderPack(
 			corePack,
 			"repository",
-			["claude"],
+			["claude", "codex", "cursor"],
 			["ap-core-instructions"],
 		);
 		const paths = rendered.outputs.map((output) => output.path);
+		const cursorOnlyPaths = renderPack(
+			corePack,
+			"repository",
+			["cursor"],
+			["ap-core-instructions"],
+		).outputs.map((output) => output.path);
 
 		expect(paths).toContain(".claude/skills/ap-manage-agents-pack/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-create-new-skill/SKILL.md");
+		expect(paths).toContain(".claude/skills/ap-add-mcp/SKILL.md");
+		expect(paths).toContain(".agents/skills/ap-add-mcp/SKILL.md");
+		expect(cursorOnlyPaths).toContain(".cursor/skills/ap-add-mcp/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-recall-memory/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-save-memory/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-maintain-memory/SKILL.md");
@@ -239,6 +342,7 @@ describe("renderPack", () => {
 					[
 						"ap-manage-agents-pack",
 						"ap-create-new-skill",
+						"ap-add-mcp",
 						"ap-recall-memory",
 						"ap-save-memory",
 						"ap-maintain-memory",
@@ -291,6 +395,10 @@ describe("renderPack", () => {
 			[
 				"ap-start-dev-session",
 				"skills/engineering/workflows/session/ap-start-dev-session",
+			],
+			[
+				"ap-subagent-driven-development",
+				"skills/engineering/workflows/execution/ap-subagent-driven-development",
 			],
 			["ap-test-web-app", "skills/engineering/testing/ap-test-web-app"],
 		]) {

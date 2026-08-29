@@ -11,7 +11,7 @@ invoke one explicitly, include its exact chat activation name:
 Use ap-debug to investigate why this test fails intermittently.
 ```
 
-The two Agents Pack management skills and three project-memory skills are always
+The three Agents Pack management skills and three project-memory skills are always
 installed. Other skills depend on the component selection for the current
 repository or global scope. Ask your coding agent to “use
 `ap-manage-agents-pack` to list my installed and available skills” when you are
@@ -21,6 +21,7 @@ unsure.
 
 | Skill | Chat activation name | What it does | Source |
 |---|---|---|---|
+| Add an MCP Server | `ap-add-mcp` | Adds, inspects, or removes a user-level remote MCP server across Claude Code, Codex, and Cursor through the safe Agents Pack CLI lifecycle. | [Open skill](../content/packs/core/skills/agents-pack/ap-add-mcp/SKILL.md) |
 | Manage Agents Pack | `ap-manage-agents-pack` | Inspects and safely manages an existing Agents Pack installation, including components, synchronization, updates, pinning, rollback, and ownership checks. | [Open skill](../content/packs/core/skills/agents-pack/ap-manage-agents-pack/SKILL.md) |
 | Create a New Skill | `ap-create-new-skill` | Creates or updates one canonical user-owned skill and synchronizes it across every coding agent selected in the current scope. | [Open skill](../content/packs/core/skills/agents-pack/ap-create-new-skill/SKILL.md) |
 | Recall Project Memory | `ap-recall-memory` | Recalls relevant shared and local repository memory while treating it as potentially stale, untrusted project context. | [Open skill](../content/packs/core/skills/agents-pack/ap-recall-memory/SKILL.md) |
@@ -33,6 +34,8 @@ unsure.
 |---|---|---|---|
 | Frontend Design | `ap-frontend-design` | Designs and implements distinctive, production-ready web interfaces grounded in the product, audience, content, and existing design system. | [Open skill](../content/packs/core/skills/engineering/frontend/ap-frontend-design/SKILL.md) |
 | Frontend Review | `ap-frontend-review` | Reviews a rendered interface for visual quality, responsive behavior, interaction states, accessibility, design consistency, and runtime problems. | [Open skill](../content/packs/core/skills/engineering/frontend/ap-frontend-review/SKILL.md) |
+| React Best Practices | `ap-react-best-practices` | Applies Vercel's version-aware React and Next.js performance guidance to waterfalls, bundles, data flow, rendering, and hot paths. | [Open skill](../content/packs/core/skills/engineering/frontend/ap-react-best-practices/SKILL.md) |
+| React Composition Patterns | `ap-react-composition-patterns` | Designs scalable React component APIs with composition, explicit variants, compound components, and clear state boundaries. | [Open skill](../content/packs/core/skills/engineering/frontend/ap-react-composition-patterns/SKILL.md) |
 | Test a Web App | `ap-test-web-app` | Exercises real browser flows and reports or, when requested, fixes reproducible functional failures using runtime evidence. | [Open skill](../content/packs/core/skills/engineering/testing/ap-test-web-app/SKILL.md) |
 | Debug | `ap-debug` | Investigates a reproducible software problem through evidence, competing hypotheses, root-cause analysis, and regression verification. | [Open skill](../content/packs/core/skills/engineering/workflows/debugging/ap-debug/SKILL.md) |
 | Develop APIs | `ap-develop-apis` | Designs, implements, debugs, or reviews HTTP APIs with thin transport layers, reusable business logic, durable contracts, and consumer documentation. | [Open skill](../content/packs/core/skills/engineering/backend/ap-develop-apis/SKILL.md) |
@@ -48,6 +51,14 @@ unsure.
 | Prepare a Context Handoff | `ap-clear-dev-context` | Produces a detailed, paste-ready handoff before conversation context is cleared or a development session is restarted. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-clear-dev-context/SKILL.md) |
 | Continue a Development Session | `ap-continue-dev-session` | Rebuilds and reconciles context from a prior handoff before safely resuming development work. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-continue-dev-session/SKILL.md) |
 | Review a Plan | `ap-review-plan` | Challenges a development plan through repository-grounded review and an independent subagent review when available. | [Open skill](../content/packs/core/skills/engineering/workflows/planning/ap-review-plan/SKILL.md) |
+| Subagent-Driven Development | `ap-subagent-driven-development` | Explicitly executes a prepared plan through fresh task implementers, local task commits, independent review and repair loops, and final whole-branch review. | [Open skill](../content/packs/core/skills/engineering/workflows/execution/ap-subagent-driven-development/SKILL.md) |
+
+Subagent-Driven Development is configured and instructed for explicit-only
+use. Invoke it deliberately with a prepared plan, for example:
+
+```text
+Use ap-subagent-driven-development to execute docs/plans/feature.md.
+```
 
 ## Marketing and growth
 

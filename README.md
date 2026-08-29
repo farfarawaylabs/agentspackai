@@ -5,7 +5,7 @@ instructions, skills, and subagents. You choose the agents and components you
 want once; Agents Pack renders the right files for each provider and keeps
 track of what it owns.
 
-**New here? Start with the [Agents Pack user guide](./docs/USER_GUIDE.md).**
+**New here?** Read the [official docs](https://agentspack.ai) (install, guides, skill catalog, and CLI reference). The in-repo [user guide](./docs/USER_GUIDE.md) remains available as a deep reference.
 
 ## NEW: Portable project memory
 
@@ -56,7 +56,7 @@ once, then synchronize them across every selected agent.
 - Repository-wide or global installation.
 - Standalone macOS and Linux executables with a checksum-verifying installer.
 - Interactive selection of agents and components.
-- One core instruction set, 27 portable skills, and six native subagents.
+- One core instruction set, 31 portable skills, and six native subagents.
 - Automatic recall and capture of repository-owned memory across supported
   coding agents, plus user-invoked maintenance.
 - Provider-specific rendering for Claude Code, Codex, and Cursor.
@@ -66,6 +66,7 @@ once, then synchronize them across every selected agent.
 - Read-only status, drift detection, dry runs, and transactional writes.
 - Official pack release notes and update checks.
 - Version pinning, local rollback, and safe ejection.
+- User-level remote MCP server management across Claude Code, Codex, and Cursor.
 - A static registry and GitHub Release workflow for official pack delivery.
 
 Global scope currently supports Claude Code and Codex. Global Cursor
@@ -130,6 +131,9 @@ Without `--pack`, Agents Pack downloads the current official content pack.
 | `agents-pack unpin` | Allow forward updates again |
 | `agents-pack rollback [version]` | Restore an older pack from the local cache |
 | `agents-pack eject` | Safely remove managed outputs |
+| `agents-pack mcp add <name> --url <url>` | Add a user-level remote MCP server across providers |
+| `agents-pack mcp status [name]` | Inspect managed MCP configuration and drift |
+| `agents-pack mcp remove <name>` | Remove a managed MCP server from its original providers |
 
 Run `agents-pack <command> --help` for the exact options. When running from
 source, replace `agents-pack` with:

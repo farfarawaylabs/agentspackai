@@ -8,6 +8,7 @@ import {
 	parseForkArguments,
 	parseInitArguments,
 	parseListArguments,
+	parseMcpArguments,
 	parseRollbackArguments,
 	parseSyncArguments,
 	parseUpdateArguments,
@@ -254,6 +255,53 @@ describe("version-control arguments", () => {
 		expect(() => parseRollbackArguments(["--force"])).toThrow(
 			"Unknown rollback option",
 		);
+	});
+});
+
+describe("MCP arguments", () => {
+	test("parses add, status, and remove", () => {
+		expect(
+			parseMcpArguments([
+				"add",
+				"docs",
+				"--url",
+				"https://example.com/mcp",
+				"--agents",
+				"codex,cursor",
+				"--yes",
+			]),
+		).toEqual({
+			action: "add",
+			name: "docs",
+			url: "https://example.com/mcp",
+			agents: ["codex", "cursor"],
+			yes: true,
+			dryRun: false,
+		});
+		expect(parseMcpArguments(["status"])).toEqual({ action: "status" });
+		expect(parseMcpArguments(["status", "docs"])).toEqual({
+			action: "status",
+			name: "docs",
+		});
+		expect(parseMcpArguments(["remove", "docs", "--dry-run"])).toEqual({
+			action: "remove",
+			name: "docs",
+			yes: false,
+			dryRun: true,
+		});
+	});
+
+	test("defaults add to all providers and rejects incomplete input", () => {
+		expect(
+			parseMcpArguments(["add", "docs", "--url", "https://example.com/mcp"]),
+		).toMatchObject({ agents: ["claude", "codex", "cursor"] });
+		expect(() => parseMcpArguments(["add", "docs"])).toThrow("requires --url");
+		expect(() => parseMcpArguments(["login", "docs"])).toThrow(
+			"add, status, or remove",
+		);
+		expect(() =>
+			parseMcpArguments(["remove", "docs", "--agents", "all"]),
+		).toThrow("valid only for mcp add");
 	});
 });
 
