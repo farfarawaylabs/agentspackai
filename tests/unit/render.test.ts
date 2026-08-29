@@ -79,8 +79,16 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.28.0");
-		expect(rendered.outputs.map((output) => output.path)).toEqual([
+		expect(corePack.manifest.version).toBe("0.29.0");
+		const outputPaths = rendered.outputs.map((output) => output.path);
+		const reactOutputPaths = outputPaths.filter((path) =>
+			path.startsWith(".claude/skills/ap-react-"),
+		);
+		expect(
+			outputPaths.filter(
+				(path) => !path.startsWith(".claude/skills/ap-react-"),
+			),
+		).toEqual([
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
 			".claude/agents/ap-code-reviewer.md",
@@ -150,6 +158,29 @@ describe("renderPack", () => {
 			".claude/skills/ap-write-database-queries/references/query-correctness-and-security.md",
 			".claude/skills/ap-write-database-queries/references/transactions-concurrency-and-testing.md",
 		]);
+		expect(reactOutputPaths).toEqual(
+			corePack.files
+				.filter(
+					(file) =>
+						file.path.startsWith(
+							"skills/engineering/frontend/ap-react-best-practices/",
+						) ||
+						file.path.startsWith(
+							"skills/engineering/frontend/ap-react-composition-patterns/",
+						),
+				)
+				.map((file) =>
+					file.path.replace("skills/engineering/frontend/", ".claude/skills/"),
+				)
+				.sort(),
+		);
+		expect(reactOutputPaths).toHaveLength(80);
+		expect(reactOutputPaths).toContain(
+			".claude/skills/ap-react-best-practices/references/async-parallel.md",
+		);
+		expect(reactOutputPaths).toContain(
+			".claude/skills/ap-react-composition-patterns/references/react19-no-forwardref.md",
+		);
 		expect(
 			decodeOutput(
 				rendered.outputs,
@@ -219,6 +250,46 @@ describe("renderPack", () => {
 				".claude/rules/agents-pack/ap-core-instructions.md",
 			),
 		).not.toContain("ap-maintain-memory");
+	});
+
+	test("renders optional React skills only when selected for every provider", () => {
+		const selected = [
+			"ap-core-instructions",
+			"ap-react-best-practices",
+			"ap-react-composition-patterns",
+		];
+		const recommended = corePack.manifest.components
+			.filter((component) => component.selection !== "optional")
+			.map((component) => component.id);
+
+		for (const [target, root] of [
+			["claude", ".claude"],
+			["codex", ".agents"],
+			["cursor", ".cursor"],
+		] as const) {
+			const paths = renderPack(
+				corePack,
+				"repository",
+				[target],
+				selected,
+			).outputs.map((output) => output.path);
+			const recommendedPaths = renderPack(
+				corePack,
+				"repository",
+				[target],
+				recommended,
+			).outputs.map((output) => output.path);
+
+			for (const name of [
+				"ap-react-best-practices",
+				"ap-react-composition-patterns",
+			]) {
+				expect(paths).toContain(`${root}/skills/${name}/SKILL.md`);
+				expect(recommendedPaths).not.toContain(
+					`${root}/skills/${name}/SKILL.md`,
+				);
+			}
+		}
 	});
 
 	test("always renders the required Agents Pack skills", () => {

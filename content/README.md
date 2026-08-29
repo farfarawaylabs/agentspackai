@@ -41,7 +41,9 @@ packs/core/skills/
 │   │   └── ap-validate-trust-boundaries/
 │   ├── frontend/
 │   │   ├── ap-frontend-design/
-│   │   └── ap-frontend-review/
+│   │   ├── ap-frontend-review/
+│   │   ├── ap-react-best-practices/
+│   │   └── ap-react-composition-patterns/
 │   ├── security/
 │   │   └── ap-security-audit/
 │   ├── testing/
@@ -113,6 +115,10 @@ The current core pack contains:
   `ap-maintain-memory` workflow for conservative corpus maintenance;
 - `ap-frontend-design`, including the shared `DESIGN.md` contract;
 - `ap-frontend-review`, including an evidence-based visual QA checklist;
+- `ap-react-best-practices`, adapted from Vercel's React and Next.js
+  performance guidance with 70 progressive rule references;
+- `ap-react-composition-patterns`, adapted from Vercel's guidance for
+  scalable component APIs, shared state, explicit variants, and React 19;
 - `ap-design-data-models`, including conceptual, relational, document,
   distributed, lifecycle, and schema-evolution guidance;
 - `ap-develop-apis`, including thin API architecture, contract, security,

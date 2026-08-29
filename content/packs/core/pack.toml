@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.28.0"
+version = "0.29.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -92,6 +92,26 @@ summary = "Review frontend implementation, usability, accessibility, responsiven
 category = "engineering/frontend"
 selection = "optional"
 source = "skills/engineering/frontend/ap-frontend-review"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-react-best-practices"
+kind = "skill"
+title = "Apply React best practices"
+summary = "Apply Vercel's performance guidance for React and Next.js using version-aware, evidence-based changes."
+category = "engineering/frontend"
+selection = "optional"
+source = "skills/engineering/frontend/ap-react-best-practices"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-react-composition-patterns"
+kind = "skill"
+title = "Apply React composition patterns"
+summary = "Design scalable React component APIs with composition, explicit variants, and clear state boundaries."
+category = "engineering/frontend"
+selection = "optional"
+source = "skills/engineering/frontend/ap-react-composition-patterns"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
