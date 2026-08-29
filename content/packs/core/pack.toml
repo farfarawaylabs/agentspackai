@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.27.0"
+version = "0.28.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -62,6 +62,16 @@ summary = "Explicitly audit, consolidate, and repair repository memory without e
 category = "agents-pack/memory"
 selection = "required"
 source = "skills/agents-pack/ap-maintain-memory"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-add-mcp"
+kind = "skill"
+title = "Add an MCP server"
+summary = "Add, inspect, and remove user-level remote MCP servers across coding agents."
+category = "agents-pack/management"
+selection = "required"
+source = "skills/agents-pack/ap-add-mcp"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]

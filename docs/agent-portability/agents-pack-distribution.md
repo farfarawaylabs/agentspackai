@@ -27,9 +27,9 @@ Use:
 The source remains under `content/packs/core/`. A release produces three
 distinct objects:
 
-1. a Git tag such as `pack-core-v0.27.0`;
+1. a Git tag such as `pack-core-v0.28.0`;
 2. an immutable GitHub Release asset such as
-   `agents-pack-core-0.27.0.pack`; and
+   `agents-pack-core-0.28.0.pack`; and
 3. a small static registry document that identifies the current official
    version and its asset URL.
 
@@ -125,7 +125,7 @@ Before merging, build the exact proposed release locally:
 bun run check
 bun run pack:build \
   --registry registry/v1/index.json \
-  --tag pack-core-v0.27.0
+  --tag pack-core-v0.28.0
 ```
 
 After the pull request is merged, tag the merge commit:
@@ -133,8 +133,8 @@ After the pull request is merged, tag the merge commit:
 ```text
 git switch main
 git pull --ff-only
-git tag pack-core-v0.27.0
-git push origin pack-core-v0.27.0
+git tag pack-core-v0.28.0
+git push origin pack-core-v0.28.0
 ```
 
 The tag-triggered workflow:

@@ -15,6 +15,7 @@ export const COMMAND_NAMES = [
 	"unpin",
 	"rollback",
 	"eject",
+	"mcp",
 ] as const;
 
 export type CommandName = (typeof COMMAND_NAMES)[number];
@@ -85,6 +86,23 @@ export interface SyncArguments {
 	yes: boolean;
 	dryRun: boolean;
 }
+
+export type McpArguments =
+	| {
+			action: "add";
+			name: string;
+			url: string;
+			agents: ("claude" | "codex" | "cursor")[];
+			yes: boolean;
+			dryRun: boolean;
+	  }
+	| { action: "status"; name?: string }
+	| {
+			action: "remove";
+			name: string;
+			yes: boolean;
+			dryRun: boolean;
+	  };
 
 export function parseArguments(argv: string[]): ParsedArguments {
 	const [first, ...rest] = argv;
@@ -402,6 +420,98 @@ export function parseSyncArguments(args: readonly string[]): SyncArguments {
 	}
 
 	return parsed;
+}
+
+export function parseMcpArguments(args: readonly string[]): McpArguments {
+	const [action, ...rest] = args;
+
+	if (action !== "add" && action !== "status" && action !== "remove") {
+		throw usage("mcp requires an add, status, or remove subcommand.");
+	}
+
+	if (action === "status") {
+		if (rest.length > 1 || rest[0]?.startsWith("--")) {
+			throw usage("mcp status accepts at most one server name.");
+		}
+
+		return rest[0] === undefined
+			? { action: "status" }
+			: { action: "status", name: rest[0] };
+	}
+
+	let name = "";
+	let url: string | undefined;
+	let agents: ("claude" | "codex" | "cursor")[] | undefined;
+	let yes = false;
+	let dryRun = false;
+
+	for (let index = 0; index < rest.length; index += 1) {
+		const argument = rest[index];
+
+		switch (argument) {
+			case "--url":
+				if (action !== "add") {
+					throw usage("--url is valid only for mcp add.");
+				}
+				if (url !== undefined) {
+					throw usage("--url may be provided only once.");
+				}
+				url = requireOptionValue(rest, index, "--url");
+				index += 1;
+				break;
+			case "--agents":
+				if (action !== "add") {
+					throw usage("--agents is valid only for mcp add.");
+				}
+				if (agents !== undefined) {
+					throw usage("--agents may be provided only once.");
+				}
+				agents = parseAgents(requireOptionValue(rest, index, "--agents"));
+				index += 1;
+				break;
+			case "--yes":
+				if (yes) {
+					throw usage("--yes may be provided only once.");
+				}
+				yes = true;
+				break;
+			case "--dry-run":
+				if (dryRun) {
+					throw usage("--dry-run may be provided only once.");
+				}
+				dryRun = true;
+				break;
+			default:
+				if (argument?.startsWith("--")) {
+					throw usage(`Unknown mcp ${action} option: ${argument}`);
+				}
+				if (name.length > 0) {
+					throw usage(`mcp ${action} accepts exactly one server name.`);
+				}
+				name = argument ?? "";
+		}
+	}
+
+	if (name.length === 0) {
+		throw usage(`mcp ${action} requires a server name.`);
+	}
+
+	if (action === "add") {
+		if (url === undefined) {
+			throw usage("mcp add requires --url.");
+		}
+
+		return {
+			action,
+			name,
+			url,
+			agents: agents ?? ["claude", "codex", "cursor"],
+			yes,
+			dryRun,
+		};
+	}
+
+	return { action, name, yes, dryRun };
 }
 
 export function parseUpdateArguments(args: readonly string[]): UpdateArguments {

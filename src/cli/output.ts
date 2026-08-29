@@ -15,6 +15,7 @@ const COMMAND_SUMMARIES: Record<CommandName, string> = {
 	unpin: "Allow forward content-pack updates again.",
 	rollback: "Restore an older pack version from the local cache.",
 	eject: "Remove managed Agents Pack content safely.",
+	mcp: "Manage user-level MCP servers across coding agents.",
 };
 
 export function generalHelp(): string {
@@ -38,6 +39,7 @@ Commands:
   unpin     ${COMMAND_SUMMARIES.unpin}
   rollback  ${COMMAND_SUMMARIES.rollback}
   eject     ${COMMAND_SUMMARIES.eject}
+  mcp       ${COMMAND_SUMMARIES.mcp}
 
 Run agents-pack <command> --help for command-specific help.
 `;
@@ -210,6 +212,29 @@ ${COMMAND_SUMMARIES.eject}
 Options:
   --yes      Apply without an interactive confirmation.
   --dry-run  Print the removal plan without writing.
+`;
+	}
+
+	if (command === "mcp") {
+		return `Agents Pack: mcp
+
+Usage:
+  agents-pack mcp add <name> --url <http-url> [--agents <list>] [--yes] [--dry-run]
+  agents-pack mcp status [name]
+  agents-pack mcp remove <name> [--yes] [--dry-run]
+
+${COMMAND_SUMMARIES.mcp}
+
+This command manages machine-level configuration independently of init. The
+first release supports remote Streamable HTTP servers. OAuth login remains a
+separate provider-specific step.
+
+Options:
+  --url <url>      Remote http or https MCP endpoint.
+  --agents <list>  Comma-separated claude,codex,cursor selection, or all.
+                   Defaults to all.
+  --yes            Apply without an interactive confirmation.
+  --dry-run        Print the plan without writing.
 `;
 	}
 

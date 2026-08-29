@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.27.0");
+		expect(corePack.manifest.version).toBe("0.28.0");
 		expect(rendered.outputs.map((output) => output.path)).toEqual([
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
@@ -88,6 +88,8 @@ describe("renderPack", () => {
 			".claude/agents/ap-ux-enhancer.md",
 			".claude/agents/ap-ux-researcher.md",
 			".claude/rules/agents-pack/ap-core-instructions.md",
+			".claude/skills/ap-add-mcp/SKILL.md",
+			".claude/skills/ap-add-mcp/agents/openai.yaml",
 			".claude/skills/ap-audit-geo/SKILL.md",
 			".claude/skills/ap-audit-geo/references/geo-audit-checklist.md",
 			".claude/skills/ap-audit-seo/SKILL.md",
@@ -223,13 +225,22 @@ describe("renderPack", () => {
 		const rendered = renderPack(
 			corePack,
 			"repository",
-			["claude"],
+			["claude", "codex", "cursor"],
 			["ap-core-instructions"],
 		);
 		const paths = rendered.outputs.map((output) => output.path);
+		const cursorOnlyPaths = renderPack(
+			corePack,
+			"repository",
+			["cursor"],
+			["ap-core-instructions"],
+		).outputs.map((output) => output.path);
 
 		expect(paths).toContain(".claude/skills/ap-manage-agents-pack/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-create-new-skill/SKILL.md");
+		expect(paths).toContain(".claude/skills/ap-add-mcp/SKILL.md");
+		expect(paths).toContain(".agents/skills/ap-add-mcp/SKILL.md");
+		expect(cursorOnlyPaths).toContain(".cursor/skills/ap-add-mcp/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-recall-memory/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-save-memory/SKILL.md");
 		expect(paths).toContain(".claude/skills/ap-maintain-memory/SKILL.md");
@@ -239,6 +250,7 @@ describe("renderPack", () => {
 					[
 						"ap-manage-agents-pack",
 						"ap-create-new-skill",
+						"ap-add-mcp",
 						"ap-recall-memory",
 						"ap-save-memory",
 						"ap-maintain-memory",

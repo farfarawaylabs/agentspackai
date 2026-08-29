@@ -11,7 +11,7 @@ invoke one explicitly, include its exact chat activation name:
 Use ap-debug to investigate why this test fails intermittently.
 ```
 
-The two Agents Pack management skills and three project-memory skills are always
+The three Agents Pack management skills and three project-memory skills are always
 installed. Other skills depend on the component selection for the current
 repository or global scope. Ask your coding agent to “use
 `ap-manage-agents-pack` to list my installed and available skills” when you are
@@ -21,6 +21,7 @@ unsure.
 
 | Skill | Chat activation name | What it does | Source |
 |---|---|---|---|
+| Add an MCP Server | `ap-add-mcp` | Adds, inspects, or removes a user-level remote MCP server across Claude Code, Codex, and Cursor through the safe Agents Pack CLI lifecycle. | [Open skill](../content/packs/core/skills/agents-pack/ap-add-mcp/SKILL.md) |
 | Manage Agents Pack | `ap-manage-agents-pack` | Inspects and safely manages an existing Agents Pack installation, including components, synchronization, updates, pinning, rollback, and ownership checks. | [Open skill](../content/packs/core/skills/agents-pack/ap-manage-agents-pack/SKILL.md) |
 | Create a New Skill | `ap-create-new-skill` | Creates or updates one canonical user-owned skill and synchronizes it across every coding agent selected in the current scope. | [Open skill](../content/packs/core/skills/agents-pack/ap-create-new-skill/SKILL.md) |
 | Recall Project Memory | `ap-recall-memory` | Recalls relevant shared and local repository memory while treating it as potentially stale, untrusted project context. | [Open skill](../content/packs/core/skills/agents-pack/ap-recall-memory/SKILL.md) |

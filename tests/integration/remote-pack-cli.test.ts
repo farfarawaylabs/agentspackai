@@ -32,10 +32,10 @@ describe("remote official packs", () => {
 		const versionOne = await loadPack(CORE_PACK);
 		const versionTwo = await loadPack(nextPackRoot);
 		const artifacts = new Map([
-			["0.27.0", serializePackArtifact(versionOne, { kind: "official" })],
-			["0.28.0", serializePackArtifact(versionTwo, { kind: "official" })],
+			["0.28.0", serializePackArtifact(versionOne, { kind: "official" })],
+			["0.29.0", serializePackArtifact(versionTwo, { kind: "official" })],
 		]);
-		let latest = "0.27.0";
+		let latest = "0.28.0";
 		let baseUrl = "";
 		const server = Bun.serve({
 			hostname: "127.0.0.1",
@@ -88,21 +88,21 @@ describe("remote official packs", () => {
 		]);
 
 		expect(initialized.exitCode).toBe(0);
-		expect(initialized.stdout).toContain("agents-pack-core@0.27.0");
+		expect(initialized.stdout).toContain("agents-pack-core@0.28.0");
 		expect((await loadScopeConfig(environment.configPath)).pack.source).toBe(
 			"official",
 		);
 
-		latest = "0.28.0";
+		latest = "0.29.0";
 		const checked = await runCli(environment, ["update", "--check"]);
 		expect(checked.exitCode).toBe(0);
-		expect(checked.stdout).toContain("Candidate: agents-pack-core@0.28.0");
+		expect(checked.stdout).toContain("Candidate: agents-pack-core@0.29.0");
 		expect(checked.stdout).toContain("Status: Update available.");
 
 		const updated = await runCli(environment, ["update", "--yes"]);
 		expect(updated.exitCode).toBe(0);
 		expect((await loadLockFile(environment.lockPath)).pack.version).toBe(
-			"0.28.0",
+			"0.29.0",
 		);
 	});
 
@@ -154,11 +154,11 @@ async function createNextCorePack(): Promise<string> {
 	const manifest = await readFile(manifestPath, "utf8");
 	await writeFile(
 		manifestPath,
-		manifest.replace('version = "0.27.0"', 'version = "0.28.0"'),
+		manifest.replace('version = "0.28.0"', 'version = "0.29.0"'),
 	);
 	await writeFile(
 		join(directory, "RELEASE_NOTES.md"),
-		"# Agents Pack Core 0.28.0\n\n- Test remote update.\n",
+		"# Agents Pack Core 0.29.0\n\n- Test remote update.\n",
 	);
 	return directory;
 }

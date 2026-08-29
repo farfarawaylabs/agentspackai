@@ -20,6 +20,7 @@ the same logical component across content revisions.
 ```text
 packs/core/skills/
 ├── agents-pack/
+│   ├── ap-add-mcp/
 │   ├── ap-create-new-skill/
 │   ├── ap-manage-agents-pack/
 │   ├── ap-maintain-memory/
@@ -102,9 +103,10 @@ expresses only portable intent such as read-only access and reasoning effort.
 The current core pack contains:
 
 - durable cross-agent project instructions;
-- required `ap-manage-agents-pack` and `ap-create-new-skill` workflows for
-  safely managing Agents Pack and creating one canonical portable skill from
-  inside a coding-agent conversation;
+- required `ap-manage-agents-pack`, `ap-create-new-skill`, and `ap-add-mcp`
+  workflows for safely managing Agents Pack, creating one canonical portable
+  skill, and configuring remote MCP servers across coding agents from inside a
+  coding-agent conversation;
 - required `ap-recall-memory` and `ap-save-memory` workflows for automatically
   using repository-owned shared and project-local memory through ordinary
   Markdown and filesystem tools, plus the explicitly invoked
