@@ -51,6 +51,14 @@ unsure.
 | Prepare a Context Handoff | `ap-clear-dev-context` | Produces a detailed, paste-ready handoff before conversation context is cleared or a development session is restarted. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-clear-dev-context/SKILL.md) |
 | Continue a Development Session | `ap-continue-dev-session` | Rebuilds and reconciles context from a prior handoff before safely resuming development work. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-continue-dev-session/SKILL.md) |
 | Review a Plan | `ap-review-plan` | Challenges a development plan through repository-grounded review and an independent subagent review when available. | [Open skill](../content/packs/core/skills/engineering/workflows/planning/ap-review-plan/SKILL.md) |
+| Subagent-Driven Development | `ap-subagent-driven-development` | Explicitly executes a prepared plan through fresh task implementers, local task commits, independent review and repair loops, and final whole-branch review. | [Open skill](../content/packs/core/skills/engineering/workflows/execution/ap-subagent-driven-development/SKILL.md) |
+
+Subagent-Driven Development is configured and instructed for explicit-only
+use. Invoke it deliberately with a prepared plan, for example:
+
+```text
+Use ap-subagent-driven-development to execute docs/plans/feature.md.
+```
 
 ## Marketing and growth
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Subagent-Driven Development"
+  short_description: "Execute plans with implementer-review loops"
+  default_prompt: "Use $ap-subagent-driven-development to execute my implementation plan with fresh implementers and independent reviews."
+policy:
+  allow_implicit_invocation: false

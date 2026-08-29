@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.29.0");
+		expect(corePack.manifest.version).toBe("0.30.0");
 		const outputPaths = rendered.outputs.map((output) => output.path);
 		const reactOutputPaths = outputPaths.filter((path) =>
 			path.startsWith(".claude/skills/ap-react-"),
@@ -150,6 +150,16 @@ describe("renderPack", () => {
 			".claude/skills/ap-security-audit/references/audit-surfaces.md",
 			".claude/skills/ap-security-audit/references/finding-validation-and-reporting.md",
 			".claude/skills/ap-start-dev-session/SKILL.md",
+			".claude/skills/ap-subagent-driven-development/LICENSE.md",
+			".claude/skills/ap-subagent-driven-development/SKILL.md",
+			".claude/skills/ap-subagent-driven-development/agents/openai.yaml",
+			".claude/skills/ap-subagent-driven-development/final-reviewer-prompt.md",
+			".claude/skills/ap-subagent-driven-development/implementer-prompt.md",
+			".claude/skills/ap-subagent-driven-development/re-review-prompt.md",
+			".claude/skills/ap-subagent-driven-development/scripts/review-package",
+			".claude/skills/ap-subagent-driven-development/scripts/sdd-workspace",
+			".claude/skills/ap-subagent-driven-development/scripts/task-brief",
+			".claude/skills/ap-subagent-driven-development/task-reviewer-prompt.md",
 			".claude/skills/ap-test-web-app/SKILL.md",
 			".claude/skills/ap-validate-trust-boundaries/SKILL.md",
 			".claude/skills/ap-validate-trust-boundaries/references/files-text-and-structured-input.md",
@@ -252,11 +262,12 @@ describe("renderPack", () => {
 		).not.toContain("ap-maintain-memory");
 	});
 
-	test("renders optional React skills only when selected for every provider", () => {
+	test("renders optional skills only when selected for every provider", () => {
 		const selected = [
 			"ap-core-instructions",
 			"ap-react-best-practices",
 			"ap-react-composition-patterns",
+			"ap-subagent-driven-development",
 		];
 		const recommended = corePack.manifest.components
 			.filter((component) => component.selection !== "optional")
@@ -283,12 +294,22 @@ describe("renderPack", () => {
 			for (const name of [
 				"ap-react-best-practices",
 				"ap-react-composition-patterns",
+				"ap-subagent-driven-development",
 			]) {
 				expect(paths).toContain(`${root}/skills/${name}/SKILL.md`);
 				expect(recommendedPaths).not.toContain(
 					`${root}/skills/${name}/SKILL.md`,
 				);
 			}
+
+			const policyPath = `${root}/skills/ap-subagent-driven-development/agents/openai.yaml`;
+			expect(paths).toContain(policyPath);
+			expect(
+				decodeOutput(
+					renderPack(corePack, "repository", [target], selected).outputs,
+					policyPath,
+				),
+			).toContain("allow_implicit_invocation: false");
 		}
 	});
 
@@ -374,6 +395,10 @@ describe("renderPack", () => {
 			[
 				"ap-start-dev-session",
 				"skills/engineering/workflows/session/ap-start-dev-session",
+			],
+			[
+				"ap-subagent-driven-development",
+				"skills/engineering/workflows/execution/ap-subagent-driven-development",
 			],
 			["ap-test-web-app", "skills/engineering/testing/ap-test-web-app"],
 		]) {

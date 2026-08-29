@@ -56,7 +56,7 @@ once, then synchronize them across every selected agent.
 - Repository-wide or global installation.
 - Standalone macOS and Linux executables with a checksum-verifying installer.
 - Interactive selection of agents and components.
-- One core instruction set, 30 portable skills, and six native subagents.
+- One core instruction set, 31 portable skills, and six native subagents.
 - Automatic recall and capture of repository-owned memory across supported
   coding agents, plus user-invoked maintenance.
 - Provider-specific rendering for Claude Code, Codex, and Cursor.

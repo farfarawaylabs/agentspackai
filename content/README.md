@@ -51,6 +51,8 @@ packs/core/skills/
 │   └── workflows/
 │       ├── debugging/
 │       │   └── ap-debug/
+│       ├── execution/
+│       │   └── ap-subagent-driven-development/
 │       ├── planning/
 │       │   └── ap-review-plan/
 │       └── session/
@@ -132,6 +134,11 @@ The current core pack contains:
 - `ap-debug`, including reproducible evidence collection, execution-path
   tracing, competing hypotheses, discriminating experiments, root-cause fixes,
   regression tests, and explicit reassessment after repeated failed attempts;
+- `ap-subagent-driven-development`, an optional workflow configured and
+  instructed for explicit invocation, adapted from Superpowers for executing
+  prepared plans through sequential task implementers, local task commits,
+  independent task reviews, five-round repair breakers, a durable run ledger,
+  and final whole-branch review;
 - `ap-test-web-app`, including focused, change-aware, smoke, and broad browser
   QA; real user flows; state, console, and network evidence; reproducible
   findings; authorized fixes; and honest coverage limits;
@@ -204,7 +211,8 @@ The current core pack contains:
 
 Claude Code exposes the portable action skills as slash commands, including
 `/ap-start-dev-session`, `/ap-clear-dev-context`, `/ap-continue-dev-session`,
-`/ap-create-prd`, `/ap-review-plan`, `/ap-debug`, `/ap-test-web-app`,
+`/ap-create-prd`, `/ap-review-plan`, `/ap-subagent-driven-development`,
+`/ap-debug`, `/ap-test-web-app`,
 `/ap-security-audit`, `/ap-audit-seo`, `/ap-audit-geo`,
 `/ap-compress-todos`, `/ap-refresh-repo-docs`, and
 `/ap-run-market-research`, `/ap-manage-agents-pack`, and

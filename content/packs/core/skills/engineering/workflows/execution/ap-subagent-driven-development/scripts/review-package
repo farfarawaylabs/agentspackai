@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Write commits, a stat, and an extended-context diff for an exact commit range.
+# Usage: bash review-package PLAN_FILE BASE HEAD [OUTFILE]
+set -euo pipefail
+
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
+  echo "usage: review-package PLAN_FILE BASE HEAD [OUTFILE]" >&2
+  exit 2
+fi
+
+plan=$1
+base=$2
+head=$3
+if [ ! -f "$plan" ]; then
+  echo "no such plan file: $plan" >&2
+  exit 2
+fi
+
+base_commit=$(git rev-parse --verify "${base}^{commit}" 2>/dev/null) || {
+  echo "invalid BASE commit: $base" >&2
+  exit 2
+}
+head_commit=$(git rev-parse --verify "${head}^{commit}" 2>/dev/null) || {
+  echo "invalid HEAD commit: $head" >&2
+  exit 2
+}
+
+if [ "$base_commit" = "$head_commit" ]; then
+  echo "review range contains no commits: $base..$head" >&2
+  exit 3
+fi
+
+if ! git merge-base --is-ancestor "$base_commit" "$head_commit"; then
+  echo "BASE is not an ancestor of HEAD: $base..$head" >&2
+  exit 3
+fi
+
+script_dir=$(cd "$(dirname "$0")" && pwd -P)
+if [ "$#" -eq 4 ]; then
+  out=$4
+else
+  workspace=$(bash "$script_dir/sdd-workspace" "$plan")
+  base_short=$(git rev-parse --short "$base_commit")
+  head_short=$(git rev-parse --short "$head_commit")
+  out="$workspace/review-${base_short}..${head_short}.diff"
+fi
+
+mkdir -p "$(dirname "$out")"
+
+{
+  echo "# Review package: ${base_commit}..${head_commit}"
+  echo
+  echo "## Commits"
+  git log --oneline "${base_commit}..${head_commit}"
+  echo
+  echo "## Files changed"
+  git diff --stat "${base_commit}..${head_commit}"
+  echo
+  echo "## Diff"
+  git diff -U10 "${base_commit}..${head_commit}"
+} > "$out"
+
+commits=$(git rev-list --count "${base_commit}..${head_commit}")
+bytes=$(wc -c < "$out" | tr -d ' ')
+echo "wrote $out: $commits commit(s), $bytes bytes"

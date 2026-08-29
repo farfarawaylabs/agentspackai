@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Extract one numbered task from a Markdown implementation plan.
+# Usage: bash task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
+set -euo pipefail
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+  echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  exit 2
+fi
+
+plan=$1
+task_number=$2
+if [ ! -f "$plan" ]; then
+  echo "no such plan file: $plan" >&2
+  exit 2
+fi
+
+case "$task_number" in
+  ''|*[!0-9]*)
+    echo "TASK_NUMBER must contain only digits: $task_number" >&2
+    exit 2
+    ;;
+esac
+
+script_dir=$(cd "$(dirname "$0")" && pwd -P)
+if [ "$#" -eq 3 ]; then
+  out=$3
+else
+  workspace=$(bash "$script_dir/sdd-workspace" "$plan")
+  out="$workspace/task-${task_number}-brief.md"
+fi
+
+mkdir -p "$(dirname "$out")"
+
+awk -v n="$task_number" '
+  function heading_level(line, marks) {
+    marks = line
+    sub(/[^#].*$/, "", marks)
+    return length(marks)
+  }
+
+  function is_heading(line) {
+    return line ~ /^#+[ \t]+/
+  }
+
+  function is_task_heading(line) {
+    return line ~ /^#+[ \t]+Task[ \t]+[0-9]+([ \t:]|[.][ \t]|$)/
+  }
+
+  /^[ \t]*```/ || /^[ \t]*~~~/ {
+    if (intask) print
+    infence = !infence
+    next
+  }
+
+  !infence && is_heading($0) {
+    level = heading_level($0)
+    exact = ($0 ~ ("^#+[ \t]+Task[ \t]+" n "([ \t:]|[.][ \t]|$)"))
+
+    if (!intask && exact) {
+      intask = 1
+      tasklevel = level
+      print
+      next
+    }
+
+    if (intask && (is_task_heading($0) || level <= tasklevel)) {
+      exit
+    }
+  }
+
+  intask { print }
+' "$plan" > "$out"
+
+if [ ! -s "$out" ]; then
+  echo "task $task_number not found in $plan (expected a heading such as '## Task $task_number')" >&2
+  exit 3
+fi
+
+lines=$(wc -l < "$out" | tr -d ' ')
+echo "wrote $out: $lines lines"

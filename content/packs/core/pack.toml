@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.29.0"
+version = "0.30.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -282,6 +282,16 @@ summary = "Challenge a plan for mistakes, omissions, assumptions, risks, and sim
 category = "engineering/workflows"
 selection = "recommended"
 source = "skills/engineering/workflows/planning/ap-review-plan"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-subagent-driven-development"
+kind = "skill"
+title = "Run subagent-driven development"
+summary = "Execute an implementation plan through fresh task implementers, independent reviews, repair loops, and a final branch review."
+category = "engineering/workflows"
+selection = "optional"
+source = "skills/engineering/workflows/execution/ap-subagent-driven-development"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]

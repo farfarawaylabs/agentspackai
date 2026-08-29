@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Print and create the gitignored run workspace for one plan revision.
+# Usage: bash sdd-workspace PLAN_FILE
+set -euo pipefail
+
+if [ "$#" -ne 1 ]; then
+  echo "usage: sdd-workspace PLAN_FILE" >&2
+  exit 2
+fi
+
+plan=$1
+if [ ! -f "$plan" ]; then
+  echo "no such plan file: $plan" >&2
+  exit 2
+fi
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "current directory is not inside a Git worktree" >&2
+  exit 2
+}
+root=$(cd "$root" && pwd -P)
+
+plan_dir=$(cd "$(dirname "$plan")" && pwd -P)
+plan_abs="$plan_dir/$(basename "$plan")"
+slug=$(basename "$plan_abs")
+slug=${slug%.md}
+slug=$(printf '%s' "$slug" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g; s/--*/-/g; s/^-//; s/-$//')
+if [ -z "$slug" ] || [ "$slug" = "." ] || [ "$slug" = ".." ]; then
+  slug=plan
+fi
+
+path_hash=$(printf '%s' "$plan_abs" | git hash-object --stdin)
+content_hash=$(git hash-object --no-filters "$plan_abs")
+run_id="${slug}-${path_hash:0:12}-${content_hash:0:12}"
+agents_dir="$root/.agents-pack"
+runs_dir="$agents_dir/runs"
+base="$runs_dir/subagent-development"
+workspace="$base/$run_id"
+
+reject_symlink() {
+  if [ -L "$1" ]; then
+    echo "refusing symlinked workspace path: $1" >&2
+    exit 3
+  fi
+}
+
+for path in "$agents_dir" "$runs_dir" "$base" "$workspace"; do
+  reject_symlink "$path"
+done
+
+mkdir -p "$base"
+
+# Recheck after creation and require the physical directory to be exactly the
+# repository-local path. This prevents an existing ancestor link from routing
+# run state outside the active worktree.
+for path in "$agents_dir" "$runs_dir" "$base"; do
+  reject_symlink "$path"
+done
+base_resolved=$(cd "$base" && pwd -P)
+if [ "$base_resolved" != "$base" ]; then
+  echo "workspace root resolves outside the repository-local path: $base" >&2
+  exit 3
+fi
+
+ignore_file="$base/.gitignore"
+if [ -L "$ignore_file" ]; then
+  echo "refusing symlinked workspace ignore file: $ignore_file" >&2
+  exit 3
+elif [ -e "$ignore_file" ]; then
+  if [ ! -f "$ignore_file" ]; then
+    echo "workspace ignore path is not a regular file: $ignore_file" >&2
+    exit 3
+  fi
+  if [ "$(cat "$ignore_file")" != "*" ]; then
+    echo "refusing to overwrite existing workspace ignore file: $ignore_file" >&2
+    exit 3
+  fi
+else
+  printf '*\n' > "$ignore_file"
+fi
+
+reject_symlink "$workspace"
+mkdir -p "$workspace"
+reject_symlink "$workspace"
+workspace_resolved=$(cd "$workspace" && pwd -P)
+if [ "$workspace_resolved" != "$workspace" ]; then
+  echo "workspace resolves outside its repository-local path: $workspace" >&2
+  exit 3
+fi
+
+printf '%s\n' "$workspace_resolved"
