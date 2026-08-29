@@ -1,8 +1,18 @@
 {
 	"schema_version": 1,
-	"latest": "0.1.1",
+	"latest": "0.2.0",
 	"tag_prefix": "cli-v",
 	"versions": {
+		"0.2.0": {
+			"base_url": "https://github.com/farfarawaylabs/agentspackai/releases/download/cli-v0.2.0",
+			"checksums": "agents-pack-0.2.0-checksums.txt",
+			"assets": {
+				"darwin-arm64": "agents-pack-0.2.0-darwin-arm64.tar.gz",
+				"darwin-x64": "agents-pack-0.2.0-darwin-x64.tar.gz",
+				"linux-arm64": "agents-pack-0.2.0-linux-arm64.tar.gz",
+				"linux-x64": "agents-pack-0.2.0-linux-x64.tar.gz"
+			}
+		},
 		"0.1.1": {
 			"base_url": "https://github.com/farfarawaylabs/agentspackai/releases/download/cli-v0.1.1",
 			"checksums": "agents-pack-0.1.1-checksums.txt",

@@ -1,9 +1,12 @@
-# Agents Pack CLI 0.1.1
+# Agents Pack CLI 0.2.0
 
-- Add arrow-key menus for interactive scope and component selection.
-- Add Space-to-toggle multi-select menus for agents and custom components.
-- Make repository scope, compatible agents, and recommended components visible
-  defaults.
-- Prevent incompatible global Cursor selection in the interactive flow.
-- Accept `--agents all` in non-interactive commands.
-- Handle interactive cancellation cleanly without reporting a usage error.
+- Add `agents-pack mcp add`, `status`, and `remove` for managing user-level
+  remote MCP servers across Claude Code, Codex, and Cursor.
+- Default MCP operations to all three providers while allowing explicit
+  provider selection.
+- Add dry-run previews, ownership and drift protection, operation locking,
+  interrupted-transaction recovery, and rollback across provider changes.
+- Refuse unmanaged provider entries instead of silently adopting or
+  overwriting them.
+- Document provider-specific authentication boundaries and the remote HTTP
+  transport supported by this first release.
