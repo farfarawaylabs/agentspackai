@@ -202,3 +202,16 @@ rm "$HOME/.local/bin/agents-pack"
 
 This does not remove managed instructions, skills, subagents, or lifecycle
 state. Use `agents-pack eject` first when those should also be removed.
+
+### Coordinating CLI and Core releases
+
+Both workflows check the public URLs for the latest CLI archives, checksums,
+and pack artifacts before publishing the shared Pages registry. If a latest
+asset returns 404, the publication job defers without replacing the live
+registry. The next release workflow checks again and publishes once both
+release lines are available. Other HTTP or network failures fail the job.
+
+When preparing both releases in one commit, tag that merge commit for both
+release lines. Verify both releases and the public registry after both workflows
+finish. If publication was deferred because of asset propagation, rerun the
+publication job after all artifacts are public.

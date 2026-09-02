@@ -242,9 +242,14 @@ Agents Pack asks you to choose:
 - Claude Code, Codex, Cursor, or a supported combination; and
 - Recommended, All, or a custom component selection.
 
+Recommended includes an additional step to add optional categories or individual
+components. Custom lets you select categories or individual components from the
+full compatible catalog. These menus include skills, subagents, and instructions.
+Use the arrow keys to move, Space to toggle, and Enter to continue. Leave the
+optional selection empty to keep only the Recommended set.
+
 It shows the exact selected components and filesystem plan before applying
-anything. Pressing Enter at the confirmation prompt does not apply the plan;
-you must answer `y` or `yes`.
+anything. The confirmation defaults to No; select Yes to apply the plan.
 
 ### Non-interactive setup
 
@@ -593,6 +598,11 @@ The core pack labels components as required, recommended, or optional.
 Installs every required and currently recommended component. This is the best
 starting point for most users.
 
+Choosing Recommended in the interactive menu also offers optional categories
+and individual components. None are preselected. Passing
+`--components recommended` explicitly skips that menu and installs only the
+baseline set.
+
 ### All
 
 ```text
@@ -616,12 +626,13 @@ Required components are added automatically even if you do not list them.
 
 ### Custom interactive selection
 
-Choose `custom` during interactive initialization. The menu starts with the
-Recommended set selected. Enter a component ID or category to toggle it, then
-enter `done`.
+Choose Custom during interactive initialization. The menu groups compatible
+skills, subagents, and instructions by category, with recommended components
+preselected. Use the arrow keys to move and Space to toggle a whole category or
+an individual component. Press Enter to accept the selection.
 
-Required components stay selected. The menu shows each component’s category,
-selection level, and short description.
+Required components are always included outside the editable selection. Each
+component shows its type, ID, selection level, and short description.
 
 Your final component IDs are stored explicitly. If a component later changes
 from optional to recommended, it is not automatically added to an existing
@@ -834,8 +845,9 @@ reports:
 
 - installed and candidate versions;
 - whether an update is available;
-- current pin state; and
-- candidate release notes.
+- current pin state;
+- candidate release notes; and
+- newly introduced components compatible with your selected agents.
 
 It does not cache or apply the candidate.
 
@@ -853,6 +865,12 @@ Interactively:
 agents-pack update
 ```
 
+For a newer pack, the menu offers newly introduced skills, subagents, and
+instructions, grouped by category. Select a whole category or individual
+components, or leave the selection empty to skip them. Review the combined
+update and additions before confirming. Required components are added
+automatically.
+
 Non-interactively:
 
 ```sh
@@ -860,8 +878,27 @@ agents-pack update --yes
 ```
 
 Agents Pack preserves your explicit component selection. New optional or
-recommended components become available but are not silently installed.
-User-owned canonical content is not part of the official update.
+recommended components are added only when you select them. `--yes` skips the
+selection menu and keeps your existing choices, including previously declined
+components. User-owned canonical content is not part of the official update.
+
+To choose additions explicitly, including in scripts or dry runs:
+
+```sh
+agents-pack update --add ap-design-studio,ap-design-critic --dry-run
+agents-pack update --add ap-design-studio,ap-design-critic --yes
+```
+
+`--add` accepts compatible component IDs from the candidate pack, including older
+components you did not previously select. It adds to your existing selection and
+skips the menu. The version update and selected additions apply together in one
+transaction. `--check` and `--dry-run` show new components without prompting.
+
+Discovery compares the candidate's full catalog with the cached installed pack,
+so previously declined components are not offered again as new. If that cache is
+missing or invalid, the CLI reports that it cannot identify new components and
+still permits the update. You can use `--add`, or use
+`agents-pack list --available` and `agents-pack install <id>` after updating.
 
 ### Update from a local candidate
 
@@ -873,7 +910,7 @@ agents-pack update --pack /path/to/new-local-pack --dry-run
 agents-pack update --pack /path/to/new-local-pack --yes
 ```
 
-`--check` cannot be combined with `--yes` or `--dry-run`.
+`--check` cannot be combined with `--yes`, `--dry-run`, or `--add`.
 
 ## Pin, unpin, and roll back
 
@@ -1086,11 +1123,12 @@ Requires at least one canonical user-owned component.
 
 ```text
 agents-pack update --check [--pack <local-directory>]
-agents-pack update [--pack <local-directory>] [--yes] [--dry-run]
+agents-pack update [--pack <local-directory>] [--add <id,id>] [--yes] [--dry-run]
 ```
 
 Official installations use the registry by default. Local installations
-require `--pack`.
+require `--pack`. Interactive updates offer new components; `--add` selects
+additions explicitly. Existing selections are preserved.
 
 ### `pin` and `unpin`
 

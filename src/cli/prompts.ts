@@ -1,6 +1,7 @@
 import {
 	cancel as cancelPrompt,
 	confirm,
+	groupMultiselect,
 	isCancel,
 	multiselect,
 	select,
@@ -13,7 +14,12 @@ import {
 	sortComponentsForDisplay,
 	type ComponentChoice,
 } from "../core/selection.ts";
-import type { AgentTarget, LoadedPack, Scope } from "../core/types.ts";
+import type {
+	AgentTarget,
+	LoadedPack,
+	PackComponent,
+	Scope,
+} from "../core/types.ts";
 import type { InitArguments } from "./arguments.ts";
 
 export async function promptForInitArguments(
@@ -91,7 +97,7 @@ export async function promptForComponentChoice(
 				{
 					value: "recommended",
 					label: "Recommended",
-					hint: "required and recommended components",
+					hint: "required and recommended, then choose optional categories",
 				},
 				{
 					value: "all",
@@ -101,15 +107,15 @@ export async function promptForComponentChoice(
 				{
 					value: "custom",
 					label: "Custom",
-					hint: "choose components individually",
+					hint: "choose categories or individual components",
 				},
 			],
 			initialValue: "recommended",
 		}),
 	);
 
-	if (mode !== "custom") {
-		return { kind: mode };
+	if (mode === "all") {
+		return { kind: "all" };
 	}
 
 	const required = new Set(
@@ -117,42 +123,73 @@ export async function promptForComponentChoice(
 			.filter((component) => component.selection === "required")
 			.map((component) => component.id),
 	);
+	const selectable = compatible.filter((component) =>
+		mode === "recommended"
+			? component.selection === "optional"
+			: component.selection !== "required",
+	);
 	const selected = new Set(
-		unwrapPrompt(
-			await multiselect<string>({
-				message: "Select components",
-				options: compatible.map((component) => {
-					const marker =
-						component.selection === "required"
-							? "required"
-							: recommended.has(component.id)
-								? "recommended"
-								: "optional";
-
-					return {
-						value: component.id,
-						label: component.id,
-						hint: `${marker} · ${formatCategory(component.category)} · ${component.summary}`,
-						disabled: required.has(component.id),
-					};
-				}),
-				initialValues: compatible
-					.filter(
-						(component) =>
-							recommended.has(component.id) && !required.has(component.id),
-					)
-					.map((component) => component.id),
-				required: false,
-			}),
+		await promptForGroupedComponents(
+			selectable,
+			mode === "recommended"
+				? "Add optional categories or components (leave empty to keep Recommended)"
+				: "Select categories or components (required components are always included)",
+			mode === "custom"
+				? selectable
+						.filter((component) => recommended.has(component.id))
+						.map((component) => component.id)
+				: [],
 		),
 	);
+	const included = mode === "recommended" ? recommended : required;
 
 	return {
 		kind: "explicit",
 		ids: compatible
 			.map((component) => component.id)
-			.filter((id) => required.has(id) || selected.has(id)),
+			.filter((id) => included.has(id) || selected.has(id)),
 	};
+}
+
+export async function promptForNewComponents(
+	components: readonly PackComponent[],
+): Promise<string[]> {
+	return promptForGroupedComponents(
+		components.filter((component) => component.selection !== "required"),
+		"Add new categories or components from this update (leave empty to skip)",
+		[],
+	);
+}
+
+async function promptForGroupedComponents(
+	components: readonly PackComponent[],
+	message: string,
+	initialValues: string[],
+): Promise<string[]> {
+	if (components.length === 0) return [];
+	const groups = new Map<
+		string,
+		{ value: string; label: string; hint: string }[]
+	>();
+	for (const component of sortComponentsForDisplay(components)) {
+		const label = formatCategory(component.category);
+		const options = groups.get(label) ?? [];
+		options.push({
+			value: component.id,
+			label: component.title,
+			hint: `${component.kind} · ${component.id} · ${component.selection} · ${component.summary}`,
+		});
+		groups.set(label, options);
+	}
+	return unwrapPrompt(
+		await groupMultiselect<string>({
+			message,
+			options: Object.fromEntries(groups),
+			initialValues,
+			selectableGroups: true,
+			required: false,
+		}),
+	);
 }
 
 export async function confirmApply(): Promise<boolean> {

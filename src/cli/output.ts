@@ -54,6 +54,10 @@ Usage:
 
 ${COMMAND_SUMMARIES.init}
 
+Without --components, interactive init offers Recommended, All, or Custom.
+Recommended lets you add optional categories; Custom selects categories or
+individual skills, subagents, and instructions. Required components stay included.
+
 Options:
   --scope <scope>  Install in repository or global scope.
   --agents <list>  Comma-separated claude,codex,cursor selection, or all.
@@ -111,13 +115,18 @@ Options:
 
 Usage:
   agents-pack update --check [--pack <path>]
-  agents-pack update [--pack <path>] [--yes] [--dry-run]
+  agents-pack update [--pack <path>] [--add <id,id>] [--yes] [--dry-run]
 
 ${COMMAND_SUMMARIES.update}
 
+Interactive updates offer newly added components by category or individually.
+Existing selections are preserved. --yes skips this picker and adds no optional
+components unless you request them with --add.
+
 Options:
   --pack <path>  Use a local candidate instead of the official registry.
-  --check        Show version and release information without writing.
+  --check        Show versions, release notes, and new components without writing.
+  --add <id,id>   Add these component IDs while updating; never removes selections.
   --yes          Apply without an interactive confirmation.
   --dry-run      Print the update plan without writing.
 `;

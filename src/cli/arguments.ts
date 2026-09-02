@@ -39,6 +39,7 @@ export interface InitArguments {
 
 export interface UpdateArguments {
 	packPath?: string;
+	addComponents?: string[];
 	check: boolean;
 	yes: boolean;
 	dryRun: boolean;
@@ -521,6 +522,23 @@ export function parseUpdateArguments(args: readonly string[]): UpdateArguments {
 		const argument = args[index];
 
 		switch (argument) {
+			case "--add": {
+				if (parsed.addComponents !== undefined) {
+					throw usage("--add may be provided only once.");
+				}
+				const ids = requireOptionValue(args, index, "--add").split(",");
+				if (
+					ids.some((id) => !/^[a-z0-9][a-z0-9-]*$/.test(id)) ||
+					new Set(ids).size !== ids.length
+				) {
+					throw usage(
+						"--add requires a comma-separated list of unique component IDs.",
+					);
+				}
+				parsed.addComponents = ids;
+				index += 1;
+				break;
+			}
 			case "--pack":
 				if (parsed.packPath !== undefined) {
 					throw usage("--pack may be provided only once.");
@@ -554,6 +572,9 @@ export function parseUpdateArguments(args: readonly string[]): UpdateArguments {
 
 	if (parsed.check && (parsed.yes || parsed.dryRun)) {
 		throw usage("--check cannot be combined with --yes or --dry-run.");
+	}
+	if (parsed.check && parsed.addComponents !== undefined) {
+		throw usage("--check cannot be combined with --add.");
 	}
 
 	return parsed;

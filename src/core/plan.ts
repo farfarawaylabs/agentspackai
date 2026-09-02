@@ -51,6 +51,7 @@ export interface InitPlanOptions {
 export interface UpdatePlanOptions {
 	pack: LoadedPack;
 	context: PathContext;
+	addComponents?: readonly string[];
 }
 
 export interface ComponentPlanOptions {
@@ -193,7 +194,7 @@ async function planForwardUpdate(
 		config,
 		lock,
 		paths,
-		config.components,
+		[...new Set([...config.components, ...(options.addComponents ?? [])])],
 		config.pack.pinnedVersion,
 	);
 }

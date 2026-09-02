@@ -18,7 +18,7 @@ describe("CLI help", () => {
 		const result = await runCli(["--version"]);
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stdout).toBe("agents-pack 0.2.0\n");
+		expect(result.stdout).toBe("agents-pack 0.3.0\n");
 		expect(result.stderr).toBe("");
 	});
 

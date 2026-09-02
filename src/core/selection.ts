@@ -94,6 +94,20 @@ export function isCompatible(
 	return component.targets.some((target) => targets.includes(target));
 }
 
+export function findNewComponents(
+	previous: PackManifest,
+	candidate: PackManifest,
+	targets: readonly AgentTarget[],
+): PackComponent[] {
+	const known = new Set(previous.components.map((component) => component.id));
+	return sortComponentsForDisplay(
+		candidate.components.filter(
+			(component) =>
+				!known.has(component.id) && isCompatible(component, targets),
+		),
+	);
+}
+
 export function sortComponentsForDisplay(
 	components: readonly PackComponent[],
 ): PackComponent[] {

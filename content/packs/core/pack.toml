@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.30.0"
+version = "0.31.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
