@@ -92,6 +92,7 @@ describe("renderPack", () => {
 			".claude/agents/ap-backend-python-developer.md",
 			".claude/agents/ap-backend-typescript-developer.md",
 			".claude/agents/ap-code-reviewer.md",
+			".claude/agents/ap-design-critic.md",
 			".claude/agents/ap-trend-researcher.md",
 			".claude/agents/ap-ux-enhancer.md",
 			".claude/agents/ap-ux-researcher.md",
@@ -114,6 +115,9 @@ describe("renderPack", () => {
 			".claude/skills/ap-design-data-models/references/document-and-distributed-modeling.md",
 			".claude/skills/ap-design-data-models/references/relational-modeling.md",
 			".claude/skills/ap-design-data-models/references/schema-evolution-and-governance.md",
+			".claude/skills/ap-design-polish/SKILL.md",
+			".claude/skills/ap-design-polish/references/ai-design-tells.md",
+			".claude/skills/ap-design-studio/SKILL.md",
 			".claude/skills/ap-develop-apis/SKILL.md",
 			".claude/skills/ap-develop-apis/references/api-consumer-artifacts.md",
 			".claude/skills/ap-develop-apis/references/http-contract-checklist.md",
@@ -124,12 +128,17 @@ describe("renderPack", () => {
 			".claude/skills/ap-develop-with-vercel-ai-sdk/references/migrate-observe-and-test.md",
 			".claude/skills/ap-develop-with-vercel-ai-sdk/references/tools-context-and-safety.md",
 			".claude/skills/ap-develop-with-vercel-ai-sdk/references/ui-streaming-and-persistence.md",
+			".claude/skills/ap-explore-design-directions/SKILL.md",
+			".claude/skills/ap-explore-design-directions/scripts/generate-seeds.mjs",
 			".claude/skills/ap-frontend-design/SKILL.md",
 			".claude/skills/ap-frontend-design/references/design-md.md",
 			".claude/skills/ap-frontend-review/SKILL.md",
 			".claude/skills/ap-frontend-review/references/review-checklist.md",
 			".claude/skills/ap-handle-errors-reliably/SKILL.md",
 			".claude/skills/ap-handle-errors-reliably/references/retries-timeouts-and-cleanup.md",
+			".claude/skills/ap-implement-new-design/SKILL.md",
+			".claude/skills/ap-implement-new-design/references/critic-prompt.md",
+			".claude/skills/ap-implement-new-design/references/static-html.md",
 			".claude/skills/ap-landing-page/SKILL.md",
 			".claude/skills/ap-landing-page/references/pre-publish-checklist.md",
 			".claude/skills/ap-landing-page/references/search-and-citation.md",
@@ -265,6 +274,10 @@ describe("renderPack", () => {
 	test("renders optional skills only when selected for every provider", () => {
 		const selected = [
 			"ap-core-instructions",
+			"ap-design-polish",
+			"ap-design-studio",
+			"ap-explore-design-directions",
+			"ap-implement-new-design",
 			"ap-react-best-practices",
 			"ap-react-composition-patterns",
 			"ap-subagent-driven-development",
@@ -292,6 +305,10 @@ describe("renderPack", () => {
 			).outputs.map((output) => output.path);
 
 			for (const name of [
+				"ap-design-polish",
+				"ap-design-studio",
+				"ap-explore-design-directions",
+				"ap-implement-new-design",
 				"ap-react-best-practices",
 				"ap-react-composition-patterns",
 				"ap-subagent-driven-development",
@@ -299,6 +316,23 @@ describe("renderPack", () => {
 				expect(paths).toContain(`${root}/skills/${name}/SKILL.md`);
 				expect(recommendedPaths).not.toContain(
 					`${root}/skills/${name}/SKILL.md`,
+				);
+			}
+
+			for (const reference of [
+				"ap-implement-new-design/references/critic-prompt.md",
+				"ap-implement-new-design/references/static-html.md",
+				"ap-design-polish/references/ai-design-tells.md",
+			]) {
+				expect(
+					requireOutput(
+						renderPack(corePack, "repository", [target], selected).outputs,
+						`${root}/skills/${reference}`,
+					).bytes,
+				).toEqual(
+					corePack.files.find(
+						(file) => file.path === `skills/design/${reference}`,
+					)?.bytes ?? new Uint8Array(),
 				);
 			}
 
@@ -376,6 +410,9 @@ describe("renderPack", () => {
 			],
 			["ap-create-prd", "skills/product/planning/ap-create-prd"],
 			["ap-debug", "skills/engineering/workflows/debugging/ap-debug"],
+			["ap-design-polish", "skills/design/ap-design-polish"],
+			["ap-design-studio", "skills/design/ap-design-studio"],
+			["ap-implement-new-design", "skills/design/ap-implement-new-design"],
 			[
 				"ap-refresh-repo-docs",
 				"skills/engineering/documentation/ap-refresh-repo-docs",
@@ -557,6 +594,7 @@ describe("Subagent rendering", () => {
 
 		for (const name of [
 			"ap-code-reviewer",
+			"ap-design-critic",
 			"ap-trend-researcher",
 			"ap-ux-researcher",
 		]) {

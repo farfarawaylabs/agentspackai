@@ -60,6 +60,108 @@ use. Invoke it deliberately with a prepared plan, for example:
 Use ap-subagent-driven-development to execute docs/plans/feature.md.
 ```
 
+## Design exploration, implementation, and polish
+
+| Skill | Chat activation name | What it does | Source |
+|---|---|---|---|
+| Design Studio | `ap-design-studio` | Guides exploration, building, fresh critique, polish, and verification into shareable static HTML concepts; integrates a selection into the actual product only when explicitly requested. | [Open skill](../content/packs/core/skills/design/ap-design-studio/SKILL.md) |
+| Explore Design Directions | `ap-explore-design-directions` | Generates three distinct direction briefs by default. Stops for the user's choice when used alone, or hands briefs to Studio for an already requested prototype batch. | [Open skill](../content/packs/core/skills/design/ap-explore-design-directions/SKILL.md) |
+| Implement a New Design | `ap-implement-new-design` | Builds a direction as a standalone HTML prototype or integrates it into an application, with bounded fresh visual critique and functional verification. | [Open skill](../content/packs/core/skills/design/ap-implement-new-design/SKILL.md) |
+| Polish a Design | `ap-design-polish` | Removes clutter, reduces generic visual treatments, and tightens craft while preserving the chosen identity and working behavior. Supports audit-only requests. | [Open skill](../content/packs/core/skills/design/ap-design-polish/SKILL.md) |
+
+Use Studio for the complete process:
+
+```text
+Use ap-design-studio to create four designs for our homepage. Keep our logo,
+use an editorial feel, and avoid dark backgrounds.
+```
+
+Studio builds three complete static HTML concepts by default, or the number
+you request in ordinary language. It carries your constraints through the
+specialist skills and presents the rendered options for selection. Add "show
+me the directions before building" for an earlier checkpoint, or "ideas only"
+to stop at written concepts. A request for four built concepts normally
+continues through all four without asking you to choose from descriptions.
+
+Each concept has its own directory with an HTML page, embedded styles/scripts,
+and any required bundled assets. It should open directly in a browser without
+the application, a backend, or package installation. Local interactions use
+clearly identified demo behavior. A gallery links to all concepts, and a ZIP
+keeps multi-file deliverables together for team sharing. Direct-file, offline,
+and copied-package verification limits are reported explicitly.
+
+Prototype work leaves application files and root `DESIGN.md` unchanged. Draft
+design notes belong with each concept. Saying "I love concept two" selects it;
+to change the actual product, ask explicitly:
+
+```text
+Take concept two, use concept one's typography, and implement it in our
+actual site.
+```
+
+Studio then uses the implementation skill's application mode to translate the
+selected design into the real framework, components, and behavior. It preserves
+the prototype files as references. Integration does not include deployment.
+
+By default, Studio permits an initial assessment, up to two critique-driven
+revision rounds, then one polish pass and a final assessment if appearance
+changed: at most four valid assessments per concept. User-specified limits
+apply to the full workflow, and explicit total budgets are not multiplied by
+the concept count. Stages and remaining budgets are retained across resumptions.
+
+Studio's supporting skills and `ap-design-critic` are optional components;
+installing Studio does not automatically install them. It identifies missing
+content and runtime capabilities rather than claiming unavailable stages ran.
+
+The individual skills remain useful for going through the steps manually:
+
+```text
+Use ap-explore-design-directions to suggest three directions for the product page.
+Use ap-implement-new-design to build the editorial direction as a static HTML prototype.
+Use ap-design-polish to clean up that prototype while preserving its typography.
+```
+
+The implementation workflow accepts a chosen concept, references, an existing
+design system, or a clear description. If the direction is unclear, it offers
+concepts and waits for your choice, except when you already requested a batch
+of built static concepts. It uses `ap-frontend-design` for building
+and `ap-frontend-review` for verification when installed, with repository-based
+fallbacks. The separate optional [ap-design-critic subagent](../content/packs/core/subagents/design/ap-design-critic/instructions.md)
+provides the independent visual assessments.
+
+Every critique requires a new agent conversation with no inherited task
+history. It receives only the critic role, a fixed brief and assessment
+prompt, current visuals, and optional fixed reference images. Previous scores,
+feedback, implementation rationale, and the target score stay with the
+implementing agent. Asking an existing critic to forget its history does not
+satisfy this requirement.
+
+The standalone implementation skill defaults to a target of 8.5/10 with an
+initial assessment and up to three improvement rounds. Studio passes its
+assigned budget instead. Refinement stops earlier when the target is reached or
+progress stalls. You can request a different target or round limit in ordinary
+language. Visual scores are subjective and are reported separately from
+functional checks. Missing browser or isolated-critic capabilities are
+reported; implementation can proceed without claiming independent validation.
+If final fixes change the appearance after the budget is exhausted, the last
+score is labeled as applying to the earlier version.
+
+Use `ap-design-polish` for a focused final cleanup of an existing interface:
+
+```text
+Use ap-design-polish on the pricing page. Reduce clutter, but preserve its
+editorial typography, comparison details, and mobile purchase flow.
+```
+
+It inspects the rendered result, removes elements that do not earn their place,
+then addresses generic treatments and unresolved details. It preserves useful
+labels, controls, feedback, and signature elements; it does not equate polish
+with making every design minimalist. Add "audit only" to receive suggestions
+without source changes. Its AI-tell score is a subjective assessment of
+genericness and overdesign, not a claim about AI authorship or a substitute for
+functional verification. An independent critic is optional and, when
+requested, must start with completely fresh context.
+
 ## Marketing and growth
 
 | Skill | Chat activation name | What it does | Source |

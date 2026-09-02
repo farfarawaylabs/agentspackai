@@ -3,6 +3,11 @@
 Use this reference when creating, reconstructing, or materially changing a
 root `DESIGN.md`.
 
+For isolated static prototypes, "root" means the individual concept's output
+directory. Keep draft rules there; do not promote an unselected concept into
+the application's root design contract. Normal application integration uses
+the repository's design contract after the user requests that integration.
+
 `DESIGN.md` is the persistent contract between design intent and frontend
 implementation. Follow Google's current `design.md` specification:
 https://github.com/google-labs-code/design.md/blob/main/docs/spec.md

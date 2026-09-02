@@ -85,6 +85,56 @@ source = "skills/engineering/frontend/ap-frontend-design"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
+id = "ap-design-studio"
+kind = "skill"
+title = "Run a design studio"
+summary = "Coordinate exploration, static HTML concepts, fresh critiques, polish, and shareable files before explicit product integration."
+category = "design/creative"
+selection = "optional"
+source = "skills/design/ap-design-studio"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-explore-design-directions"
+kind = "skill"
+title = "Explore design directions"
+summary = "Generate distinct visual direction briefs for a human taste checkpoint or an already requested batch of static prototypes."
+category = "design/creative"
+selection = "optional"
+source = "skills/design/ap-explore-design-directions"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-implement-new-design"
+kind = "skill"
+title = "Implement a new design"
+summary = "Build a chosen visual direction, refine it through bounded fresh-context critiques, and verify the final interface."
+category = "design/creative"
+selection = "optional"
+source = "skills/design/ap-implement-new-design"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-design-polish"
+kind = "skill"
+title = "Polish a design"
+summary = "Remove clutter and generic visual treatments while preserving design identity, usability, and working behavior."
+category = "design/creative"
+selection = "optional"
+source = "skills/design/ap-design-polish"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-design-critic"
+kind = "subagent"
+title = "Design critic"
+summary = "Independently critique rendered visual design for product fit, identity, composition, typography, hierarchy, distinctiveness, restraint, and craft."
+category = "design/critique"
+selection = "optional"
+source = "subagents/design/ap-design-critic"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
 id = "ap-frontend-review"
 kind = "skill"
 title = "Review frontend quality"

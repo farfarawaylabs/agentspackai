@@ -20,6 +20,15 @@ a visual review into an unsolicited redesign.
 
 ## Establish scope
 
+For a static HTML concept, the supplied prototype directory is the review and
+fix boundary. Use its brief and local design notes, inspect the actual HTML
+file at desktop/mobile widths, and test direct-file/offline opening and
+relative assets. Do not start, build, or modify the real application to review
+a prototype. Treat declared demo interactions as demos; verify their local
+behavior without expecting backend integration or inventing live submissions.
+Report direct-file or offline checks that the browser tools cannot perform.
+The project/build references below apply to that artifact's scope in this mode.
+
 1. Identify the pages, flows, components, states, and viewports in scope.
 2. Read relevant project documentation and root `DESIGN.md`.
 3. Inspect the framework, styling method, tokens, component system, routes,
