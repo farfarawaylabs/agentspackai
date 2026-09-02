@@ -95,6 +95,16 @@ source = "skills/design/ap-explore-design-directions"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
+id = "ap-design-critic"
+kind = "subagent"
+title = "Design critic"
+summary = "Independently critique rendered visual design for product fit, identity, composition, typography, hierarchy, distinctiveness, restraint, and craft."
+category = "design/critique"
+selection = "optional"
+source = "subagents/design/ap-design-critic"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
 id = "ap-frontend-review"
 kind = "skill"
 title = "Review frontend quality"
