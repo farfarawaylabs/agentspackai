@@ -1,12 +1,12 @@
-# Agents Pack CLI 0.2.0
+# Agents Pack CLI 0.3.0
 
-- Add `agents-pack mcp add`, `status`, and `remove` for managing user-level
-  remote MCP servers across Claude Code, Codex, and Cursor.
-- Default MCP operations to all three providers while allowing explicit
-  provider selection.
-- Add dry-run previews, ownership and drift protection, operation locking,
-  interrupted-transaction recovery, and rollback across provider changes.
-- Refuse unmanaged provider entries instead of silently adopting or
-  overwriting them.
-- Document provider-specific authentication boundaries and the remote HTTP
-  transport supported by this first release.
+- Add an optional-category selection step to interactive Recommended setup.
+- Group Custom setup and new-component update choices by category, with whole-category
+  and individual selection for skills, subagents, and instructions.
+- Offer newly introduced compatible components during interactive content updates,
+  preserving existing selections and previously declined components.
+- Add `agents-pack update --add <id,id>` for explicit additions, including scripts
+  and dry runs. `--yes` keeps existing choices unless additions are requested.
+- Show newly introduced components in `update --check` and `--dry-run`.
+- Apply the version change and selected additions in one transaction, with
+  cancellation, drift, ownership, and rollback protections.

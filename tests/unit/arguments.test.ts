@@ -205,6 +205,21 @@ describe("component arguments", () => {
 });
 
 describe("parseUpdateArguments", () => {
+	test("accepts explicit component additions without replacing the selection", () => {
+		expect(
+			parseUpdateArguments(["--add", "ap-new-skill,ap-new-agent", "--yes"])
+				.addComponents,
+		).toEqual(["ap-new-skill", "ap-new-agent"]);
+		for (const args of [
+			["--add"],
+			["--add", ""],
+			["--add", "one,"],
+			["--add", "one,one"],
+			["--add", "one", "--add", "two"],
+			["--check", "--add", "one"],
+		])
+			expect(() => parseUpdateArguments(args)).toThrow();
+	});
 	test("parses pack, confirmation, and dry-run flags", () => {
 		expect(
 			parseUpdateArguments(["--pack", "./pack", "--yes", "--dry-run"]),

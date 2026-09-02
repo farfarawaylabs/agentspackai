@@ -1,18 +1,20 @@
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { parseUpdateArguments } from "../cli/arguments.ts";
-import { confirmApply } from "../cli/prompts.ts";
-import { cachePack } from "../core/base-cache.ts";
+import { confirmApply, promptForNewComponents } from "../cli/prompts.ts";
+import { cachePack, loadCachedPack } from "../core/base-cache.ts";
 import { AgentsPackError } from "../core/errors.ts";
 import { formatChangePlan } from "../core/format-plan.ts";
 import { detectInstalledScope } from "../core/inspect.ts";
 import { loadPack } from "../core/pack.ts";
 import { planUpdate, planUpdateCheck } from "../core/plan.ts";
 import { loadOfficialPack } from "../core/registry.ts";
+import { findNewComponents } from "../core/selection.ts";
 import type {
 	ChangePlan,
 	ExecutorEvent,
 	LockFile,
+	PackComponent,
 	PathContext,
 	ScopeConfig,
 } from "../core/types.ts";
@@ -25,6 +27,9 @@ export interface UpdateCommandDependencies {
 	interactive?: boolean;
 	write?: (text: string) => void;
 	confirm?: () => Promise<boolean>;
+	promptForNewComponents?: (
+		components: readonly PackComponent[],
+	) => Promise<string[]>;
 	onExecutorEvent?: (event: ExecutorEvent) => void | Promise<void>;
 	loadOfficialPack?: (
 		packId: string,
@@ -64,28 +69,73 @@ export async function runUpdate(
 		}
 
 		write(report);
+		if (compareVersions(pack.manifest.version, state.lock.pack.version) > 0) {
+			const additions = await discoverNewComponents(
+				state.config,
+				state.lock,
+				pack,
+				userHome,
+				write,
+			);
+			write(formatNewComponents(additions));
+		}
 		return;
 	}
 
-	const apply = (approvedPlan?: ChangePlan) =>
+	let addComponents = parsed.addComponents ?? [];
+	// Validate the candidate and current installation before offering additions.
+	let approvedPlan = await planUpdate({ pack, context, addComponents });
+	write(formatCandidateRelease(state.lock, pack));
+	if (compareVersions(pack.manifest.version, state.lock.pack.version) > 0) {
+		const additions = await discoverNewComponents(
+			state.config,
+			state.lock,
+			pack,
+			userHome,
+			write,
+		);
+		write(formatNewComponents(additions));
+		const selectable = additions.filter(
+			(component) => component.selection !== "required",
+		);
+		if (
+			interactive &&
+			!parsed.yes &&
+			!parsed.dryRun &&
+			parsed.addComponents === undefined &&
+			selectable.length > 0
+		) {
+			addComponents = await (
+				dependencies.promptForNewComponents ?? promptForNewComponents
+			)(selectable);
+			const allowed = new Set(selectable.map((component) => component.id));
+			if (
+				new Set(addComponents).size !== addComponents.length ||
+				addComponents.some((id) => !allowed.has(id))
+			) {
+				throw new AgentsPackError(
+					"USAGE",
+					"Select only new components offered by this update.",
+					{ exitCode: 2 },
+				);
+			}
+			approvedPlan = await planUpdate({ pack, context, addComponents });
+		}
+	}
+	write(formatChangePlan(approvedPlan));
+
+	const apply = (approvedPlan: ChangePlan) =>
 		runMutation({
 			paths: state.paths,
 			command: "update",
 			createPlan: async () => {
-				const currentPlan = await planUpdate({ pack, context });
+				const currentPlan = await planUpdate({ pack, context, addComponents });
 
-				if (
-					approvedPlan !== undefined &&
-					planSignature(currentPlan) !== planSignature(approvedPlan)
-				) {
+				if (planSignature(currentPlan) !== planSignature(approvedPlan)) {
 					throw new AgentsPackError(
 						"DRIFT",
 						"The update plan changed after approval. Review and rerun it.",
 					);
-				}
-
-				if (approvedPlan === undefined) {
-					write(formatChangePlan(currentPlan));
 				}
 
 				return currentPlan;
@@ -93,32 +143,18 @@ export async function runUpdate(
 			onEvent: dependencies.onExecutorEvent,
 		});
 
-	if (parsed.yes && !parsed.dryRun) {
-		const approvedPlan = await planUpdate({ pack, context });
-		write(formatCandidateRelease(state.lock, pack));
-		write(formatChangePlan(approvedPlan));
-		await cachePack(userHome, pack);
-		const result = await apply(approvedPlan);
-		writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
-		return;
-	}
-
-	const approvedPlan = await planUpdate({ pack, context });
-	write(formatCandidateRelease(state.lock, pack));
-	write(formatChangePlan(approvedPlan));
-
 	if (parsed.dryRun) {
 		write("Dry run only. No files changed.\n");
 		return;
 	}
 
-	if (approvedPlan.operations.length === 0) {
+	if (!parsed.yes && approvedPlan.operations.length === 0) {
 		await cachePack(userHome, pack);
 		write("Agents Pack is already at this version. No changes applied.\n");
 		return;
 	}
 
-	if (!interactive) {
+	if (!parsed.yes && !interactive) {
 		throw new AgentsPackError(
 			"USAGE",
 			"Non-interactive update requires --yes to apply changes.",
@@ -126,7 +162,7 @@ export async function runUpdate(
 		);
 	}
 
-	if (!(await (dependencies.confirm ?? confirmApply)())) {
+	if (!parsed.yes && !(await (dependencies.confirm ?? confirmApply)())) {
 		write("Cancelled. No files changed.\n");
 		return;
 	}
@@ -134,6 +170,45 @@ export async function runUpdate(
 	await cachePack(userHome, pack);
 	const result = await apply(approvedPlan);
 	writeMutationResult(result, pack.manifest.id, pack.manifest.version, write);
+}
+
+async function discoverNewComponents(
+	config: ScopeConfig,
+	lock: LockFile,
+	pack: Awaited<ReturnType<typeof loadPack>>,
+	userHome: string,
+	write: (text: string) => void,
+): Promise<PackComponent[]> {
+	try {
+		const previous = await loadCachedPack(userHome, lock.pack.sha256);
+		return findNewComponents(previous.manifest, pack.manifest, config.targets);
+	} catch (error) {
+		if (
+			!(error instanceof AgentsPackError) ||
+			!["MALFORMED_STATE", "INVALID_PACK"].includes(error.code)
+		)
+			throw error;
+		// Updates can repair an installation whose cached Base was lost. Do not
+		// turn optional discovery into a new prerequisite for that recovery path.
+		write(
+			"New-component discovery unavailable: the previous pack cache is missing or invalid. Existing selections and explicit additions are preserved; use agents-pack list --available after updating.\n\n",
+		);
+		return [];
+	}
+}
+
+function formatNewComponents(components: readonly PackComponent[]): string {
+	if (components.length === 0) return "";
+	return [
+		"New components in this update:",
+		...components.map(
+			(component) =>
+				`  ${component.id} (${component.kind}; ${component.category}; ${component.selection === "required" ? "required, added automatically" : component.selection}) — ${component.summary}`,
+		),
+		"",
+		"Interactive update lets you choose additions. With --yes or --dry-run, use --add <id,id> to select extras explicitly.",
+		"",
+	].join("\n");
 }
 
 async function resolveInstalledOfficialPack(

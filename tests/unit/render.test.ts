@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.30.0");
+		expect(corePack.manifest.version).toBe("0.31.0");
 		const outputPaths = rendered.outputs.map((output) => output.path);
 		const reactOutputPaths = outputPaths.filter((path) =>
 			path.startsWith(".claude/skills/ap-react-"),
