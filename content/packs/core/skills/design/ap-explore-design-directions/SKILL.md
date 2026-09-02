@@ -7,7 +7,9 @@ description: Explore multiple genuinely distinct visual directions before implem
 
 Generate a small set of deliberately different design directions before any implementation begins. The purpose of this skill is divergence: escape the model's most probable visual answer, expose meaningful choices, and let human taste select or combine a direction before code hardens the design.
 
-Do not implement the interface, edit application source, or turn the concepts into production UI unless the user explicitly asks for implementation in a separate step.
+This skill produces direction briefs, not interfaces. Do not edit application
+source. A coordinating workflow can pass those briefs to an implementation
+skill when the user has already requested built prototypes.
 
 ## Respect the full invocation
 
@@ -123,7 +125,14 @@ Keep the concepts concrete enough that a designer or implementation agent could 
 
 ## End at the taste checkpoint
 
-After presenting all requested directions, stop before implementation and invite the user to exercise taste.
+When used on its own, present all requested directions and stop before
+implementation to invite the user to exercise taste.
+
+When used within `ap-design-studio` or another workflow where the user already
+requested completed static concepts, return all requested briefs to that
+workflow without requiring a favorite first. The coordinator builds the
+prototypes and presents the rendered selection checkpoint. Still pause here
+if the user requested ideas only or explicitly wants to choose before building.
 
 Ask them to choose one direction, combine specific elements from several, or react in plain language. Useful reactions include:
 

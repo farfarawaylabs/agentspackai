@@ -9,6 +9,24 @@ Create working interfaces with a deliberate visual identity. Ground every
 choice in the product, audience, content, and repository rather than familiar
 templates or fashionable defaults.
 
+## Static prototype scope
+
+When the request is for static HTML concepts or a coordinating skill supplies
+prototype mode, treat the assigned concept directory as the design output
+root. Use embedded styles/scripts and bundled relative assets that work when
+the HTML file is opened directly, without the application or a backend.
+Demonstrate interactions locally and identify demo-only operations. When
+provided, follow `ap-implement-new-design`'s static HTML contract.
+
+Read the application's design system as context, but keep all prototype code,
+draft tokens, and `DESIGN.md` inside the concept directory. In this mode, the
+design-contract and verification steps below apply to the prototype: do not
+change app source, shared components, dependencies, deployment settings, or
+root `DESIGN.md`, and do not run unrelated app builds. Verify the actual static
+artifact at desktop/mobile widths and report direct-file/offline limits.
+Prototypes are temporary previews, not public indexable pages. Application
+integration requires the user's explicit request and uses the normal workflow.
+
 ## Orient before designing
 
 1. Read the brief and relevant project documentation.

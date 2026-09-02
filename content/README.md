@@ -26,6 +26,11 @@ packs/core/skills/
 │   ├── ap-maintain-memory/
 │   ├── ap-recall-memory/
 │   └── ap-save-memory/
+├── design/
+│   ├── ap-design-polish/
+│   ├── ap-design-studio/
+│   ├── ap-explore-design-directions/
+│   └── ap-implement-new-design/
 ├── engineering/
 │   ├── ai/
 │   │   └── ap-develop-with-vercel-ai-sdk/
@@ -77,6 +82,9 @@ contains portable instructions plus a small provider-neutral execution profile:
 ```text
 packs/core/subagents/
 ├── design/
+│   ├── ap-design-critic/
+│   │   ├── agent.toml
+│   │   └── instructions.md
 │   └── ap-ux-enhancer/
 │       ├── agent.toml
 │       └── instructions.md
@@ -116,6 +124,21 @@ The current core pack contains:
   Markdown and filesystem tools, plus the explicitly invoked
   `ap-maintain-memory` workflow for conservative corpus maintenance;
 - `ap-frontend-design`, including the shared `DESIGN.md` contract;
+- `ap-design-studio`, which guides the specialist skills through complete,
+  shareable static HTML concepts, with natural-language counts and constraints,
+  a rendered selection checkpoint, and explicit later application integration;
+- `ap-explore-design-directions`, which generates distinct visual concepts for
+  a human taste checkpoint or an already requested batch of static prototypes;
+- `ap-implement-new-design`, which builds a static prototype or integrates a
+  chosen direction into the real application and runs
+  bounded refinement with a completely fresh critic context for every
+  assessment, followed by functional verification;
+- `ap-design-polish`, which removes unnecessary elements and generic visual
+  treatments while preserving identity and behavior, with an audit-only mode
+  and a contextual reference for interpreting common design signals;
+- the read-only `ap-design-critic` subagent, which judges supplied visual
+  artifacts for product fit, identity, composition, typography, hierarchy,
+  distinctiveness, restraint, and craft;
 - `ap-frontend-review`, including an evidence-based visual QA checklist;
 - `ap-react-best-practices`, adapted from Vercel's React and Next.js
   performance guidance with 70 progressive rule references;
