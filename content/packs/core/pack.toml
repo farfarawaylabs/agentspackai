@@ -85,6 +85,16 @@ source = "skills/engineering/frontend/ap-frontend-design"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
+id = "ap-explore-design-directions"
+kind = "skill"
+title = "Explore design directions"
+summary = "Generate externally perturbed, genuinely distinct visual directions and stop for a human taste checkpoint before implementation."
+category = "design/creative"
+selection = "optional"
+source = "skills/design/ap-explore-design-directions"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
 id = "ap-frontend-review"
 kind = "skill"
 title = "Review frontend quality"
