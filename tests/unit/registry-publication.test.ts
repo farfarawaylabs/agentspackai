@@ -8,12 +8,17 @@ import packRegistry from "../../registry/v1/index.json";
 
 test("publication checks every current CLI artifact and the current pack", () => {
 	const urls = latestAssetUrls(cliRegistry, packRegistry);
+	const latestPack = packRegistry.packs["agents-pack-core"];
+	const latestPackRelease = Object.entries(latestPack.versions).find(
+		([version]) => version === latestPack.latest,
+	)?.[1];
+	if (latestPackRelease === undefined) {
+		throw new Error(`Missing latest pack release ${latestPack.latest}.`);
+	}
 	expect(urls).toHaveLength(6);
 	expect(urls.filter((url) => url.endsWith(".tar.gz"))).toHaveLength(4);
 	expect(urls.some((url) => url.endsWith("-checksums.txt"))).toBe(true);
-	expect(urls).toContain(
-		packRegistry.packs["agents-pack-core"].versions["0.31.0"].url,
-	);
+	expect(urls).toContain(latestPackRelease.url);
 });
 
 test("publication waits for both release lines before advancing the shared registry", async () => {

@@ -43,9 +43,10 @@ them before editing application source. Resume implementation after their
 choice without asking for the same approval again.
 
 When the user or Studio already requested a batch of built static concepts,
-use the exploration briefs as inputs for each prototype instead of requiring
-a favorite first. Honor an explicitly requested earlier checkpoint. Refine
-each concept against its own brief; never reuse a critic across concepts.
+use the exploration creative packets as inputs for each prototype instead of
+requiring a favorite first. Honor an explicitly requested earlier checkpoint.
+Refine each concept against its own packet; never reuse a critic across
+concepts or expose sibling concepts to its implementer.
 
 Before implementation, establish a concise visual brief containing:
 
@@ -55,10 +56,33 @@ Before implementation, establish a concise visual brief containing:
 - relevant pages, states, and desktop/mobile coverage; and
 - optional reference images as a quality baseline, not a layout to copy.
 
+When a creative packet is supplied, preserve its originality method,
+content-native generator, binding contracts, explicit rejections, and
+acceptance checks in this brief. These are implementation constraints, not
+optional inspiration. Resolve genuine contradictions with product usability
+in favor of the primary user task and record the compromise; a visual premise
+never authorizes unreadable content or broken interaction.
+
 Keep this brief stable throughout refinement. A critic's opinion does not
 authorize a new direction. If a material direction change is needed, discuss
 it with the user, then update the brief. Do not reset the iteration budget
 silently when the brief changes.
+
+## Pass the originality gate
+
+Before coding, state in the implementation record:
+
+- the probable generic answer this concept must not collapse into;
+- the content-native rule that generates its composition;
+- the first-viewport silhouette and type roles it commits to;
+- the familiar fallback treatments that would invalidate the direction; and
+- how the visual premise still serves the page's primary job.
+
+If the packet is incomplete, fill only the missing fields from the chosen
+direction rather than silently replacing it with a new concept. If the answer
+would still work unchanged for an unrelated product after swapping copy and a
+logo, revise the composition before implementation. Distinctiveness must come
+from the organizing logic, not merely a novel font, color, texture, or label.
 
 ## Prepare implementation and review
 
@@ -104,6 +128,16 @@ motion is reduced or assets are loading.
 Run checks relevant to that mode and exercise the primary interactions before
 capturing the result. Fix known functional or rendering failures instead of
 spending a critique on a broken preview.
+
+Before capture, wait for intended fonts to load and inspect every deliberate
+text contact at desktop and narrow widths. Fix clipped glyphs, accidental
+overlap, and near-tangencies where separate text blocks almost touch. Preserve
+an intentional overlap only when it is named in the brief, remains readable,
+and survives responsive reflow. Audit weight distribution as well: headings,
+labels, navigation, buttons, and metadata should not all use heavy weights to
+compete for attention. Use size, spacing, placement, color, and type style for
+hierarchy before adding another bold role.
+
 For static prototypes, verify the HTML contract rather than installing or
 building the real application. Keep an existing application Git diff unchanged.
 

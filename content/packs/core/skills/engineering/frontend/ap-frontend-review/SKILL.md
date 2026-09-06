@@ -57,7 +57,15 @@ Use browser inspection when available:
 5. Test keyboard operation and reduced motion.
 6. Review DOM semantics and browser-console errors alongside screenshots.
 7. Stress likely failure cases such as long text, sparse data, dense data,
-   missing media, and constrained width when the application permits it.
+   missing media, enlarged text, and constrained width when the application
+   permits it. Wait for intended fonts to load before judging final typography;
+   confirm which face actually rendered when tooling exposes that information.
+
+At every inspected width, distinguish deliberate text overlap from layout
+failure. Report clipped glyphs, accidental overlaps, and near-tangencies where
+separate text blocks almost touch. Also inspect weight saturation: if headings,
+labels, navigation, buttons, and metadata are all bold, the hierarchy has not
+been resolved merely because each item remains legible.
 
 Do not infer that an interaction works from its appearance. Do not infer visual
 quality from a DOM snapshot alone.

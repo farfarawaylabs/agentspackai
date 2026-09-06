@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.31.0"
+version = "0.31.1"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -88,7 +88,7 @@ targets = ["claude", "codex", "cursor"]
 id = "ap-design-studio"
 kind = "skill"
 title = "Run a design studio"
-summary = "Coordinate exploration, static HTML concepts, fresh critiques, polish, and shareable files before explicit product integration."
+summary = "Coordinate original, isolated static HTML concepts, fresh critiques, polish, and shareable files before explicit product integration."
 category = "design/creative"
 selection = "optional"
 source = "skills/design/ap-design-studio"
@@ -98,7 +98,7 @@ targets = ["claude", "codex", "cursor"]
 id = "ap-explore-design-directions"
 kind = "skill"
 title = "Explore design directions"
-summary = "Generate distinct visual direction briefs for a human taste checkpoint or an already requested batch of static prototypes."
+summary = "Generate binding creative packets with varied originality methods for a taste checkpoint or a requested batch of static prototypes."
 category = "design/creative"
 selection = "optional"
 source = "skills/design/ap-explore-design-directions"

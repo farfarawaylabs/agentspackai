@@ -28,14 +28,16 @@ afterEach(async () => {
 describe("remote official packs", () => {
 	test("initializes, checks, and updates without a local pack path", async () => {
 		const environment = await createEnvironment();
-		const nextPackRoot = await createNextCorePack();
 		const versionOne = await loadPack(CORE_PACK);
+		const currentVersion = versionOne.manifest.version;
+		const nextVersion = "0.32.0";
+		const nextPackRoot = await createNextCorePack(nextVersion);
 		const versionTwo = await loadPack(nextPackRoot);
 		const artifacts = new Map([
-			["0.31.0", serializePackArtifact(versionOne, { kind: "official" })],
-			["0.32.0", serializePackArtifact(versionTwo, { kind: "official" })],
+			[currentVersion, serializePackArtifact(versionOne, { kind: "official" })],
+			[nextVersion, serializePackArtifact(versionTwo, { kind: "official" })],
 		]);
-		let latest = "0.31.0";
+		let latest = currentVersion;
 		let baseUrl = "";
 		const server = Bun.serve({
 			hostname: "127.0.0.1",
@@ -88,21 +90,23 @@ describe("remote official packs", () => {
 		]);
 
 		expect(initialized.exitCode).toBe(0);
-		expect(initialized.stdout).toContain("agents-pack-core@0.31.0");
+		expect(initialized.stdout).toContain(`agents-pack-core@${currentVersion}`);
 		expect((await loadScopeConfig(environment.configPath)).pack.source).toBe(
 			"official",
 		);
 
-		latest = "0.32.0";
+		latest = nextVersion;
 		const checked = await runCli(environment, ["update", "--check"]);
 		expect(checked.exitCode).toBe(0);
-		expect(checked.stdout).toContain("Candidate: agents-pack-core@0.32.0");
+		expect(checked.stdout).toContain(
+			`Candidate: agents-pack-core@${nextVersion}`,
+		);
 		expect(checked.stdout).toContain("Status: Update available.");
 
 		const updated = await runCli(environment, ["update", "--yes"]);
 		expect(updated.exitCode).toBe(0);
 		expect((await loadLockFile(environment.lockPath)).pack.version).toBe(
-			"0.32.0",
+			nextVersion,
 		);
 	});
 
@@ -146,7 +150,7 @@ async function createEnvironment(): Promise<TestEnvironment> {
 	};
 }
 
-async function createNextCorePack(): Promise<string> {
+async function createNextCorePack(nextVersion: string): Promise<string> {
 	const directory = await mkdtemp(join(tmpdir(), "agents-pack-next-core-"));
 	temporaryDirectories.push(directory);
 	await cp(CORE_PACK, directory, { recursive: true });
@@ -154,11 +158,11 @@ async function createNextCorePack(): Promise<string> {
 	const manifest = await readFile(manifestPath, "utf8");
 	await writeFile(
 		manifestPath,
-		manifest.replace('version = "0.31.0"', 'version = "0.32.0"'),
+		manifest.replace(/^version = "[^"]+"$/m, `version = "${nextVersion}"`),
 	);
 	await writeFile(
 		join(directory, "RELEASE_NOTES.md"),
-		"# Agents Pack Core 0.32.0\n\n- Test remote update.\n",
+		`# Agents Pack Core ${nextVersion}\n\n- Test remote update.\n`,
 	);
 	return directory;
 }

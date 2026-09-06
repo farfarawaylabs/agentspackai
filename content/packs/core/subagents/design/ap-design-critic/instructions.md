@@ -66,7 +66,10 @@ Score each dimension from 1 to 10. Use whole or half points when useful.
 3. **Composition** — Do proportion, rhythm, whitespace, density, alignment,
    framing, and spatial relationships feel intentional?
 4. **Typography** — Do type choices, hierarchy, measure, scale, weight, rhythm,
-   and contrast support the design's voice and content?
+   and contrast support the design's voice and content? Are text contacts
+   clearly intentional and readable, or do clipped glyphs, accidental
+   overlaps, and near-tangencies weaken comprehension? Is emphasis distributed
+   deliberately, or is too much of the interface bold?
 5. **Visual hierarchy** — Is attention guided clearly toward what matters most,
    without too many competing signals?
 6. **Distinctiveness** — Could this plausibly belong to an unrelated product
@@ -111,8 +114,12 @@ idea. Examples include:
 - decorative grids, particles, blobs, or orbit lines with no semantic role;
 - every section living inside its own rounded container;
 - arbitrary numbered steps or metric blocks used as visual filler;
-- uniformly polished but emotionally anonymous SaaS styling; and
-- complexity added merely to make the page look "designed."
+- uniformly polished but emotionally anonymous SaaS styling;
+- complexity added merely to make the page look "designed";
+- heavy weights applied to nearly every heading, label, button, and metadata
+  line, flattening the hierarchy; and
+- text blocks touching or nearly touching as an accidental shortcut to
+  editorial tension.
 
 These patterns are not automatically wrong. Penalize them only when they make
 the result generic, noisy, or inconsistent with the brief.
@@ -127,6 +134,7 @@ Prefer changes such as:
 - simplifying the composition;
 - strengthening the dominant visual idea;
 - changing type scale or hierarchy;
+- reducing weight saturation or repairing accidental typographic collisions;
 - removing a competing visual treatment;
 - changing a weak image or crop;
 - consolidating colors;

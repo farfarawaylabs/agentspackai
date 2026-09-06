@@ -126,20 +126,25 @@ The current core pack contains:
 - `ap-frontend-design`, including the shared `DESIGN.md` contract;
 - `ap-design-studio`, which guides the specialist skills through complete,
   shareable static HTML concepts, with natural-language counts and constraints,
-  a rendered selection checkpoint, and explicit later application integration;
-- `ap-explore-design-directions`, which generates distinct visual concepts for
-  a human taste checkpoint or an already requested batch of static prototypes;
+  isolated per-concept implementation, a rendered selection checkpoint, and
+  explicit later application integration;
+- `ap-explore-design-directions`, which generates binding creative packets
+  using art-direction, reference-collision, and anti-convergence methods for a
+  human taste checkpoint or an already requested batch of static prototypes;
 - `ap-implement-new-design`, which builds a static prototype or integrates a
-  chosen direction into the real application and runs
+  chosen direction into the real application, enforces the packet's
+  content-native composition and rejection checks, and runs
   bounded refinement with a completely fresh critic context for every
   assessment, followed by functional verification;
 - `ap-design-polish`, which removes unnecessary elements and generic visual
   treatments while preserving identity and behavior, with an audit-only mode
-  and a contextual reference for interpreting common design signals;
+  and a contextual reference for interpreting common design signals including
+  weight saturation and accidental typographic collisions;
 - the read-only `ap-design-critic` subagent, which judges supplied visual
   artifacts for product fit, identity, composition, typography, hierarchy,
   distinctiveness, restraint, and craft;
-- `ap-frontend-review`, including an evidence-based visual QA checklist;
+- `ap-frontend-review`, including an evidence-based visual QA checklist with
+  fonts-loaded responsive typography and collision checks;
 - `ap-react-best-practices`, adapted from Vercel's React and Next.js
   performance guidance with 70 progressive rule references;
 - `ap-react-composition-patterns`, adapted from Vercel's guidance for

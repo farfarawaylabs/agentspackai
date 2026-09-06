@@ -7,9 +7,11 @@ description: Explore multiple genuinely distinct visual directions before implem
 
 Generate a small set of deliberately different design directions before any implementation begins. The purpose of this skill is divergence: escape the model's most probable visual answer, expose meaningful choices, and let human taste select or combine a direction before code hardens the design.
 
-This skill produces direction briefs, not interfaces. Do not edit application
-source. A coordinating workflow can pass those briefs to an implementation
-skill when the user has already requested built prototypes.
+This skill produces creative packets, not interfaces. A packet includes the
+direction's originality method, content-native generator, binding visual
+contracts, and rejected fallback patterns. Do not edit application source. A
+coordinating workflow can pass those packets to an implementation skill when
+the user has already requested built prototypes.
 
 ## Respect the full invocation
 
@@ -37,6 +39,12 @@ Read the relevant brief, project documentation, root `DESIGN.md`, existing desig
 - explicit user likes, dislikes, references, and exclusions.
 
 If the repository already has a strong design system, explore directions that can plausibly extend or reinterpret it rather than pretending the project is greenfield.
+
+Read
+[references/creative-packets.md](references/creative-packets.md) before
+creating directions. Inspect prior generated concepts or user feedback when
+they are supplied, and describe the local convergence pattern to escape. Do
+not inspect unrelated private material merely to manufacture exclusions.
 
 Do not ask questions merely to complete a design questionnaire. If the available context is sufficient, make reasonable assumptions and state only the ones that materially affect the directions.
 
@@ -90,6 +98,29 @@ For every direction, make intentional choices across most of these dimensions:
 
 The directions must differ in underlying design logic, not only in color palettes or font choices.
 
+## Assign an originality method
+
+Use the bundled creative-packet reference to give every direction a deliberate
+escape mechanism:
+
+- a binding art direction grounded in a strong supplied or discovered premise;
+- a collision of two or three distant reference worlds, with literal motifs
+  rejected; or
+- an anti-convergence exercise that replaces the probable default answer with
+  content-specific alternatives.
+
+For a batch of three, prefer using each method once when they fit the task. For
+larger batches, rotate or combine them without repeating the same reference
+family or page archetype. Do not force binding art direction when no coherent
+premise exists, and do not use anti-convergence as a generic list of forbidden
+styles without evidence of what is converging.
+
+Each direction must name a content-native generator. Create at least two
+composition sketches in words for reference-collision and anti-convergence
+directions. Reject or materially revise the first safe, transferable answer
+before finalizing the packet. A direction fails when it is unusual only in
+decoration or when its premise obscures the interface's primary job.
+
 ## Force meaningful divergence
 
 Before presenting the directions, compare them against each other.
@@ -110,18 +141,27 @@ Avoid recurring AI defaults unless the project specifically justifies them:
 
 Do not make every option weird. A restrained direction can be highly distinctive through typography, proportion, hierarchy, and craft.
 
-## Present each direction as a decision
+Compare the concepts' probable first-viewport silhouettes, content generators,
+type roles, weight distribution, and color roles. Revise a batch that still
+converges on the same editorial, dashboard, poster, or landing-page family even
+when its labels and metaphors differ.
 
-Give every direction a memorable working name. For each one, include:
+## Present each direction as a creative packet
 
-1. **Core idea** — one or two sentences describing the concept and why it belongs to this product.
-2. **Visual system** — composition, typography, color logic, imagery/material language, and density.
-3. **Signature moment** — the one element or interaction a user is most likely to remember.
-4. **Aesthetic risk** — one deliberate risk or convention being challenged, plus why it may be worth it.
-5. **What to avoid** — the boundary that prevents this direction from collapsing into a cliché.
-6. **Best fit** — what audience, brand posture, or product goal makes this direction strongest.
+Give every direction a memorable working name. Follow the complete packet
+format in the bundled reference. At minimum, make these decisions explicit:
 
-Keep the concepts concrete enough that a designer or implementation agent could act on them, but do not specify every CSS value or component.
+1. **Core idea and product job.**
+2. **Originality method and content-native generator.**
+3. **Inputs, probable defaults, and deliberate rejections.**
+4. **Composition, typography, color, imagery, interaction, and mobile contracts.**
+5. **Signature moment and aesthetic risk.**
+6. **Acceptance checks and invalidating fallback patterns.**
+7. **Best fit** — the audience, brand posture, or product goal that makes the direction strongest.
+
+Keep the concepts concrete enough that a designer or implementation agent can
+detect when implementation drifts back toward a familiar default, but do not
+specify every CSS value or component.
 
 ## End at the taste checkpoint
 
@@ -129,10 +169,10 @@ When used on its own, present all requested directions and stop before
 implementation to invite the user to exercise taste.
 
 When used within `ap-design-studio` or another workflow where the user already
-requested completed static concepts, return all requested briefs to that
-workflow without requiring a favorite first. The coordinator builds the
-prototypes and presents the rendered selection checkpoint. Still pause here
-if the user requested ideas only or explicitly wants to choose before building.
+requested completed static concepts, return all requested creative packets to
+that workflow without requiring a favorite first. The coordinator builds the
+prototypes and presents the rendered selection checkpoint. Still pause here if
+the user requested ideas only or explicitly wants to choose before building.
 
 Ask them to choose one direction, combine specific elements from several, or react in plain language. Useful reactions include:
 

@@ -50,6 +50,12 @@ justified aesthetic risk. Derive them from the subject's real world—its
 materials, language, artifacts, environments, or workflows—not from an
 arbitrary style label.
 
+When the request includes a creative packet, treat its originality method,
+content-native generator, binding contracts, and explicit rejections as the
+chosen direction. Do not dilute them into a familiar page template during
+implementation. The packet remains subordinate to legibility, accessibility,
+and the interface's primary job.
+
 For greenfield work or a substantial redesign, research current visual
 references when web access is available:
 
@@ -68,7 +74,9 @@ and subject-specific knowledge. Never pretend research occurred.
 
 Challenge the result before coding: if the direction could be applied to an
 unrelated company with only the logo and copy changed, it is still too generic.
-Revise it.
+Name the probable default composition, then revise it using a rule derived
+from this product's content or workflow. Distinctiveness must survive the
+removal of decorative styling.
 
 ## Maintain the design contract
 
@@ -98,7 +106,12 @@ Make intentional decisions about:
 - **Typography:** Choose type for the product's voice and content. Establish a
   clear hierarchy, readable measures, deliberate weights, and purposeful
   pairings. A common typeface is acceptable when justified; an unusual one is
-  not automatically distinctive.
+  not automatically distinctive. Do not make every heading, label, button,
+  and metadata line bold. Reserve heavy weights for a small number of roles;
+  create the rest of the hierarchy with scale, spacing, placement, color,
+  case, and style. Avoid accidental text collisions and near-tangencies. An
+  intentional overlap must remain readable and be part of the stated concept,
+  not an untested by-product of absolute positioning or tight line-height.
 - **Color:** Give colors semantic roles, maintain sufficient contrast, and use
   accents with discipline. Avoid default gradients and evenly distributed
   palettes that lack hierarchy.
@@ -163,6 +176,9 @@ Build around content rather than a fixed list of devices:
   by the project.
 - Prevent horizontal overflow, clipped text, distorted media, and mobile
   viewport-height failures.
+- Recheck text relationships after responsive reflow, font substitution, and
+  longer labels. Separate unrelated text blocks enough that they do not read
+  as an accidental collision.
 - Provide usable touch targets, keyboard access, visible focus, semantic HTML,
   labels, and meaningful alternative text.
 - Optimize media and avoid interaction or animation work that harms runtime
@@ -177,8 +193,11 @@ Do not declare frontend work complete from source inspection alone.
    and a representative desktop width; add other widths when the layout or
    audience warrants them.
 3. Exercise the important interactions and states.
-4. Check overflow, clipping, hierarchy, spacing, contrast, focus, keyboard
-   behavior, reduced motion, and browser-console errors.
+4. Wait for intended fonts to load, confirm the rendered face, then check
+   overflow, clipped glyphs, accidental text overlap, near-tangencies,
+   hierarchy, weight distribution, spacing, contrast, focus, keyboard
+   behavior, reduced motion, and browser-console errors. Stress long labels
+   and enlarged text when the interface permits it.
 5. Compare the implementation with the brief and `DESIGN.md`.
 6. Fix issues and re-run the checks that exposed them.
 

@@ -18,11 +18,14 @@ checklist item is not automatically a defect.
 - The page has a clear primary purpose and visual entry point.
 - Typography, spacing, color, shape, iconography, and elevation follow
   `DESIGN.md` and the implemented token system.
+- Heavy font weights are reserved for intentional roles; headings, labels,
+  navigation, buttons, and metadata do not all compete at the same emphasis.
 - Repeated components behave and look consistently across pages.
 - Alignment, grouping, density, and whitespace reflect content relationships.
 - Decorative elements reinforce the intended identity rather than add noise.
-- Real content remains legible; no clipping, unintended overlap, or obscured
-  controls appear.
+- Real content remains legible; no clipped glyphs, unintended text overlap,
+  near-tangencies, or obscured controls appear. Any deliberate overlap is
+  traceable to the design direction and remains readable.
 
 ## Responsive behavior
 
@@ -37,6 +40,8 @@ checklist item is not automatically a defect.
 - Mobile viewport units and safe areas behave correctly.
 - Long labels, localized-looking text, and unusually sparse or dense content do
   not break the layout.
+- Enlarged text and loaded production fonts do not create collisions or clipped
+  line boxes at transition widths.
 
 ## Accessibility and input
 
@@ -79,7 +84,8 @@ checklist item is not automatically a defect.
   interface.
 - Images use appropriate dimensions, formats, loading behavior, and aspect
   ratios.
-- Fonts load intentionally and include sensible fallbacks.
+- Fonts load intentionally and include sensible fallbacks; typography is
+  judged after loading and the expected face actually renders.
 - Expensive animation, layout work, or oversized media does not visibly degrade
   interaction.
 - The relevant build, tests, lint, and type checks pass.
