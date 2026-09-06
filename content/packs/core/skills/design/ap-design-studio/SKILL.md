@@ -38,13 +38,14 @@ integration or deployment.
 ## Prepare the run
 
 Read relevant project and brand context. Establish one product/content brief
-and comparable page coverage for all concepts. Avoid repeatedly asking for
-information already supplied. Use realistic, approved content; distinguish
-demonstration data from actual product claims.
+and comparable page coverage for all concepts. Keep this common brief separate
+from each concept's creative packet. Avoid repeatedly asking for information
+already supplied. Use realistic, approved content; distinguish demonstration
+data from actual product claims.
 
 Locate and read each specialist's instructions when reaching its stage:
 
-- `ap-explore-design-directions` for differentiated concept briefs;
+- `ap-explore-design-directions` for differentiated creative packets;
 - `ap-implement-new-design` for building and bounded critique, using its
   static-prototype mode and bundled static HTML contract;
 - `ap-frontend-design`, used by implementation for visual execution;
@@ -68,8 +69,8 @@ concept its own subdirectory and pass the exact path to every stage. All
 prototype edits and draft design notes belong there; application source,
 configuration, dependencies, and root `DESIGN.md` remain unchanged.
 
-Use the implementing skill's existing progress record to retain concept
-briefs, output paths, stage completion, assessments, and remaining budget.
+Use the implementing skill's existing progress record to retain creative
+packets, output paths, stage completion, assessments, and remaining budget.
 Keep review history separate from the shareable pages. On resumption, continue
 unfinished stages instead of rebuilding completed concepts or resetting caps.
 
@@ -95,15 +96,21 @@ critic.
 
 1. **Explore.** Use `ap-explore-design-directions` with the product brief,
    requested count, and user qualifiers. State that the user requested built
-   static concepts and that these briefs will go to the prototype stage.
-   Receive all direction briefs; do not have the explorer implement pages.
-   Unless an earlier checkpoint was requested, carry the directions forward.
+   static concepts and that the creative packets will go to the prototype
+   stage. For a three-concept run, prefer one binding-art-direction packet,
+   one reference-collision packet, and one anti-convergence packet when each
+   fits the task. Receive all packets; do not have the explorer implement
+   pages. Unless an earlier checkpoint was requested, carry them forward.
 2. **Build each concept.** Use `ap-implement-new-design` in static-prototype
-   mode with that concept's brief, output directory, common content/coverage,
-   and the assigned refinement budget. It uses `ap-frontend-design` and
-   handles rendered critique. Keep concepts structurally distinct instead of
-   producing palette swaps. Do not apply one concept's visual choices to all
-   the others.
+   mode with the common product/content brief, that concept's complete creative
+   packet, output directory, and assigned refinement budget. By default,
+   dispatch a separate implementation conversation for every concept without
+   inherited parent history. Give it only the common brief, its own complete
+   packet, and necessary shared product assets; do not expose sibling concepts,
+   screenshots, source, or rationale. It uses `ap-frontend-design` and handles
+   rendered critique. Keep concepts distinct in first-viewport silhouette,
+   content generator, type roles, and interaction logic instead of producing
+   palette swaps. Do not apply one concept's visual choices to all the others.
 3. **Polish each concept.** Use `ap-design-polish` on that concept's prototype
    only, passing its identity and details to preserve. Use audit-only mode
    when the user disallows further edits or the refinement budget is spent.
@@ -121,14 +128,18 @@ critic.
    appearance is unchanged, retain its applicable assessment. Report a
    below-target or unavailable result without silently starting more rounds.
 
-The same implementing agent may coordinate these stages sequentially. Every
-critic, for every concept and iteration, needs a new conversation with no
-inherited history. Send only the role, fixed assessment prompt, that concept's
-brief, current visuals, and optional fixed references. Exclude other concepts,
-the comparison gallery, prior screenshots, feedback, scores, and implementation
-rationale. Reuse the existing dispatch procedure rather than making another
-critic rubric. Keep studio-quality scores separate from polish's subjective
-AI-tell assessments.
+The Studio coordinator may sequence these stages, and the same concept
+implementer may retain its own build and refinement context. Do not reuse one
+implementation conversation across sibling concepts when isolated dispatch is
+available. If it is unavailable, preserve separate directories and packets and
+report that implementation isolation was not achieved. Every critic, for every
+concept and iteration, needs a new conversation with no inherited history.
+Send only the role, fixed assessment prompt, that concept's brief, current
+visuals, and optional fixed references. Exclude other concepts, the comparison
+gallery, prior screenshots, feedback, scores, and implementation rationale.
+Reuse the existing dispatch procedure rather than making another critic rubric.
+Keep studio-quality scores separate from polish's subjective AI-tell
+assessments.
 
 ## Package and let the user choose
 

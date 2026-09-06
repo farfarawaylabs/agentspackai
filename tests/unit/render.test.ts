@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.31.0");
+		expect(corePack.manifest.version).toBe("0.31.1");
 		const outputPaths = rendered.outputs.map((output) => output.path);
 		const reactOutputPaths = outputPaths.filter((path) =>
 			path.startsWith(".claude/skills/ap-react-"),
@@ -129,6 +129,7 @@ describe("renderPack", () => {
 			".claude/skills/ap-develop-with-vercel-ai-sdk/references/tools-context-and-safety.md",
 			".claude/skills/ap-develop-with-vercel-ai-sdk/references/ui-streaming-and-persistence.md",
 			".claude/skills/ap-explore-design-directions/SKILL.md",
+			".claude/skills/ap-explore-design-directions/references/creative-packets.md",
 			".claude/skills/ap-explore-design-directions/scripts/generate-seeds.mjs",
 			".claude/skills/ap-frontend-design/SKILL.md",
 			".claude/skills/ap-frontend-design/references/design-md.md",
@@ -177,6 +178,12 @@ describe("renderPack", () => {
 			".claude/skills/ap-write-database-queries/references/query-correctness-and-security.md",
 			".claude/skills/ap-write-database-queries/references/transactions-concurrency-and-testing.md",
 		]);
+		expect(
+			decodeOutput(
+				rendered.outputs,
+				".claude/skills/ap-frontend-review/SKILL.md",
+			),
+		).toContain("weight saturation");
 		expect(reactOutputPaths).toEqual(
 			corePack.files
 				.filter(
@@ -320,6 +327,7 @@ describe("renderPack", () => {
 			}
 
 			for (const reference of [
+				"ap-explore-design-directions/references/creative-packets.md",
 				"ap-implement-new-design/references/critic-prompt.md",
 				"ap-implement-new-design/references/static-html.md",
 				"ap-design-polish/references/ai-design-tells.md",
@@ -336,6 +344,12 @@ describe("renderPack", () => {
 				);
 			}
 
+			expect(
+				decodeOutput(
+					renderPack(corePack, "repository", [target], selected).outputs,
+					`${root}/skills/ap-explore-design-directions/references/creative-packets.md`,
+				),
+			).toContain("content-native generator");
 			const policyPath = `${root}/skills/ap-subagent-driven-development/agents/openai.yaml`;
 			expect(paths).toContain(policyPath);
 			expect(

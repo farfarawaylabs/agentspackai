@@ -14,6 +14,7 @@ import type { InitArguments } from "../../src/cli/arguments.ts";
 import { runEject } from "../../src/commands/eject.ts";
 import { runInit } from "../../src/commands/init.ts";
 import { runUpdate } from "../../src/commands/update.ts";
+import { loadPack } from "../../src/core/pack.ts";
 
 const PROJECT_ROOT = resolve(import.meta.dir, "../..");
 const CLI_PATH = join(PROJECT_ROOT, "src/cli/main.ts");
@@ -107,6 +108,7 @@ describe("init CLI", () => {
 
 	test("installs native subagent definitions from a schema version 1 pack", async () => {
 		const environment = await createEnvironment();
+		const corePack = await loadPack(CORE_PACK);
 		const args = initArgsForPack(
 			"repository",
 			"claude,codex,cursor",
@@ -116,7 +118,9 @@ describe("init CLI", () => {
 		const first = await runCli(environment, args);
 
 		expect(first.exitCode).toBe(0);
-		expect(first.stdout).toContain("Initialized agents-pack-core@0.31.0");
+		expect(first.stdout).toContain(
+			`Initialized agents-pack-core@${corePack.manifest.version}`,
+		);
 		expect(
 			await readFile(
 				join(

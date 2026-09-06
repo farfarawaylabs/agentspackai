@@ -35,6 +35,11 @@ references as a quality baseline, not a design to reproduce. Distinguish
 product misalignment and craft weaknesses from personal preference. Flag
 generic or excessive treatments only when they weaken the result.
 
+Inspect typography closely. Distinguish a deliberate, readable text overlap
+from clipped glyphs, accidental collisions, or near-tangencies. Assess whether
+font weight creates real hierarchy or whether too many roles are bold and
+competing for attention.
+
 Return your standard verdict and scorecard, the strongest choices, the
 biggest gaps, three prioritized changes with the greatest visual impact,
 and the elements to preserve. Tie observations to the supplied views.

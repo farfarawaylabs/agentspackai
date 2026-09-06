@@ -35,6 +35,9 @@ or deployment configuration to make a prototype work.
 - Include the viewport meta tag, semantic markup, responsive layouts, useful
   keyboard interactions, and reduced-motion behavior where applicable.
   Demonstrate the requested page coverage, not merely a hero screenshot.
+- Make font loading deterministic within the portable artifact. Check the
+  rendered result after fonts settle, and use fallbacks that do not cause
+  clipped glyphs, accidental overlaps, or unreadable near-tangencies.
 - Give controls an honest local behavior: opening a demo dialog, changing a
   tab, or showing simulated form validation. Prevent form submissions and
   purchases from reaching real services. Explain demo-only actions where a
@@ -52,7 +55,9 @@ merely because it must be static.
 
 Open the actual HTML using a file URL when browser tools support it. Inspect
 desktop and narrow widths, exercise the demonstrated interactions, and check
-console errors, missing assets, overflow, and focus behavior. Verify it works
+console errors, missing assets, overflow, text collisions, font-weight balance,
+and focus behavior. Stress longer labels and enlarged text when practical.
+Verify it works
 without network access; a page that only works through the app server has not
 passed static verification. A local preview server can help development but
 does not replace direct-file verification. Report browser-tool limitations.

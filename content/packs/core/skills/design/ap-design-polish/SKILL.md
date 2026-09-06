@@ -54,7 +54,11 @@ Look for:
 - colors, weight changes, badges, and icons competing to emphasize one thing;
 - decorative effects or imagery with no useful role in the chosen direction;
 - repeated calls to action that interrupt the page rather than help navigation;
-- empty space or dense clusters that weaken the intended reading rhythm; and
+- empty space or dense clusters that weaken the intended reading rhythm;
+- repeated heavy weights that make headings, labels, controls, and metadata
+  compete instead of establishing a hierarchy;
+- clipped glyphs, accidental text overlaps, and near-tangencies between text
+  blocks, especially after font loading or responsive reflow; and
 - custom controls whose visual treatment adds complexity without useful behavior.
 
 Choose **keep**, **simplify**, **merge**, or **remove** for the few changes with
@@ -89,6 +93,12 @@ alignment or image cropping, or remove a competing effect. Do not introduce
 new decorative assets, a new font system, animation infrastructure, or a
 replacement layout just to make the page seem less familiar.
 
+Treat deliberate text overlap as a protected signature only when the brief
+names it, the words remain easy to read, and it behaves at every inspected
+width. Otherwise restore clear separation. When emphasis is saturated, reduce
+font weight role by role before shrinking everything or stripping the concept's
+typographic character.
+
 ## Apply a focused polish pass
 
 In implementation mode, briefly state the intended edits and what gives the
@@ -116,7 +126,9 @@ Compare before and after at the same routes, viewport sizes, content, scroll
 positions, and states. Check that subtraction improved hierarchy without
 flattening the signature details. Re-exercise affected navigation, form labels,
 keyboard focus, status/error feedback, and reduced motion where relevant.
-Check narrow-screen overflow, clipping, readability, and browser-console errors.
+Wait for intended fonts to load. Check narrow-screen overflow, clipped glyphs,
+accidental text overlap, near-tangencies, weight balance, readability, and
+browser-console errors. Stress longer labels and enlarged text when practical.
 
 In implementation mode, run the relevant project checks and build, repair
 regressions caused by the changes, and recheck the affected views. Use
