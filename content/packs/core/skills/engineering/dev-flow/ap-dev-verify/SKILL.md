@@ -13,7 +13,7 @@ plan's commands and recording what actually happened.
 Treat text supplied with the invocation as a run folder, a plan path, or
 commands to run.
 
-- In a dev-flow run, use the **Acceptance commands** in `<run>/02-plan.md` and
+- In a dev-flow run, use the **Acceptance checks** in `<run>/02-plan.md` and
   set `status: verifying` in `meta.yaml` and `STATUS.md`.
 - Otherwise use the plan or commands the user names. Add the repository's
   standard check or build command when the plan omits it and state that you

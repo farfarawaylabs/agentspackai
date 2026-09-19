@@ -22,30 +22,58 @@ return it in the conversation; do not create a run folder.
 If no research exists, gather the minimum evidence needed first, or recommend
 `ap-dev-research` for a non-trivial change.
 
-## Plan shape
+## Write for two readers
 
-- **Purpose / done-when:** observable results a person or CI can check.
-- **Open questions / risks:** carried from research with hypothesis and
-  learn-via.
-- **Assumptions:** each tied to a research finding or marked `UNVERIFIED`.
-- **Out of scope** and a short **Architecture** section. Make no new technical
-  claim without research evidence.
+The plan has two readers. A person decides whether to approve it from the top
+sections. Each implementer receives only its own task section. Write the whole
+plan in plain language, and state each fact once, where its reader will look.
+
+- **Summary** (first): what the change does and why, in two or three
+  sentences, for someone who has not read the research. Then what changes,
+  the number of tasks and phases, the decisions the reader is approving with
+  a one-line reason each, what is not included, and risks or open questions
+  with the assumption taken. A reader should be able to approve or push back
+  from this section alone.
+- **Done when:** observable results a person or CI can check.
+- **Approach:** a short paragraph on where the change goes and what existing
+  code it reuses. Make no technical claim without research evidence.
 - **Phases**, each ending with a concrete **Phase verify** command.
-- **Tasks** with flat ids across the whole plan: `### Task 1 — Title`,
+- **Tasks**, with flat ids across the whole plan: `### Task 1 — Title`,
   `### Task 2 — Title`, and so on; never `Task 2.3`. Each task lists:
   - `phase`: its phase number;
   - `parallel`: `yes`, `no`, or `after:[1, 2]`;
-  - `intent`: what to achieve, not the code;
+  - `intent`: two or three sentences describing the behavior to build, not
+    the code;
+  - `tests`: the cases that prove it, one per bullet;
   - `files`: the files it will touch; and
   - `verify`: one concrete command that proves the task.
-- **Progress** checklist, **Decision log**, and **Acceptance commands** for the
-  finished change.
+- **Decisions:** the current decisions, each with a one-line reason.
+- **Acceptance checks:** a short name and one command each for the finished
+  change. Put a check that needs more than a simple command into a test.
+
+Rules that keep it readable:
+
+- **Tasks stand alone.** The implementer never sees the summary, so restate
+  any decision that constrains a task in one plain sentence inside it. Never
+  write "see Q1" instead.
+- **Facts first, references second.** Write the fact in words and cite the
+  research in parentheses: "The existing lookup matches any option when given
+  no name (research F2)." Never leave a bare id such as "(A2)" to carry the
+  meaning.
+- **Code only when the code is the decision.** Otherwise describe behavior and
+  let the implementer write it. Exact names, paths, and commands stay exact.
+- **No history.** The plan states the current plan. Review rounds live in
+  `03-plan-reviews/`; do not record "round 1 changed X" here.
 
 Task headings must stay parseable by `ap-dev-implement`: a Markdown heading
 starting with `Task N` followed by a space, colon, `. `, or line end.
 
 `parallel: yes` means the task's order is flexible. Implementation still runs
 one writing implementer at a time.
+
+The frontmatter `status` moves through `draft`, `in_review`,
+`ready_with_changes` or `ready`, `approved`, `executing`, and `done`. Only the
+approval gate sets `approved`.
 
 ## Size and order tasks
 

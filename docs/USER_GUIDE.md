@@ -518,8 +518,10 @@ use on its own:
 
 1. `ap-dev-research` gathers evidence from the code and current documentation.
    Every finding must cite a file or source.
-2. `ap-dev-plan` writes a phased plan of numbered tasks, each with the files it
-   touches and one command that proves it works.
+2. `ap-dev-plan` writes a phased plan. It opens with a plain-language summary
+   of what will change and the decisions you are approving, followed by
+   numbered tasks, each with its test cases, files, and one command that
+   proves it works.
 3. `ap-review-plan` has a fresh subagent review the plan, for up to two rounds,
    and applies the required changes.
 4. You approve the plan. Nothing is implemented before that.

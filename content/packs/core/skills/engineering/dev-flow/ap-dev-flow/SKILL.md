@@ -78,8 +78,9 @@ Pass the run path to every stage.
    `not_ready`, apply the required changes to `02-plan.md` and start the next
    round with a new reviewer.
 4. **Approval gate.** Set `status: awaiting_approval`. Present the plan's
-   phases and tasks, the latest review verdict with any unresolved findings,
-   and open questions with their hypotheses. Wait for the user's explicit
+   **Summary** section as written in `02-plan.md`, so what the user approves
+   matches the file, followed by the task titles, the latest review verdict
+   with any unresolved findings, and the plan path. Wait for the user's explicit
    approval; incorporate requested changes (another review round if they are
    material). Nothing is implemented before approval. On approval, set the
    plan's frontmatter `status: approved`.

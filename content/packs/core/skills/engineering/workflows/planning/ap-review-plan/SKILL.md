@@ -62,9 +62,20 @@ Ask it to check:
 - risks to existing behavior and user-owned changes; and
 - at least one credible alternative for material design decisions.
 
+Check readability, because a person approves the plan and each implementer
+sees only its own task:
+
+- the plan opens with a summary that someone who has not read the research
+  can use to understand what will change, why, and which decisions they are
+  approving;
+- facts are written out in words, with research references only in
+  parentheses, never a bare id carrying the meaning; and
+- each task can be understood in under a minute and stands alone, restating
+  any decision that constrains it.
+
 For a dev-flow plan, also check that every task has a flat `### Task N — Title`
-heading with `phase`, `parallel`, `intent`, `files`, and one concrete `verify`
-command, and that every phase ends with a **Phase verify** command.
+heading with `phase`, `parallel`, `intent`, `tests`, `files`, and one concrete
+`verify` command, and that every phase ends with a **Phase verify** command.
 
 Ask it to rethink its leading conclusion once before answering.
 
@@ -112,5 +123,7 @@ plan's frontmatter. Afterwards update `plan_round`, and set the plan's status to
 `ready` or `ready_with_changes` for those verdicts, or back to `draft` for
 `not_ready`. Only the approval gate in `ap-dev-flow` sets `approved`.
 
-In apply mode, apply the required changes checklist to `02-plan.md` and note
-each change under the plan's decision log. A new round needs a new reviewer.
+In apply mode, apply the required changes checklist to `02-plan.md`. Update
+the plan's Summary and Decisions sections when a change affects them, but do
+not record the review history in the plan; it stays in `03-plan-reviews/`. A
+new round needs a new reviewer.

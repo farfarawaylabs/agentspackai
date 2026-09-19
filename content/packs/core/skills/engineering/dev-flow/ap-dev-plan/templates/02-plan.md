@@ -1,36 +1,37 @@
 ---
 status: draft
-# status: draft | in_review | ready_with_changes | ready | approved | executing | done
 mode: interactive
-# mode: interactive | auto
 based_on_research: 01-research.md
 open_questions_carried: false
 ---
 
-# Plan
+# Plan: <one-line goal>
 
-## Purpose / done-when
+## Summary
 
-Observable done-when (what a human or CI can check).
+<Two or three plain sentences: what this change does and why. Written for a
+reader who has not seen the research.>
 
-## Open questions / risks
+**What changes:** <files or areas, in plain words>. <N> tasks in <M> phases.
 
-Carry from research.
+**Decisions to approve**
 
-- Q1 (defer_until_implement): … — hypothesis: … — learn via: …
+- <A decision the reader is agreeing to, with a one-line reason.>
 
-## Assumptions
+**Not included:** <what is deliberately left out>.
 
-- A1 — … (from F1)
-- A2 — … (`UNVERIFIED`)
+**Risks and open questions:** <anything that could change the plan, with the
+assumption taken and how it will be learned>, or "None".
 
-## Out of scope
+## Done when
 
-- …
+- <An observable result a person or CI can check.>
 
-## Architecture
+## Approach
 
-Short: approach, main modules, boundaries. No novel claims without research evidence.
+<A short paragraph: where the change goes and which existing code it reuses.
+State facts in words, then cite the evidence in parentheses, for example
+"The existing lookup matches any option when given no name (research F2)".>
 
 ## Phase 1 — <name>
 
@@ -39,49 +40,29 @@ Short: approach, main modules, boundaries. No novel claims without research evid
 ### Task 1 — <title>
 
 - phase: 1
-- parallel: yes | no | after:[]
-- intent: What to implement (not the full code)
+- parallel: no
+- intent: <Two or three sentences describing the behavior to build, not the
+  code. Restate any decision that constrains this task, because the
+  implementer sees only this task.>
+- tests:
+  - <one case per bullet>
 - files: `path/a.ts`, `path/b.ts`
 - verify: `<command>`
 
 ### Task 2 — <title>
 
 - phase: 1
-- parallel: no
+- parallel: after:[1]
 - intent: …
+- tests:
+  - …
 - files: …
 - verify: `<command>`
 
-## Phase 2 — <name>
+## Decisions
 
-**Phase verify:** `<command>`
+- <Current decision> — <one-line reason>.
 
-### Task 3 — <title>
+## Acceptance checks
 
-- phase: 2
-- parallel: yes
-- intent: …
-- files: …
-- verify: `<command>`
-
-<!-- Machine ids are flat Task N (not Task 2.3). Headings must match:
-     ^#+\s+Task\s+N(\s|:|\.\s|$)
-     Example valid: ### Task 3 — Title
--->
-
-## Progress
-
-- [ ] Task 1
-- [ ] Task 2
-- [ ] Phase 1 verify
-- [ ] Task 3
-- [ ] Phase 2 verify
-
-## Decision log / surprises
-
-<!-- Before implement only. During implement the plan is immutable; corrections
-     go to 04-implementation-ledger.md. -->
-
-## Acceptance commands
-
-- [ ] `<command>`
+- <Short name>: `<command>`
