@@ -846,7 +846,8 @@ reports:
 - installed and candidate versions;
 - whether an update is available;
 - current pin state;
-- candidate release notes; and
+- candidate release notes;
+- selected components that the candidate removed; and
 - newly introduced components compatible with your selected agents.
 
 It does not cache or apply the candidate.
@@ -899,6 +900,15 @@ so previously declined components are not offered again as new. If that cache is
 missing or invalid, the CLI reports that it cannot identify new components and
 still permits the update. You can use `--add`, or use
 `agents-pack list --available` and `agents-pack install <id>` after updating.
+
+### When a new pack removes a component
+
+If the candidate pack no longer contains a component you selected, the update
+still proceeds. The plan and `update --check` warn once for each removed
+component, the update uninstalls its managed files, and your configuration keeps
+only the remaining selections. The pack release notes name any replacement;
+install it with `--add` or `agents-pack install <id>`. CLI versions before
+0.3.1 refuse such an update, so update the CLI first.
 
 ### Update from a local candidate
 

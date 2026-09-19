@@ -7,7 +7,12 @@ import { AgentsPackError } from "../core/errors.ts";
 import { formatChangePlan } from "../core/format-plan.ts";
 import { detectInstalledScope } from "../core/inspect.ts";
 import { loadPack } from "../core/pack.ts";
-import { planUpdate, planUpdateCheck } from "../core/plan.ts";
+import {
+	partitionSelectedComponents,
+	planUpdate,
+	planUpdateCheck,
+	removedComponentWarnings,
+} from "../core/plan.ts";
 import { loadOfficialPack } from "../core/registry.ts";
 import { findNewComponents } from "../core/selection.ts";
 import type {
@@ -62,10 +67,11 @@ export async function runUpdate(
 			: await loadPack(resolve(cwd, parsed.packPath));
 
 	if (parsed.check) {
-		const report = formatUpdateCheck(state.config, state.lock, pack);
+		let report = formatUpdateCheck(state.config, state.lock, pack);
 
 		if (compareVersions(pack.manifest.version, state.lock.pack.version) >= 0) {
 			await planUpdateCheck({ pack, context });
+			report += formatRemovedComponents(state.config, pack);
 		}
 
 		write(report);
@@ -207,6 +213,27 @@ function formatNewComponents(components: readonly PackComponent[]): string {
 		),
 		"",
 		"Interactive update lets you choose additions. With --yes or --dry-run, use --add <id,id> to select extras explicitly.",
+		"",
+	].join("\n");
+}
+
+// Check output omits per-skill render warnings; only removals change what the
+// user keeps, so they are the only plan warnings repeated here.
+function formatRemovedComponents(
+	config: ScopeConfig,
+	pack: Awaited<ReturnType<typeof loadPack>>,
+): string {
+	const { removed } = partitionSelectedComponents(
+		config.components,
+		pack.manifest,
+	);
+	if (removed.length === 0) return "";
+	return [
+		"Warnings:",
+		...removedComponentWarnings(removed, pack.manifest.version).map(
+			(warning) => `  - ${warning}`,
+		),
+		"",
 		"",
 	].join("\n");
 }

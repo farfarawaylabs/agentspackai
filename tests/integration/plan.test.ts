@@ -319,7 +319,7 @@ describe("update planning", () => {
 		}
 	});
 
-	test("refuses an update that removes a selected component", async () => {
+	test("uninstalls a selected component removed from the candidate pack and warns", async () => {
 		const environment = await createEnvironment();
 		await initialize(environment, ["claude"]);
 		const missingSelected: LoadedPack = {
@@ -332,14 +332,52 @@ describe("update planning", () => {
 			},
 		};
 
+		const plan = await planUpdate({
+			pack: missingSelected,
+			context: environment.context,
+		});
+
+		expect(plan.warnings).toContain(
+			"Selected component agents-pack-smoke-test was removed in 0.2.0 and will be uninstalled. See the pack release notes for its replacement.",
+		);
+		expect(plan.operations).toContainEqual({
+			kind: "remove-file",
+			path: ".claude/skills/agents-pack-smoke-test/SKILL.md",
+		});
+
+		await materializePlan(environment.repository, plan);
+		const config = await readFile(
+			join(environment.repository, ".agents-pack/pack.toml"),
+			"utf8",
+		);
+		const lock = await readFile(
+			join(environment.repository, ".agents-pack/lock.json"),
+			"utf8",
+		);
+		expect(config).toContain('"ap-smoke-instructions"');
+		expect(config).not.toContain("agents-pack-smoke-test");
+		expect(lock).toContain('"version": "0.2.0"');
+		expect(lock).not.toContain("agents-pack-smoke-test");
+
+		const repeated = await planUpdate({
+			pack: missingSelected,
+			context: environment.context,
+		});
+		expect(repeated.operations).toEqual([]);
+		expect(repeated.warnings).toEqual([]);
+	});
+
+	test("still refuses an explicit addition missing from the candidate pack", async () => {
+		const environment = await createEnvironment();
+		await initialize(environment, ["claude"], ["ap-smoke-instructions"]);
+
 		expect(
 			planUpdate({
-				pack: missingSelected,
+				pack: packVersionTwo,
 				context: environment.context,
+				addComponents: ["ap-not-in-pack"],
 			}),
-		).rejects.toMatchObject({
-			code: "UNKNOWN_COMPONENT",
-		});
+		).rejects.toMatchObject({ code: "UNKNOWN_COMPONENT" });
 	});
 });
 

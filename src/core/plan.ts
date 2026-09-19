@@ -34,6 +34,7 @@ import type {
 	Scope,
 	ScopeConfig,
 	ScopePaths,
+	PackManifest,
 	PackSourceKind,
 } from "./types.ts";
 import type { ScopeState } from "./inspect.ts";
@@ -188,14 +189,52 @@ async function planForwardUpdate(
 		);
 	}
 
-	return reconcileInstalled(
+	// A component removed from the candidate pack must not block the update.
+	// Explicit additions are not filtered, so an unknown --add id still fails.
+	const { retained, removed } = partitionSelectedComponents(
+		config.components,
+		options.pack.manifest,
+	);
+	const plan = await reconcileInstalled(
 		"update",
 		options.pack,
 		config,
 		lock,
 		paths,
-		[...new Set([...config.components, ...(options.addComponents ?? [])])],
+		[...new Set([...retained, ...(options.addComponents ?? [])])],
 		config.pack.pinnedVersion,
+	);
+
+	return {
+		...plan,
+		warnings: [
+			...plan.warnings,
+			...removedComponentWarnings(removed, options.pack.manifest.version),
+		],
+	};
+}
+
+export function partitionSelectedComponents(
+	selected: readonly string[],
+	manifest: PackManifest,
+): { retained: string[]; removed: string[] } {
+	const available = new Set(
+		manifest.components.map((component) => component.id),
+	);
+
+	return {
+		retained: selected.filter((component) => available.has(component)),
+		removed: selected.filter((component) => !available.has(component)),
+	};
+}
+
+export function removedComponentWarnings(
+	removed: readonly string[],
+	packVersion: string,
+): string[] {
+	return removed.map(
+		(component) =>
+			`Selected component ${component} was removed in ${packVersion} and will be uninstalled. See the pack release notes for its replacement.`,
 	);
 }
 
@@ -219,14 +258,9 @@ export async function planRollback(
 		);
 	}
 
-	const available = new Set(
-		options.pack.manifest.components.map((component) => component.id),
-	);
-	const retained = config.components.filter((component) =>
-		available.has(component),
-	);
-	const removed = config.components.filter(
-		(component) => !available.has(component),
+	const { retained, removed } = partitionSelectedComponents(
+		config.components,
+		options.pack.manifest,
 	);
 	const plan = await reconcileInstalled(
 		"rollback",
