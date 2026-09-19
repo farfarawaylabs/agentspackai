@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
 # Write commits, a stat, and an extended-context diff for an exact commit range.
-# Usage: bash review-package PLAN_FILE BASE HEAD [OUTFILE]
+# Usage: bash review-package RUN BASE HEAD [OUTFILE]
+# RUN is a flow id or run path accepted by dev-run-workspace resolve. The
+# package is written to the run's tasks/ folder unless OUTFILE is given. Outside
+# a run folder, pass - as RUN together with OUTFILE.
 set -euo pipefail
 
 if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then
-  echo "usage: review-package PLAN_FILE BASE HEAD [OUTFILE]" >&2
+  echo "usage: review-package RUN BASE HEAD [OUTFILE]" >&2
   exit 2
 fi
 
-plan=$1
 base=$2
 head=$3
-if [ ! -f "$plan" ]; then
-  echo "no such plan file: $plan" >&2
+script_dir=$(cd "$(dirname "$0")" && pwd -P)
+run=$1
+if [ "$run" = "-" ] && [ "$#" -ne 4 ]; then
+  echo "RUN - requires an explicit OUTFILE" >&2
   exit 2
+fi
+if [ "$run" != "-" ]; then
+  run=$(bash "$script_dir/dev-run-workspace" resolve "$run")
 fi
 
 base_commit=$(git rev-parse --verify "${base}^{commit}" 2>/dev/null) || {
@@ -35,14 +42,12 @@ if ! git merge-base --is-ancestor "$base_commit" "$head_commit"; then
   exit 3
 fi
 
-script_dir=$(cd "$(dirname "$0")" && pwd -P)
 if [ "$#" -eq 4 ]; then
   out=$4
 else
-  workspace=$(bash "$script_dir/sdd-workspace" "$plan")
   base_short=$(git rev-parse --short "$base_commit")
   head_short=$(git rev-parse --short "$head_commit")
-  out="$workspace/review-${base_short}..${head_short}.diff"
+  out="$(bash "$script_dir/dev-run-workspace" tasks "$run")/package-${base_short}..${head_short}.diff"
 fi
 
 mkdir -p "$(dirname "$out")"

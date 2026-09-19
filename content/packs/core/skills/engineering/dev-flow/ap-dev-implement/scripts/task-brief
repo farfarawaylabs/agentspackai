@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
-# Extract one numbered task from a Markdown implementation plan.
-# Usage: bash task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
+# Extract one numbered task from a run's 02-plan.md into tasks/task-N-brief.md.
+# Usage: bash task-brief RUN TASK_NUMBER [OUTFILE]
+# RUN is a flow id or run path accepted by dev-run-workspace resolve.
 set -euo pipefail
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
-  echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  echo "usage: task-brief RUN TASK_NUMBER [OUTFILE]" >&2
   exit 2
 fi
 
-plan=$1
 task_number=$2
+script_dir=$(cd "$(dirname "$0")" && pwd -P)
+run=$(bash "$script_dir/dev-run-workspace" resolve "$1")
+plan="$run/02-plan.md"
 if [ ! -f "$plan" ]; then
   echo "no such plan file: $plan" >&2
   exit 2
@@ -22,12 +25,10 @@ case "$task_number" in
     ;;
 esac
 
-script_dir=$(cd "$(dirname "$0")" && pwd -P)
 if [ "$#" -eq 3 ]; then
   out=$3
 else
-  workspace=$(bash "$script_dir/sdd-workspace" "$plan")
-  out="$workspace/task-${task_number}-brief.md"
+  out="$(bash "$script_dir/dev-run-workspace" tasks "$run")/task-${task_number}-brief.md"
 fi
 
 mkdir -p "$(dirname "$out")"
@@ -73,7 +74,7 @@ awk -v n="$task_number" '
 ' "$plan" > "$out"
 
 if [ ! -s "$out" ]; then
-  echo "task $task_number not found in $plan (expected a heading such as '## Task $task_number')" >&2
+  echo "task $task_number not found in $plan (expected a heading such as '### Task $task_number — Title')" >&2
   exit 3
 fi
 

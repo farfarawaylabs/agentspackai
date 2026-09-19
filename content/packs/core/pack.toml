@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.31.1"
+version = "0.32.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -325,11 +325,81 @@ source = "skills/engineering/workflows/session/ap-continue-dev-session"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]
+id = "ap-dev-flow"
+kind = "skill"
+title = "Run the dev flow"
+summary = "Take a goal through research, a reviewed and approved plan, reviewed task-by-task implementation, integration review, and verification in one worktree."
+category = "engineering/dev-flow"
+selection = "recommended"
+source = "skills/engineering/dev-flow/ap-dev-flow"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-dev-research"
+kind = "skill"
+title = "Research a development goal"
+summary = "Gather repository and documentation evidence for a change, rejecting findings without a cited source."
+category = "engineering/dev-flow"
+selection = "recommended"
+source = "skills/engineering/dev-flow/ap-dev-research"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-dev-plan"
+kind = "skill"
+title = "Write an implementation plan"
+summary = "Write a phased plan of flat numbered tasks, each with intent, files, and one verify command."
+category = "engineering/dev-flow"
+selection = "recommended"
+source = "skills/engineering/dev-flow/ap-dev-plan"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-dev-implement"
+kind = "skill"
+title = "Implement a plan"
+summary = "Execute an approved plan with a fresh implementer per task, independent task review, and a reviewed repair ladder; replaces subagent-driven development."
+category = "engineering/dev-flow"
+selection = "recommended"
+source = "skills/engineering/dev-flow/ap-dev-implement"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-dev-review-code"
+kind = "skill"
+title = "Review the integrated change"
+summary = "Review a phase or whole-branch diff with a fresh read-only reviewer and map findings to approve, revise, or block."
+category = "engineering/dev-flow"
+selection = "recommended"
+source = "skills/engineering/dev-flow/ap-dev-review-code"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-dev-verify"
+kind = "skill"
+title = "Verify acceptance"
+summary = "Run a plan's acceptance commands and record each exit status and output excerpt."
+category = "engineering/dev-flow"
+selection = "recommended"
+source = "skills/engineering/dev-flow/ap-dev-verify"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-clean-dev-runs"
+kind = "skill"
+title = "Clean dev-flow runs"
+summary = "List old dev-flow run folders and remove confirmed ones through the guarded workspace script."
+category = "engineering/dev-flow"
+selection = "optional"
+source = "skills/engineering/dev-flow/ap-clean-dev-runs"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
 id = "ap-review-plan"
 kind = "skill"
 title = "Review a plan"
-summary = "Challenge a plan for mistakes, omissions, assumptions, risks, and simpler alternatives."
-category = "engineering/workflows"
+summary = "Have a fresh subagent challenge a plan for mistakes, omissions, assumptions, risks, and simpler alternatives; critique-only unless you ask to apply."
+category = "engineering/dev-flow"
 selection = "recommended"
 source = "skills/engineering/workflows/planning/ap-review-plan"
 targets = ["claude", "codex", "cursor"]
@@ -338,7 +408,7 @@ targets = ["claude", "codex", "cursor"]
 id = "ap-subagent-driven-development"
 kind = "skill"
 title = "Run subagent-driven development"
-summary = "Execute an implementation plan through fresh task implementers, independent reviews, repair loops, and a final branch review."
+summary = "Retired: replaced by ap-dev-implement and ap-dev-flow; will be removed in a later version."
 category = "engineering/workflows"
 selection = "optional"
 source = "skills/engineering/workflows/execution/ap-subagent-driven-development"

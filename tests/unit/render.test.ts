@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.31.1");
+		expect(corePack.manifest.version).toBe("0.32.0");
 		const outputPaths = rendered.outputs.map((output) => output.path);
 		const reactOutputPaths = outputPaths.filter((path) =>
 			path.startsWith(".claude/skills/ap-react-"),
@@ -103,6 +103,7 @@ describe("renderPack", () => {
 			".claude/skills/ap-audit-geo/references/geo-audit-checklist.md",
 			".claude/skills/ap-audit-seo/SKILL.md",
 			".claude/skills/ap-audit-seo/references/seo-audit-checklist.md",
+			".claude/skills/ap-clean-dev-runs/SKILL.md",
 			".claude/skills/ap-clear-dev-context/SKILL.md",
 			".claude/skills/ap-compress-todos/SKILL.md",
 			".claude/skills/ap-continue-dev-session/SKILL.md",
@@ -118,6 +119,30 @@ describe("renderPack", () => {
 			".claude/skills/ap-design-polish/SKILL.md",
 			".claude/skills/ap-design-polish/references/ai-design-tells.md",
 			".claude/skills/ap-design-studio/SKILL.md",
+			".claude/skills/ap-dev-flow/SKILL.md",
+			".claude/skills/ap-dev-flow/agents/openai.yaml",
+			".claude/skills/ap-dev-implement/LICENSE.md",
+			".claude/skills/ap-dev-implement/SKILL.md",
+			".claude/skills/ap-dev-implement/agents/openai.yaml",
+			".claude/skills/ap-dev-implement/final-reviewer-prompt.md",
+			".claude/skills/ap-dev-implement/implementer-prompt.md",
+			".claude/skills/ap-dev-implement/re-review-prompt.md",
+			".claude/skills/ap-dev-implement/scripts/dev-run-workspace",
+			".claude/skills/ap-dev-implement/scripts/review-package",
+			".claude/skills/ap-dev-implement/scripts/task-brief",
+			".claude/skills/ap-dev-implement/task-reviewer-prompt.md",
+			".claude/skills/ap-dev-implement/templates/04-implementation-ledger.md",
+			".claude/skills/ap-dev-implement/templates/STATUS.md",
+			".claude/skills/ap-dev-implement/templates/meta.yaml",
+			".claude/skills/ap-dev-implement/templates/task-review.md",
+			".claude/skills/ap-dev-plan/SKILL.md",
+			".claude/skills/ap-dev-plan/templates/02-plan.md",
+			".claude/skills/ap-dev-research/SKILL.md",
+			".claude/skills/ap-dev-research/templates/01-research.md",
+			".claude/skills/ap-dev-review-code/SKILL.md",
+			".claude/skills/ap-dev-review-code/templates/code-review.md",
+			".claude/skills/ap-dev-verify/SKILL.md",
+			".claude/skills/ap-dev-verify/templates/06-verify.md",
 			".claude/skills/ap-develop-apis/SKILL.md",
 			".claude/skills/ap-develop-apis/references/api-consumer-artifacts.md",
 			".claude/skills/ap-develop-apis/references/http-contract-checklist.md",
@@ -152,6 +177,7 @@ describe("renderPack", () => {
 			".claude/skills/ap-refresh-repo-docs/SKILL.md",
 			".claude/skills/ap-refresh-repo-docs/references/feature-and-subsystem-documentation.md",
 			".claude/skills/ap-review-plan/SKILL.md",
+			".claude/skills/ap-review-plan/templates/plan-review.md",
 			".claude/skills/ap-run-market-research/SKILL.md",
 			".claude/skills/ap-run-market-research/references/report-structure.md",
 			".claude/skills/ap-save-memory/SKILL.md",
@@ -160,16 +186,8 @@ describe("renderPack", () => {
 			".claude/skills/ap-security-audit/references/audit-surfaces.md",
 			".claude/skills/ap-security-audit/references/finding-validation-and-reporting.md",
 			".claude/skills/ap-start-dev-session/SKILL.md",
-			".claude/skills/ap-subagent-driven-development/LICENSE.md",
 			".claude/skills/ap-subagent-driven-development/SKILL.md",
 			".claude/skills/ap-subagent-driven-development/agents/openai.yaml",
-			".claude/skills/ap-subagent-driven-development/final-reviewer-prompt.md",
-			".claude/skills/ap-subagent-driven-development/implementer-prompt.md",
-			".claude/skills/ap-subagent-driven-development/re-review-prompt.md",
-			".claude/skills/ap-subagent-driven-development/scripts/review-package",
-			".claude/skills/ap-subagent-driven-development/scripts/sdd-workspace",
-			".claude/skills/ap-subagent-driven-development/scripts/task-brief",
-			".claude/skills/ap-subagent-driven-development/task-reviewer-prompt.md",
 			".claude/skills/ap-test-web-app/SKILL.md",
 			".claude/skills/ap-validate-trust-boundaries/SKILL.md",
 			".claude/skills/ap-validate-trust-boundaries/references/files-text-and-structured-input.md",
@@ -288,6 +306,7 @@ describe("renderPack", () => {
 			"ap-react-best-practices",
 			"ap-react-composition-patterns",
 			"ap-subagent-driven-development",
+			"ap-clean-dev-runs",
 		];
 		const recommended = corePack.manifest.components
 			.filter((component) => component.selection !== "optional")
@@ -319,6 +338,7 @@ describe("renderPack", () => {
 				"ap-react-best-practices",
 				"ap-react-composition-patterns",
 				"ap-subagent-driven-development",
+				"ap-clean-dev-runs",
 			]) {
 				expect(paths).toContain(`${root}/skills/${name}/SKILL.md`);
 				expect(recommendedPaths).not.toContain(
@@ -358,6 +378,55 @@ describe("renderPack", () => {
 					policyPath,
 				),
 			).toContain("allow_implicit_invocation: false");
+		}
+	});
+
+	test("renders the dev-flow pipeline in the recommended selection with explicit-only entry points", () => {
+		const devFlow = corePack.manifest.components.filter(
+			(component) => component.category === "engineering/dev-flow",
+		);
+		expect(devFlow.map((component) => component.id).sort()).toEqual([
+			"ap-clean-dev-runs",
+			"ap-dev-flow",
+			"ap-dev-implement",
+			"ap-dev-plan",
+			"ap-dev-research",
+			"ap-dev-review-code",
+			"ap-dev-verify",
+			"ap-review-plan",
+		]);
+		expect(
+			devFlow
+				.filter((component) => component.id !== "ap-clean-dev-runs")
+				.every((component) => component.selection === "recommended"),
+		).toBe(true);
+		const recommended = corePack.manifest.components
+			.filter((component) => component.selection !== "optional")
+			.map((component) => component.id);
+
+		for (const [target, root] of [
+			["claude", ".claude"],
+			["codex", ".agents"],
+			["cursor", ".cursor"],
+		] as const) {
+			const outputs = renderPack(
+				corePack,
+				"repository",
+				[target],
+				recommended,
+			).outputs;
+
+			for (const name of ["ap-dev-flow", "ap-dev-implement"]) {
+				expect(
+					decodeOutput(outputs, `${root}/skills/${name}/agents/openai.yaml`),
+				).toContain("allow_implicit_invocation: false");
+				expect(
+					decodeOutput(outputs, `${root}/skills/${name}/SKILL.md`),
+				).toContain("Use only when the user explicitly invokes");
+			}
+			expect(
+				decodeOutput(outputs, `${root}/skills/ap-dev-implement/SKILL.md`),
+			).toContain("Supersedes ap-subagent-driven-development");
 		}
 	});
 
@@ -452,6 +521,15 @@ describe("renderPack", () => {
 				"skills/engineering/workflows/execution/ap-subagent-driven-development",
 			],
 			["ap-test-web-app", "skills/engineering/testing/ap-test-web-app"],
+			...[
+				"ap-dev-flow",
+				"ap-dev-research",
+				"ap-dev-plan",
+				"ap-dev-implement",
+				"ap-dev-review-code",
+				"ap-dev-verify",
+				"ap-clean-dev-runs",
+			].map((name) => [name, `skills/engineering/dev-flow/${name}`]),
 		]) {
 			const source = corePack.files.find(
 				(file) => file.path === `${sourceRoot}/SKILL.md`,
@@ -486,7 +564,7 @@ describe("renderPack", () => {
 		).toContain("Inspect relevant memory");
 		expect(
 			decodeOutput(rendered.outputs, ".claude/skills/ap-review-plan/SKILL.md"),
-		).toContain("Start one independent review subagent");
+		).toContain("Invoked on its own it is critique-only");
 		expect(
 			decodeOutput(rendered.outputs, ".claude/skills/ap-create-prd/SKILL.md"),
 		).toContain("Ask one decision-sized question at a time by default");
@@ -507,7 +585,7 @@ describe("renderPack", () => {
 				rendered.outputs,
 				".claude/skills/ap-start-dev-session/SKILL.md",
 			),
-		).toContain(".agentspack/TECHNICAL_REQUIREMENTS.md");
+		).toContain(".agents-pack/TECHNICAL_REQUIREMENTS.md");
 
 		expect(
 			rendered.outputs.some((output) =>
