@@ -168,8 +168,11 @@ bash <skill-directory>/scripts/task-brief <run> N
 
 It writes `<run>/tasks/task-N-brief.md`. Dispatch a fresh implementer with
 [implementer-prompt.md](implementer-prompt.md), giving only one sentence of
-context, the brief path, relevant interfaces or rulings from earlier tasks, and
+context, the brief path, the plan's **Global constraints** verbatim, the
+interfaces produced by finished tasks, the rulings that bind this task, and
 the report path `<run>/tasks/task-N-report.md`. Never give it the whole plan.
+The brief describes behavior, so the implementer chooses the implementation
+within those constraints.
 Record its identity so repair rounds 1–3 can resume it.
 
 ### 2. Handle the implementer status
@@ -196,7 +199,8 @@ bash <skill-directory>/scripts/review-package <run> BASE HEAD
 
 Dispatch a fresh read-only reviewer (never the implementer or a previous
 reviewer) with [task-reviewer-prompt.md](task-reviewer-prompt.md), the brief,
-the report, the package, the exact SHAs, and verbatim global constraints.
+the report, the package, the exact SHAs, and the plan's **Global
+constraints** and **Review focus** verbatim.
 
 Write its result to `<run>/tasks/review-N-rR.md` using
 [templates/task-review.md](templates/task-review.md). Every task review needs

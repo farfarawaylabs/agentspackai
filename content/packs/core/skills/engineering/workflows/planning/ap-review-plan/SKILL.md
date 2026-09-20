@@ -62,20 +62,26 @@ Ask it to check:
 - risks to existing behavior and user-owned changes; and
 - at least one credible alternative for material design decisions.
 
-Check readability, because a person approves the plan and each implementer
-sees only its own task:
+Check readability, because a person approves the plan while each implementer
+receives only one task:
 
-- the plan opens with a summary that someone who has not read the research
-  can use to understand what will change, why, and which decisions they are
-  approving;
+- the Summary and Decisions let someone who has not read the research
+  understand what changes, why, and what they are approving;
+- nothing important is said twice: a decision appears once, not again inside a
+  task or a second list;
+- tasks describe behavior rather than steps, with no nested step lists and no
+  code unless it is the contract; and
 - facts are written out in words, with research references only in
-  parentheses, never a bare id carrying the meaning; and
-- each task can be understood in under a minute and stands alone, restating
-  any decision that constrains it.
+  parentheses, never a bare id carrying the meaning.
 
-For a dev-flow plan, also check that every task has a flat `### Task N — Title`
-heading with `phase`, `parallel`, `intent`, `tests`, `files`, and one concrete
-`verify` command, and that every phase ends with a **Phase verify** command.
+For a dev-flow plan, also check that:
+
+- every task has a flat `### Task N — Title` heading with `phase`, `parallel`,
+  `intent`, `files`, `interfaces`, `tests`, and one concrete `verify` command;
+- every phase ends with a **Phase verify** command;
+- **Global constraints** and **Review focus** are present, and the review focus
+  names the test that pins each failure mode; and
+- acceptance checks are readable commands rather than inline scripts.
 
 Ask it to rethink its leading conclusion once before answering.
 
