@@ -63,9 +63,11 @@ existing lookup matches any option when given no name (research F2)".>
   code, unless the exact code is the contract.>
 - files: create `path/new.ts`; modify `path/existing.ts`
 - interfaces: consumes `<signature or none>`; produces `<signature>`
-- tests:
-  - <one case per bullet>
+- tests: <the cases that prove this task's own behavior, one per bullet>
+  - <case>
 - verify: `<command>`
+
+<!-- Add another field, such as constraints or data, when the task needs it. -->
 
 ### Task 2 — <title>
 
@@ -81,6 +83,7 @@ existing lookup matches any option when given no name (research F2)".>
 ## Acceptance checks
 
 <What must be true when the whole change is done, each with the command that
-proves it. Readable commands only; a check that needs a script is a test.>
+proves it. Readable commands only, with no inline script and no hard-coded base
+branch; a check that needs a script is a test.>
 
 - <observable result>: `<command>`

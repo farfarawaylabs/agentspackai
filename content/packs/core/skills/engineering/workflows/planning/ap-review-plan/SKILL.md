@@ -62,26 +62,36 @@ Ask it to check:
 - risks to existing behavior and user-owned changes; and
 - at least one credible alternative for material design decisions.
 
-Check readability, because a person approves the plan while each implementer
-receives only one task:
+First run a quick structural pass and report what it finds, before the
+judgment-heavy review below. These findings are cheap, so do not let deeper
+correctness work crowd them out:
+
+- every task has `phase`, `parallel`, `intent`, `files`, `interfaces`,
+  `tests`, and `verify`, and every phase ends with a **Phase verify** command;
+- each task includes the tests that prove its own behavior, rather than
+  deferring them to a later task;
+- **Global constraints** and **Review focus** are present, and the review focus
+  names the test that pins each failure mode;
+- no `verify` or acceptance check inlines a shell or Node script, and none
+  hard-codes a base branch name; and
+- nothing important is stated twice: a decision appears once, not again in
+  scope, in another list, or inside a task.
+
+Extra task fields are allowed when they carry real information. Flag one only
+when it repeats a decision or becomes implementation steps under another name.
+
+Then check readability, because a person approves the plan while each
+implementer receives only one task:
 
 - the Summary and Decisions let someone who has not read the research
   understand what changes, why, and what they are approving;
-- nothing important is said twice: a decision appears once, not again inside a
-  task or a second list;
 - tasks describe behavior rather than steps, with no nested step lists and no
   code unless it is the contract; and
 - facts are written out in words, with research references only in
   parentheses, never a bare id carrying the meaning.
 
-For a dev-flow plan, also check that:
-
-- every task has a flat `### Task N — Title` heading with `phase`, `parallel`,
-  `intent`, `files`, `interfaces`, `tests`, and one concrete `verify` command;
-- every phase ends with a **Phase verify** command;
-- **Global constraints** and **Review focus** are present, and the review focus
-  names the test that pins each failure mode; and
-- acceptance checks are readable commands rather than inline scripts.
+Judge the plan's length by its scope, not by a line count. A large feature
+legitimately needs many phases; repetition and implementation detail do not.
 
 Ask it to rethink its leading conclusion once before answering.
 

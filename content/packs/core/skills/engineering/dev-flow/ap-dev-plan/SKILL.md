@@ -49,9 +49,14 @@ Sections, in order:
 - **Phases**, each ending with a concrete **Phase verify** command.
 - **Tasks** (below).
 - **Acceptance checks:** what must be true when the change is done, each with
-  one readable command. A check that needs a script belongs in a test.
+  one readable command.
 
-Each task carries:
+Every `verify` and acceptance command is a command someone can read and run,
+such as a package script or a test command. Do not inline a shell or Node
+script, and do not hard-code a base branch name; a check that needs a script
+belongs in a test.
+
+Each task carries these fields:
 
 - `phase`, and `parallel` as `yes`, `no`, or `after:[1, 2]`;
 - `intent`: one to three sentences naming the behavior to build;
@@ -60,6 +65,16 @@ Each task carries:
   ones, or `none`;
 - `tests`: the cases that prove it, one per bullet; and
 - `verify`: one concrete command.
+
+Add another field when a task genuinely needs it, such as `constraints` for
+rules that bind only this task or `data` for fixtures. Do not add a field that
+restates a decision already made, or that turns into implementation steps
+under another name.
+
+**A task includes its own tests.** Build the behavior and the cases that prove
+it in the same task, so its verify command means something and its reviewer
+sees the evidence. Do not plan one task that writes code and a later task that
+tests it.
 
 Rules that keep tasks readable and useful:
 
@@ -75,9 +90,10 @@ Rules that keep tasks readable and useful:
 - **No history.** The plan states the current plan; review rounds live in
   `03-plan-reviews/`.
 
-Keep the whole plan short enough to read in one sitting; for a small feature
-that is roughly 150 lines. If it grows past that, the tasks are over-specified
-or the scope is too large.
+Length follows scope: a large feature with many phases will be long, and that
+is fine. What must not grow is repetition and step-by-step detail. If the plan
+feels long, look for the same decision stated in several places or tasks that
+describe implementation rather than behavior, and cut those.
 
 Task headings must stay parseable by `ap-dev-implement`: a Markdown heading
 starting with `Task N` followed by a space, colon, `. `, or line end. Ids are
