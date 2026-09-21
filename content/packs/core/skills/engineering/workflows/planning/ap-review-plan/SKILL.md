@@ -67,7 +67,8 @@ judgment-heavy review below. These findings are cheap, so do not let deeper
 correctness work crowd them out:
 
 - every task has `phase`, `parallel`, `intent`, `files`, `interfaces`,
-  `tests`, and `verify`, and every phase ends with a **Phase verify** command;
+  `tests`, and `verify`, and every phase names a **Phase verify** command
+  under its heading;
 - each task includes the tests that prove its own behavior, rather than
   deferring them to a later task;
 - **Global constraints** and **Review focus** are present, and the review focus
@@ -75,7 +76,10 @@ correctness work crowd them out:
 - no `verify` or acceptance check inlines a shell or Node script, and none
   hard-codes a base branch name; and
 - nothing important is stated twice: a decision appears once, not again in
-  scope, in another list, or inside a task.
+  scope, in another list, or inside a task; and
+- global constraints read as one-line rules, with evidence cited to the
+  research rather than proofs, line numbers, or verified examples quoted
+  inline.
 
 Extra task fields are allowed when they carry real information. Flag one only
 when it repeats a decision or becomes implementation steps under another name.

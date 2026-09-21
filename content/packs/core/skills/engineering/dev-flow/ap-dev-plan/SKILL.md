@@ -41,12 +41,16 @@ Sections, in order:
 - **Scope:** what is not included, plus risks and open questions with the
   assumption taken and how it will be learned.
 - **Global constraints:** rules that bind every task, copied verbatim from the
-  specification, repository instructions, or the decisions above.
+  specification, repository instructions, or the decisions above. Each is one
+  imperative line; keep the evidence in `01-research.md` and cite it in
+  parentheses rather than quoting proofs, line numbers, or verified examples
+  here.
 - **Review focus:** up to five failure modes most likely to break this change,
   each naming the test that pins it.
 - **Approach:** a short paragraph on where the change goes and what existing
   code it reuses. Make no technical claim without research evidence.
-- **Phases**, each ending with a concrete **Phase verify** command.
+- **Phases**, each naming a concrete **Phase verify** command under its
+  heading, which must pass before the next phase starts.
 - **Tasks** (below).
 - **Acceptance checks:** what must be true when the change is done, each with
   one readable command.
@@ -64,7 +68,8 @@ Each task carries these fields:
 - `interfaces`: what it consumes from earlier tasks and produces for later
   ones, or `none`;
 - `tests`: the cases that prove it, one per bullet; and
-- `verify`: one concrete command.
+- `verify`: the narrowest command that proves this task, which is usually
+  narrower than the phase verify.
 
 Add another field when a task genuinely needs it, such as `constraints` for
 rules that bind only this task or `data` for fixtures. Do not add a field that

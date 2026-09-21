@@ -32,11 +32,12 @@ taken, and how it will be learned>, or "None".
 
 ## Global constraints
 
-<Rules that bind every task, copied verbatim from the specification, the
-repository's instructions, or the decisions above. The controller passes
-these to every implementer and reviewer, so tasks do not repeat them.>
+<One-line rules that bind every task, from the specification, the repository's
+instructions, or the decisions above. The controller passes these to every
+implementer and reviewer, so tasks do not repeat them. Cite the research for
+evidence instead of quoting proofs here.>
 
-- <constraint>
+- <constraint> (research F<n>)
 
 ## Review focus
 
