@@ -1,6 +1,5 @@
 ---
 status: draft
-mode: interactive
 based_on_research: 01-research.md
 open_questions_carried: false
 ---

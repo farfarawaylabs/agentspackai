@@ -1,6 +1,6 @@
 ---
 name: ap-dev-research
-description: Research a development goal before planning by gathering evidence from the repository and current documentation, and record findings that each cite a file path or source URL. Use when the user asks to research, investigate, or gather context for a feature or change before writing an implementation plan, or when ap-dev-flow reaches its research stage. Rejects findings without evidence. Not for debugging a failure or for market research.
+description: Research a development goal before planning by gathering evidence from the repository and current documentation, and record findings that each cite a file path or source URL. Use when the user asks to research, investigate, or gather context for a feature or change before writing an implementation plan, or when ap-dev-flow or ap-dev-flow-auto reaches its research stage. Rejects findings without evidence. Not for debugging a failure or for market research.
 ---
 
 # Research a development goal

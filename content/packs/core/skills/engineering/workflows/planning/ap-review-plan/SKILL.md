@@ -26,8 +26,9 @@ against the system it will change.
 
 - **Critique-only** (default when invoked on its own): produce the review; do
   not edit the plan file or begin implementation.
-- **Apply**: used when `ap-dev-flow` runs this stage, or when the user
-  explicitly asks to apply the review. The reviewer still never edits the plan.
+- **Apply**: used when an orchestrator (`ap-dev-flow` or `ap-dev-flow-auto`)
+  runs this stage, or when the user explicitly asks to apply the review. The
+  reviewer still never edits the plan.
   After the round, this controller applies the required changes checklist to
   the plan and records what changed.
 
@@ -141,7 +142,9 @@ When the plan lives in a dev-flow run folder, also write
 plan_review` in `meta.yaml` and `STATUS.md` and `status: in_review` in the
 plan's frontmatter. Afterwards update `plan_round`, and set the plan's status to
 `ready` or `ready_with_changes` for those verdicts, or back to `draft` for
-`not_ready`. Only the approval gate in `ap-dev-flow` sets `approved`.
+`not_ready`. Only an orchestrator's approval gate sets `approved`: the human
+gate in `ap-dev-flow`, or the machine gate in `ap-dev-flow-auto`. Never set it
+from this stage.
 
 In apply mode, apply the required changes checklist to `02-plan.md`. Update
 the plan's Summary and Decisions sections when a change affects them, but do

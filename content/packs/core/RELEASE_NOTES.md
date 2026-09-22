@@ -38,8 +38,17 @@ the end that it cannot finish.
 
 - The run folder's `meta.yaml` now records `mode` (`interactive` or `auto`), and
   the stage skills read the mode and the caps from that file instead of assuming
-  interactive values. Existing runs are unaffected; new runs created by
-  `ap-dev-flow` still default to `interactive` and its caps.
+  interactive values. New runs created by `ap-dev-flow` still default to
+  `interactive` and its caps.
+- Both orchestrators reconcile `mode` when resuming a run the other one started,
+  so a resumed run does not keep the wrong questioning behavior or caps.
+- `ap-review-plan` applies review changes and recognizes an approval gate under
+  either orchestrator. Its repair-authorization rule, and those in
+  `ap-dev-review-code` and `ap-dev-verify`, key off the invoking orchestrator
+  rather than the presence of a run folder, so standalone invocations stay
+  report-only.
+- Phase-verify repair waves inside `ap-dev-implement` now read
+  `verify_repair_max` instead of assuming two.
 - `ap-dev-research` no longer asks about blocking open questions under
   `mode: auto`; it records the hypothesis and how each will be learned and sets
   `open_questions_carried`.

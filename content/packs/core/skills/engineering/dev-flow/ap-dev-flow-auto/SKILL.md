@@ -23,6 +23,12 @@ or an existing run to resume. If a run folder or flow id is supplied, resume
 it: read `meta.yaml` and `STATUS.md`, then continue from `last_step` without
 redoing completed stages or resetting round counters.
 
+Check `mode` before continuing. A run `ap-dev-flow` created carries
+`mode: interactive`, and every stage reads that value: left alone, they would
+wait for answers nobody is there to give and use interactive caps. Set
+`mode: auto` and the auto caps in `meta.yaml`, and say in the final report that
+the run was converted from interactive.
+
 If the ask is too fuzzy to research, stop before creating anything and say so.
 Guessing at a vague goal for an entire unattended run wastes more than it
 saves. Recommend `ap-create-prd` or `ap-dev-flow`.

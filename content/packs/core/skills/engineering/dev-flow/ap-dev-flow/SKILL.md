@@ -24,6 +24,11 @@ suggest `ap-create-prd` first. If a run folder or flow id is supplied, resume
 it: read `meta.yaml` and `STATUS.md`, then continue from `last_step` without
 redoing completed stages or resetting round counters.
 
+Check `mode` before continuing. A run `ap-dev-flow-auto` created carries
+`mode: auto`, which suppresses the questions this skill exists to ask. Set
+`mode: interactive` and the interactive caps in `meta.yaml`, and tell the user
+the run was converted.
+
 ## Check the stages
 
 Before creating anything, confirm these skills are installed:

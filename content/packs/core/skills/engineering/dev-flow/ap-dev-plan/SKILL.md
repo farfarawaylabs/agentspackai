@@ -1,6 +1,6 @@
 ---
 name: ap-dev-plan
-description: Write or update a phased implementation plan with flat numbered tasks, one verify command per task and per phase, and acceptance commands, based on research evidence. Use when the user asks to write, draft, or revise an implementation plan or task breakdown for a development change, or when ap-dev-flow reaches its planning stage. Not for product requirements (ap-create-prd) or reviewing an existing plan (ap-review-plan).
+description: Write or update a phased implementation plan with flat numbered tasks, one verify command per task and per phase, and acceptance commands, based on research evidence. Use when the user asks to write, draft, or revise an implementation plan or task breakdown for a development change, or when ap-dev-flow or ap-dev-flow-auto reaches its planning stage. Not for product requirements (ap-create-prd) or reviewing an existing plan (ap-review-plan).
 ---
 
 # Write an implementation plan

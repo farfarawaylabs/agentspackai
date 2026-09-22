@@ -1,6 +1,6 @@
 ---
 name: ap-dev-verify
-description: Run a plan's acceptance commands against the finished change and record each command's exit status and output excerpt. Use when the user asks to verify, run acceptance checks for, or confirm completion of implemented plan work, or when ap-dev-flow reaches its verification stage. Not for debugging a specific failure (ap-debug) or exploratory browser testing (ap-test-web-app).
+description: Run a plan's acceptance commands against the finished change and record each command's exit status and output excerpt. Use when the user asks to verify, run acceptance checks for, or confirm completion of implemented plan work, or when ap-dev-flow or ap-dev-flow-auto reaches its verification stage. Not for debugging a specific failure (ap-debug) or exploratory browser testing (ap-test-web-app).
 ---
 
 # Verify acceptance
@@ -35,13 +35,16 @@ This stage runs commands; it does not edit code.
 
 ## Repair waves
 
-Repair only under an orchestrator — any run whose `meta.yaml` carries a `mode`
-— or when the user asks for fixes. A repair wave is one implementer dispatched
-with the failing commands and their output. It commits the fix, then this stage
-reruns every acceptance command. `verify_repair_max` in `meta.yaml` caps the
-waves: two under `mode: interactive`, four under `mode: auto`. Read the cap from
-the file rather than assuming it. When the cap is reached with failures, set
-`status: stopped` and `stop_reason: verify_repair_cap` and keep every artifact.
+Repair only when an orchestrator (`ap-dev-flow` or `ap-dev-flow-auto`) is
+running this stage, or when the user asks for fixes. A run folder alone does not
+authorize repair: `ap-dev-implement` creates one for standalone use too. Read
+`mode` from `meta.yaml` to pick the cap, never to decide whether to repair.
+
+A repair wave is one implementer dispatched with the failing commands and their
+output. It commits the fix, then this stage reruns every acceptance command.
+`verify_repair_max` caps the waves: two under `mode: interactive`, four under
+`mode: auto`. When the cap is reached with failures, set `status: stopped` and
+`stop_reason: verify_repair_cap` and keep every artifact.
 
 ## Finish
 

@@ -128,12 +128,20 @@ describe("ap-dev-implement dev-run-workspace", () => {
 		expect(badMode.exitCode).toBe(2);
 		expect(badMode.stderr).toContain("mode must be interactive or auto");
 
-		const extraArgument = await run(
-			["bash", WORKSPACE, "resolve", flowId, "auto"],
-			repository,
-		);
-		expect(extraArgument.exitCode).toBe(2);
-		expect(extraArgument.stderr).toContain("usage:");
+		// A mode argument must not be silently ignored by the other commands;
+		// `remove` deletes the run folder.
+		for (const command of ["resolve", "tasks", "remove"]) {
+			const extraArgument = await run(
+				["bash", WORKSPACE, command, flowId, "auto"],
+				repository,
+			);
+			expect(extraArgument.exitCode).toBe(2);
+			expect(extraArgument.stderr).toContain("usage:");
+		}
+		// The run the rejected `remove` targeted is still there.
+		expect(
+			(await run(["bash", WORKSPACE, "resolve", flowId], repository)).exitCode,
+		).toBe(0);
 	});
 
 	test("never reuses an existing run folder", async () => {

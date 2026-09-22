@@ -280,10 +280,11 @@ repair range by a fresh reviewer, then the phase verify again. Completed tasks
 stay complete. Append after each wave:
 
 ```text
-Phase <P>: verify repair <W>/2 (<pass|fail>; commits <base7>..<head7>)
+Phase <P>: verify repair <W>/<verify_repair_max> (<pass|fail>; commits <base7>..<head7>)
 ```
 
-Allow at most two waves per phase (`verify_repair_max`). If the phase verify
+Allow at most `verify_repair_max` waves per phase, read from `meta.yaml`: two
+under `mode: interactive`, four under `mode: auto`. If the phase verify
 still fails, set `status: stopped` with `stop_reason: phase_verify_cap` and do
 not start the next phase.
 
