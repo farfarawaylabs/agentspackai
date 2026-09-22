@@ -1003,7 +1003,9 @@ agents-pack update --add ap-design-studio,ap-design-critic --yes
 `--add` accepts compatible component IDs from the candidate pack, including older
 components you did not previously select. It adds to your existing selection and
 skips the menu. The version update and selected additions apply together in one
-transaction. `--check` and `--dry-run` show new components without prompting.
+transaction. A version change is not required: running `update --add <id>` when
+you are already on the current version simply adds the component.
+`--check` and `--dry-run` show new components without prompting.
 
 Discovery compares the candidate's full catalog with the cached installed pack,
 so previously declined components are not offered again as new. If that cache is
