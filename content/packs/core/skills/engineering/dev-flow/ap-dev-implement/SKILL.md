@@ -203,7 +203,9 @@ the report, the package, the exact SHAs, and the plan's **Global
 constraints** and **Review focus** verbatim.
 
 Write its result to `<run>/tasks/review-N-rR.md` using
-[templates/task-review.md](templates/task-review.md). Every task review needs
+[templates/task-review.md](templates/task-review.md), where `R` is the round.
+Every review round writes its own file, including each re-review in the repair
+loop, and the ledger names the file. Every task review needs
 a spec-compliance verdict; when `ap-code-reviewer` runs, ask it to include the
 prompt's Spec Compliance section. Map the verdict across both severity scales:
 
@@ -225,7 +227,8 @@ a fresh reviewer. Use at most five rounds per task:
 Each implementer commits its repair, reruns the task verify, and appends to its
 report. Record `FIX_BASE` as the head the prior review saw, package
 `FIX_BASE..HEAD`, and dispatch a fresh reviewer with
-[re-review-prompt.md](re-review-prompt.md). After every round append:
+[re-review-prompt.md](re-review-prompt.md). Write its verdict to
+`<run>/tasks/review-N-rR.md` for that round. After every round append:
 
 ```text
 Task <N>: fix round <R>/5 (<X> addressed, <Y> open; commits <base7>..<head7>)
@@ -280,6 +283,10 @@ orchestrator runs integration review and verification.
 Standalone, run `ap-dev-review-code` and then `ap-dev-verify` against this run
 when they are installed. If one is missing, report its exact component id and
 offer the normal Agents Pack install workflow; do not perform its work here.
+
+Before reporting, confirm the run folder holds one review file per task
+review and per repair round. If one is missing, write it from the ledger and
+say so.
 
 Report:
 
