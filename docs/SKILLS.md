@@ -50,14 +50,34 @@ unsure.
 | Start a Development Session | `ap-start-dev-session` | Orients the agent to the project and isolates mutable local work in a dedicated Git worktree and branch before implementation begins. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-start-dev-session/SKILL.md) |
 | Prepare a Context Handoff | `ap-clear-dev-context` | Produces a detailed, paste-ready handoff before conversation context is cleared or a development session is restarted. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-clear-dev-context/SKILL.md) |
 | Continue a Development Session | `ap-continue-dev-session` | Rebuilds and reconciles context from a prior handoff before safely resuming development work. | [Open skill](../content/packs/core/skills/engineering/workflows/session/ap-continue-dev-session/SKILL.md) |
-| Review a Plan | `ap-review-plan` | Challenges a development plan through repository-grounded review and an independent subagent review when available. | [Open skill](../content/packs/core/skills/engineering/workflows/planning/ap-review-plan/SKILL.md) |
-| Subagent-Driven Development | `ap-subagent-driven-development` | Explicitly executes a prepared plan through fresh task implementers, local task commits, independent review and repair loops, and final whole-branch review. | [Open skill](../content/packs/core/skills/engineering/workflows/execution/ap-subagent-driven-development/SKILL.md) |
 
-Subagent-Driven Development is configured and instructed for explicit-only
-use. Invoke it deliberately with a prepared plan, for example:
+## Dev flow
+
+`ap-dev-flow` takes a goal through research, a written and independently
+reviewed plan, your approval, task-by-task implementation with a fresh
+implementer and an independent review per task, an integration review of the
+whole change, and acceptance verification. It runs in one isolated worktree and
+records every step in a run folder at
+`<worktree-root>/.agents-pack/runs/<flow-id>/`. Each stage is its own skill, so
+you can also run one step alone.
+
+| Skill | Chat activation name | What it does | Source |
+|---|---|---|---|
+| Dev Flow | `ap-dev-flow` | Explicitly runs the full pipeline, owns the worktree and run folder, and stops for your approval before implementation. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-flow/SKILL.md) |
+| Research a Development Goal | `ap-dev-research` | Gathers repository and documentation evidence for a change and rejects findings that cite no source. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-research/SKILL.md) |
+| Write an Implementation Plan | `ap-dev-plan` | Writes a phased plan of flat numbered tasks, each with intent, files, and one verify command. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-plan/SKILL.md) |
+| Review a Plan | `ap-review-plan` | Has a fresh subagent challenge a plan each round. Critique-only on its own; edits the plan only when you ask or under `ap-dev-flow`. Requires subagents. | [Open skill](../content/packs/core/skills/engineering/workflows/planning/ap-review-plan/SKILL.md) |
+| Implement a Plan | `ap-dev-implement` | Explicitly executes an approved plan with a fresh implementer per task, local task commits, independent task review, and a reviewed repair ladder. Replaces `ap-subagent-driven-development`. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-implement/SKILL.md) |
+| Review the Integrated Change | `ap-dev-review-code` | Reviews a phase or whole-branch diff with a fresh read-only reviewer, preferring `ap-code-reviewer`, and maps findings to approve, revise, or block. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-review-code/SKILL.md) |
+| Verify Acceptance | `ap-dev-verify` | Runs the plan's acceptance commands and records each exit status and output excerpt. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-verify/SKILL.md) |
+| Clean Dev-Flow Runs | `ap-clean-dev-runs` | Lists old run folders in the current worktree and removes only the ones you confirm. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-clean-dev-runs/SKILL.md) |
+
+`ap-dev-flow` and `ap-dev-implement` create commits through subagents, so they
+run only when invoked by name:
 
 ```text
-Use ap-subagent-driven-development to execute docs/plans/feature.md.
+Use ap-dev-flow to add rate limiting to the public API.
+Use ap-dev-implement to execute docs/plans/feature.md.
 ```
 
 ## Design exploration, implementation, and polish

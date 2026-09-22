@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# Create, resolve, or remove one dev-flow run folder in the active worktree.
+# Usage:
+#   bash dev-run-workspace new SLUG
+#   bash dev-run-workspace resolve FLOW_ID|RUN_PATH
+#   bash dev-run-workspace tasks FLOW_ID|RUN_PATH    (creates and prints <run>/tasks)
+#   bash dev-run-workspace remove FLOW_ID
+# Runs live at <worktree-root>/.agents-pack/runs/<flow-id>/, where flow-id is
+# YYYY-MM-DD-<slug>-<random hex>. Every command prints an absolute path.
+set -euo pipefail
+
+usage() {
+  echo "usage: dev-run-workspace new SLUG | resolve FLOW_ID|RUN_PATH | tasks FLOW_ID|RUN_PATH | remove FLOW_ID" >&2
+  exit 2
+}
+
+[ "$#" -eq 2 ] || usage
+command=$1
+argument=$2
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "current directory is not inside a Git worktree" >&2
+  exit 2
+}
+root=$(cd "$root" && pwd -P)
+agents_dir="$root/.agents-pack"
+runs_dir="$agents_dir/runs"
+templates="$(cd "$(dirname "$0")" && pwd -P)/../templates"
+
+reject_symlink() {
+  if [ -L "$1" ]; then
+    echo "refusing symlinked run path: $1" >&2
+    exit 3
+  fi
+}
+
+# Require the physical directory to be exactly the repository-local path. This
+# prevents an existing ancestor link from routing run state outside the
+# active worktree.
+require_local_directory() {
+  if [ "$(cd "$1" && pwd -P)" != "$1" ]; then
+    echo "run path resolves outside the repository-local path: $1" >&2
+    exit 3
+  fi
+}
+
+valid_flow_id() {
+  [[ "$1" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*-[0-9a-f]{4,}$ ]]
+}
+
+resolve_run() {
+  local run="$runs_dir/$1"
+  if ! valid_flow_id "$1"; then
+    echo "invalid flow id: $1" >&2
+    exit 2
+  fi
+  for path in "$agents_dir" "$runs_dir" "$run"; do
+    reject_symlink "$path"
+  done
+  if [ ! -d "$run" ]; then
+    echo "no such run: $run" >&2
+    exit 3
+  fi
+  require_local_directory "$runs_dir"
+  require_local_directory "$run"
+  printf '%s\n' "$run"
+}
+
+# Copy a template, replacing {{flow_id}}, {{created}}, {{worktree}}, {{run}},
+# and {{branch}} with the RUN_* environment values. Values are spliced in
+# literally (no regex replacement strings), which behaves the same in every
+# awk. YAML templates single-quote these values, so single quotes are doubled
+# for .yaml output.
+render_template() {
+  local yaml=0
+  [[ "$2" == *.yaml ]] && yaml=1
+  awk -v yaml="$yaml" '
+    BEGIN {
+      split("flow_id created worktree run branch", keys, " ")
+      for (i in keys) {
+        value = ENVIRON["RUN_" keys[i]]
+        if (yaml) gsub(/\047/, "\047\047", value)
+        values["{{" keys[i] "}}"] = value
+      }
+    }
+    {
+      for (token in values) {
+        out = ""
+        while ((at = index($0, token)) > 0) {
+          out = out substr($0, 1, at - 1) values[token]
+          $0 = substr($0, at + length(token))
+        }
+        $0 = out $0
+      }
+      print
+    }
+  ' "$1" > "$2"
+}
+
+create_run() {
+  local slug run ignore_file
+  slug=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' |
+    sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//' | cut -c1-40 | sed 's/-*$//')
+  if [ -z "$slug" ]; then
+    echo "SLUG must contain at least one letter or digit: $1" >&2
+    exit 2
+  fi
+  export RUN_flow_id
+  RUN_flow_id="$(date +%Y-%m-%d)-$slug-$(od -An -N3 -tx1 /dev/urandom | tr -d ' \n')"
+  run="$runs_dir/$RUN_flow_id"
+
+  for path in "$agents_dir" "$runs_dir"; do
+    reject_symlink "$path"
+  done
+  mkdir -p "$runs_dir"
+  for path in "$agents_dir" "$runs_dir"; do
+    reject_symlink "$path"
+  done
+  require_local_directory "$runs_dir"
+
+  ignore_file="$runs_dir/.gitignore"
+  if [ -L "$ignore_file" ]; then
+    echo "refusing symlinked run ignore file: $ignore_file" >&2
+    exit 3
+  elif [ -e "$ignore_file" ]; then
+    if [ ! -f "$ignore_file" ]; then
+      echo "run ignore path is not a regular file: $ignore_file" >&2
+      exit 3
+    fi
+    if [ "$(cat "$ignore_file")" != "*" ]; then
+      echo "refusing to overwrite existing run ignore file: $ignore_file" >&2
+      exit 3
+    fi
+  else
+    printf '*\n' > "$ignore_file"
+  fi
+
+  if [ -e "$run" ] || [ -L "$run" ]; then
+    echo "refusing to reuse existing run: $run" >&2
+    exit 3
+  fi
+  mkdir "$run"
+  require_local_directory "$run"
+
+  export RUN_created RUN_worktree="$root" RUN_run="$run" RUN_branch
+  RUN_created=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  RUN_branch=$(git branch --show-current 2>/dev/null || true)
+  render_template "$templates/meta.yaml" "$run/meta.yaml"
+  render_template "$templates/STATUS.md" "$run/STATUS.md"
+  printf '%s\n' "$run"
+}
+
+resolve_argument() {
+  if [[ "$1" == */* ]]; then
+    if [ ! -d "$1" ]; then
+      echo "no such run: $1" >&2
+      exit 3
+    fi
+    if [ "$(cd "$(dirname "$1")" && pwd -P)" != "$runs_dir" ]; then
+      echo "run is not in this worktree's run root ($runs_dir): $1" >&2
+      exit 3
+    fi
+    resolve_run "$(basename "$1")"
+  else
+    resolve_run "$1"
+  fi
+}
+
+case "$command" in
+  new)
+    create_run "$argument"
+    ;;
+  resolve)
+    resolve_argument "$argument"
+    ;;
+  tasks)
+    run=$(resolve_argument "$argument")
+    reject_symlink "$run/tasks"
+    mkdir -p "$run/tasks"
+    reject_symlink "$run/tasks"
+    require_local_directory "$run/tasks"
+    printf '%s\n' "$run/tasks"
+    ;;
+  remove)
+    run=$(resolve_run "$argument")
+    rm -rf -- "$run"
+    printf 'removed %s\n' "$run"
+    ;;
+  *)
+    usage
+    ;;
+esac

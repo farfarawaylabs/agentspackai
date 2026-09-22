@@ -1,0 +1,22 @@
+flow_id: '{{flow_id}}'
+mode: interactive          # interactive | auto
+status: created            # created | researching | planning | plan_review | awaiting_approval
+                           # | implementing | code_review | verifying | done | stopped | failed
+goal: ''
+created_at: '{{created}}'
+updated_at: '{{created}}'
+worktree: '{{worktree}}'
+branch: '{{branch}}'
+base_ref: null
+merge_base: null
+plan_round: 0
+code_review_round: 0
+open_questions_carried: false
+caps:
+  plan_review_max: 2         # auto: 4
+  task_repair_max: 5
+  integration_review_max: 2  # auto: 4
+  verify_repair_max: 2       # auto: 4
+stop_reason: null
+pr_url: null
+durable_plan_path: null

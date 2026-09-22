@@ -12,9 +12,9 @@ constraints, paths, or priorities. Do not ignore it.
 
 1. Locate the repository root and read its applicable agent instruction files.
 2. First check these requested project-context paths:
-   - `.agentspack/PRD.md`
-   - `.agentspack/TECHNICAL_REQUIREMENTS.md`
-   - `.agentspack/todos.md`
+   - `.agents-pack/PRD.md`
+   - `.agents-pack/TECHNICAL_REQUIREMENTS.md`
+   - `.agents-pack/todos.md`
 3. Read each one that exists. When one is absent, search for the repository's
    canonical equivalent, including casing variants and established root or
    documentation locations. Do not create a missing file or stop merely because

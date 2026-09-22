@@ -16,6 +16,7 @@ formats to use Agents Pack.
 - [Choose repository or global scope](#choose-repository-or-global-scope)
 - [Initialize Agents Pack](#initialize-agents-pack)
 - [Manage Agents Pack through your coding agent](#manage-agents-pack-through-your-coding-agent)
+- [Run the dev-flow pipeline](#run-the-dev-flow-pipeline)
 - [Use the CLI directly](#use-the-cli-directly)
 - [Manage remote MCP servers](#manage-remote-mcp-servers)
 - [Understand component selection](#understand-component-selection)
@@ -502,6 +503,74 @@ only when a real conflict cannot be resolved from repository evidence.
 
 See the [complete skill catalog](./SKILLS.md) for every skill, its exact chat
 activation name, a short description, and its source file.
+
+## Run the dev-flow pipeline
+
+The recommended selection includes a plan-first development pipeline. Start it
+by name with a goal:
+
+```text
+Use ap-dev-flow to add rate limiting to the public API.
+```
+
+`ap-dev-flow` runs these stages in order, each of which is also a skill you can
+use on its own:
+
+1. `ap-dev-research` gathers evidence from the code and current documentation.
+   Every finding must cite a file or source.
+2. `ap-dev-plan` writes a phased plan. It opens with a plain-language summary
+   of what will change and the decisions you are approving, followed by
+   numbered tasks, each with its test cases, files, and one command that
+   proves it works.
+3. `ap-review-plan` has a fresh subagent review the plan, for up to two rounds,
+   and applies the required changes.
+4. You approve the plan. Nothing is implemented before that.
+5. `ap-dev-implement` executes the plan one task at a time: a fresh implementer
+   writes and commits each task, its verify command must pass, and a separate
+   read-only reviewer checks it, with up to five reviewed repair rounds.
+6. `ap-dev-review-code` reviews the whole change for problems that span tasks,
+   using the `ap-code-reviewer` subagent when it is installed.
+7. `ap-dev-verify` runs the plan's acceptance commands and records the results.
+
+At the end the branch is ready and the agent offers to open a pull request. It
+does not push, merge, or open one without your approval.
+
+The pipeline needs a coding agent that can start subagents. Without them, it
+stops before plan review instead of reviewing its own work.
+
+### Where the run is recorded
+
+`ap-dev-flow` works in one dedicated Git worktree, created through
+`ap-start-dev-session`, and records every step in a run folder at the root of
+that worktree:
+
+```text
+.agents-pack/runs/<flow-id>/
+  meta.yaml  STATUS.md  01-research.md  02-plan.md
+  03-plan-reviews/  04-implementation-ledger.md
+  05-code-reviews/  06-verify.md  tasks/
+```
+
+A `.gitignore` inside `.agents-pack/runs/` keeps these files out of Git; you do
+not need to change your own `.gitignore`. To resume in a new session, start it
+in the same worktree or give the agent the run path. Removing the worktree
+removes its runs, so keep the worktree until the branch is merged. Use
+`ap-clean-dev-runs` to list old runs and delete the ones you choose.
+
+### Run one stage
+
+Give a stage a run folder to work in, or let it answer in the conversation:
+
+```text
+Use ap-review-plan to critique docs/plans/search.md.
+Use ap-dev-implement to execute docs/plans/search.md.
+```
+
+On its own, `ap-review-plan` only critiques; it edits the plan when you ask it
+to apply the review. `ap-dev-implement` runs only when invoked by name, because
+its subagents create commits, and it needs a dedicated feature worktree.
+
+`ap-dev-implement` replaces the retired `ap-subagent-driven-development` skill.
 
 ## Use the CLI directly
 

@@ -38,6 +38,14 @@ packs/core/skills/
 │   │   ├── ap-design-data-models/
 │   │   ├── ap-develop-apis/
 │   │   └── ap-write-database-queries/
+│   ├── dev-flow/
+│   │   ├── ap-clean-dev-runs/
+│   │   ├── ap-dev-flow/
+│   │   ├── ap-dev-implement/
+│   │   ├── ap-dev-plan/
+│   │   ├── ap-dev-research/
+│   │   ├── ap-dev-review-code/
+│   │   └── ap-dev-verify/
 │   ├── documentation/
 │   │   ├── ap-compress-todos/
 │   │   └── ap-refresh-repo-docs/
@@ -56,8 +64,6 @@ packs/core/skills/
 │   └── workflows/
 │       ├── debugging/
 │       │   └── ap-debug/
-│       ├── execution/
-│       │   └── ap-subagent-driven-development/
 │       ├── planning/
 │       │   └── ap-review-plan/
 │       └── session/
@@ -162,11 +168,22 @@ The current core pack contains:
 - `ap-debug`, including reproducible evidence collection, execution-path
   tracing, competing hypotheses, discriminating experiments, root-cause fixes,
   regression tests, and explicit reassessment after repeated failed attempts;
-- `ap-subagent-driven-development`, an optional workflow configured and
-  instructed for explicit invocation, adapted from Superpowers for executing
-  prepared plans through sequential task implementers, local task commits,
-  independent task reviews, five-round repair breakers, a durable run ledger,
-  and final whole-branch review;
+- `ap-dev-flow`, an explicit-only orchestrator that takes a goal through
+  `ap-dev-research`, `ap-dev-plan`, `ap-review-plan`, a human approval gate,
+  `ap-dev-implement`, `ap-dev-review-code`, and `ap-dev-verify` in one isolated
+  worktree, recording each step in a gitignored run folder at
+  `.agents-pack/runs/<flow-id>/` and reporting any missing stage by component
+  id instead of running it inline;
+- `ap-dev-implement`, an explicit-only stage adapted from Superpowers that
+  executes an approved plan through a fresh implementer per task, local task
+  commits, a verify command per task and phase, independent read-only task
+  reviews, and a five-round repair ladder with adjudication at the breaker;
+- `ap-dev-research`, `ap-dev-plan`, `ap-dev-review-code`, and `ap-dev-verify`,
+  independently usable stages for evidence-bound research, phased plans with
+  flat numbered tasks, integration review of the accumulated diff, and
+  acceptance verification;
+- `ap-clean-dev-runs`, an optional skill that lists old run folders and removes
+  only confirmed ones through the guarded workspace script;
 - `ap-test-web-app`, including focused, change-aware, smoke, and broad browser
   QA; real user flows; state, console, and network evidence; reproducible
   findings; authorized fixes; and honest coverage limits;
@@ -186,9 +203,10 @@ The current core pack contains:
   orient new work in an isolated Git worktree and branch, produce a verified
   context handoff, and safely reconcile that handoff with repository state and
   available memory;
-- `ap-review-plan`, which grounds a plan in the repository, runs an independent
-  parallel review when subagents are available, challenges architecture,
-  sequencing, risk, and verification, and returns a corrected plan;
+- `ap-review-plan`, which dispatches a fresh reviewer subagent each round to
+  challenge a plan's grounding, architecture, sequencing, risk, and
+  verification, returns a corrected plan, and edits the plan only when asked or
+  when `ap-dev-flow` runs it;
 - `ap-validate-trust-boundaries`, including syntactic and semantic validation,
   parsing limits, normalization, unknown fields, client and server ownership,
   files, Unicode, URLs, paths, archives, upstream data, and adversarial tests;
@@ -239,7 +257,8 @@ The current core pack contains:
 
 Claude Code exposes the portable action skills as slash commands, including
 `/ap-start-dev-session`, `/ap-clear-dev-context`, `/ap-continue-dev-session`,
-`/ap-create-prd`, `/ap-review-plan`, `/ap-subagent-driven-development`,
+`/ap-create-prd`, `/ap-dev-flow`, `/ap-dev-research`, `/ap-dev-plan`,
+`/ap-review-plan`, `/ap-dev-implement`, `/ap-dev-review-code`, `/ap-dev-verify`,
 `/ap-debug`, `/ap-test-web-app`,
 `/ap-security-audit`, `/ap-audit-seo`, `/ap-audit-geo`,
 `/ap-compress-todos`, `/ap-refresh-repo-docs`, and
