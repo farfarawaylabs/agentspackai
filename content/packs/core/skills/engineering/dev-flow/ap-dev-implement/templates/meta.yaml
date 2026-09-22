@@ -1,5 +1,5 @@
 flow_id: '{{flow_id}}'
-mode: interactive          # interactive | auto
+mode: '{{mode}}'  # interactive | auto
 status: created            # created | researching | planning | plan_review | awaiting_approval
                            # | implementing | code_review | verifying | done | stopped | failed
 goal: ''
@@ -13,10 +13,10 @@ plan_round: 0
 code_review_round: 0
 open_questions_carried: false
 caps:
-  plan_review_max: 2         # auto: 4
+  plan_review_max: {{plan_review_max}}
   task_repair_max: 5
-  integration_review_max: 2  # auto: 4
-  verify_repair_max: 2       # auto: 4
+  integration_review_max: {{integration_review_max}}
+  verify_repair_max: {{verify_repair_max}}
 stop_reason: null
 pr_url: null
 durable_plan_path: null

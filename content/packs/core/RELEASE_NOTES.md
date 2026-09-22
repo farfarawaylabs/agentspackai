@@ -1,47 +1,69 @@
-# Agents Pack Core 0.32.0
+# Agents Pack Core 0.33.0
 
-## New: the dev-flow pipeline
+## New: `ap-dev-flow-auto`, the unattended pipeline
 
-- Add `ap-dev-flow`, an explicit-only orchestrator that takes a goal through
-  research, planning, independent plan review, your approval, task-by-task
-  implementation, integration code review, and acceptance verification in one
-  isolated worktree.
-- Every step is a separate skill that also works on its own: `ap-dev-research`,
-  `ap-dev-plan`, `ap-review-plan`, `ap-dev-implement`, `ap-dev-review-code`, and
-  `ap-dev-verify`. All are in the new **Dev flow** category and are part of the
-  recommended selection. If a stage is not installed, `ap-dev-flow` names the
-  missing component instead of running that step itself.
-- Each run records its research, plan, reviews, implementation ledger, and
-  verification in `<worktree-root>/.agents-pack/runs/<flow-id>/`. A nested
-  `.gitignore` keeps these files out of Git. Removing the worktree removes its
-  runs, so keep the worktree until the branch is merged.
-- Add the optional `ap-clean-dev-runs` skill to list old run folders and remove
-  the ones you confirm.
-- `ap-start-dev-session` now looks for project context in `.agents-pack/`
-  instead of the misspelled `.agentspack/`.
+- Add `ap-dev-flow-auto`, an optional explicit-only orchestrator that runs the
+  same pipeline as `ap-dev-flow` without stopping to ask you anything. It ends
+  with the branch pushed and a draft pull request open.
+- The review bar is unchanged. Every task still gets a fresh implementer, a
+  passing verify command, and an independent read-only review, and the whole
+  change still gets an integration review and acceptance verification.
+- **A machine gate replaces your plan approval.** The plan passes only when a
+  review round returns `ready` with zero blocking findings. Any other verdict
+  means the required changes are applied and a new reviewer looks again. If the
+  cap is reached without that verdict the run stops with
+  `stop_reason: plan_review_cap` rather than implementing an unapproved plan.
+- **Open questions are carried, not asked.** Each keeps its assumption and how
+  it can be settled, and they are listed on the pull request.
+- **Caps are higher in auto:** four rounds for plan review, integration review,
+  and verification repair, against two in interactive. The per-task repair
+  ladder stays at five rounds in both.
+- **A stopped run opens no pull request.** When a cap is exhausted or a defect
+  has no credible correction, the branch and run folder are left as they are
+  and the stop reason is reported.
 
-## `ap-dev-implement` replaces `ap-subagent-driven-development`
+### What it is allowed to do
 
-- `ap-dev-implement` keeps the subagent-driven workflow: a fresh implementer per
-  task, local task commits, an independent read-only review of each task, and up
-  to five reviewed repair rounds. It now also runs each task's verify command
-  and each phase's verify command, and records its work in the run folder. The
-  whole-branch review moved to `ap-dev-review-code`.
-- `ap-subagent-driven-development` is retired. It remains installed for now as a
-  short pointer to `ap-dev-implement` and will be removed in a later version.
-- If you selected `ap-subagent-driven-development`, add the replacement:
-  `agents-pack update --add ap-dev-implement`, or accept it when the update
-  offers new components.
-- **Update the Agents Pack CLI to 0.3.1 or later first.** When a later pack
-  removes the retired skill, older CLIs refuse that update.
+Invoking `ap-dev-flow-auto` by name authorizes it to push the branch it creates
+to the default remote and open one draft pull request from it. It does not
+merge, publish, deploy, force-push, rewrite remote history, or push to your
+primary branch or any branch it did not create. Ask it for no pull request and
+it stops at a ready branch, writing the pull request body into the run folder.
 
-## `ap-review-plan` behavior changes
+Because it cannot ask mid-run, it checks up front that subagents are available
+and that `gh` is authenticated, and refuses to start rather than discovering at
+the end that it cannot finish.
 
-- A fresh subagent now performs every review round. The previous version
-  reviewed the plan itself and also ran a parallel subagent review.
-- Without subagent support, the review stops and says so. The previous version
-  fell back to a second checklist pass.
-- When the plan lives in a dev-flow run folder, each round is also saved as
-  `03-plan-reviews/rNN.md`.
-- Invoked on its own, it only critiques. It edits the plan only when you ask it
-  to apply the changes, or when `ap-dev-flow` runs it.
+## Changes to existing dev-flow skills
+
+- The run folder's `meta.yaml` now records `mode` (`interactive` or `auto`), and
+  the stage skills read the mode and the caps from that file instead of assuming
+  interactive values. New runs created by `ap-dev-flow` still default to
+  `interactive` and its caps.
+- Both orchestrators reconcile `mode` when resuming a run the other one started,
+  so a resumed run does not keep the wrong questioning behavior or caps.
+- `ap-review-plan` applies review changes and recognizes an approval gate under
+  either orchestrator. Its repair-authorization rule, and those in
+  `ap-dev-review-code` and `ap-dev-verify`, key off the invoking orchestrator
+  rather than the presence of a run folder, so standalone invocations stay
+  report-only.
+- Phase-verify repair waves inside `ap-dev-implement` now read
+  `verify_repair_max` instead of assuming two.
+- `ap-dev-research` no longer asks about blocking open questions under
+  `mode: auto`; it records the hypothesis and how each will be learned and sets
+  `open_questions_carried`.
+- `ap-dev-implement` no longer stops to ask when the plan changed since its
+  preflight under `mode: auto`. It re-runs the preflight against the current
+  plan and records a ruling, which the orchestrator surfaces on the pull
+  request. Interactive runs still ask.
+- `ap-dev-review-code` and `ap-dev-verify` now take their round and wave caps
+  from `meta.yaml` rather than the interactive default.
+- The bundled `dev-run-workspace` script takes an optional mode argument:
+  `dev-run-workspace new <slug> auto`. The two-argument form is unchanged and
+  still creates an interactive run.
+
+## Still to come
+
+`ap-subagent-driven-development` remains installed as a retired pointer to
+`ap-dev-implement`. It will be deleted in a later version. Update the CLI to
+0.3.1 or newer before that release so `agents-pack update` removes it cleanly.

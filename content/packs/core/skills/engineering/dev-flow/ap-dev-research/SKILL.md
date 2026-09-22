@@ -1,6 +1,6 @@
 ---
 name: ap-dev-research
-description: Research a development goal before planning by gathering evidence from the repository and current documentation, and record findings that each cite a file path or source URL. Use when the user asks to research, investigate, or gather context for a feature or change before writing an implementation plan, or when ap-dev-flow reaches its research stage. Rejects findings without evidence. Not for debugging a failure or for market research.
+description: Research a development goal before planning by gathering evidence from the repository and current documentation, and record findings that each cite a file path or source URL. Use when the user asks to research, investigate, or gather context for a feature or change before writing an implementation plan, or when ap-dev-flow or ap-dev-flow-auto reaches its research stage. Rejects findings without evidence. Not for debugging a failure or for market research.
 ---
 
 # Research a development goal
@@ -11,7 +11,7 @@ evidence; assumptions are labeled separately. Do not propose the plan here.
 ## Establish the target
 
 Treat text supplied with the invocation as the goal, a run folder, or
-constraints. When a dev-flow run folder is supplied or `ap-dev-flow` invokes
+constraints. When a dev-flow run folder is supplied or an orchestrator invokes
 this stage, write `<run>/01-research.md` from
 [templates/01-research.md](templates/01-research.md) and set `status:
 researching` and `last_step` in `meta.yaml` and `STATUS.md`. Otherwise return
@@ -56,6 +56,11 @@ List non-goals so the plan does not absorb adjacent work.
 
 Set the frontmatter `status`: `complete`, `complete_with_open_questions`, or
 `insufficient` when the evidence cannot support a plan. Summarize the key
-findings, open questions, and evidence gaps for the user. Under `ap-dev-flow`,
-ask about `blocking` questions before planning when the answer would change the
-plan materially.
+findings, open questions, and evidence gaps for the user.
+
+When a run folder is present, `mode` in `meta.yaml` decides what happens to
+`blocking` questions. Under `interactive`, ask about them before planning when
+the answer would change the plan materially. Under `auto`, ask nothing: keep
+the recorded hypothesis and `learn_via` for each one, set
+`open_questions_carried: true` in `meta.yaml`, and continue. The orchestrator
+carries them to the pull request.

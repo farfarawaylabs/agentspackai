@@ -1,6 +1,6 @@
 ---
 name: ap-dev-plan
-description: Write or update a phased implementation plan with flat numbered tasks, one verify command per task and per phase, and acceptance commands, based on research evidence. Use when the user asks to write, draft, or revise an implementation plan or task breakdown for a development change, or when ap-dev-flow reaches its planning stage. Not for product requirements (ap-create-prd) or reviewing an existing plan (ap-review-plan).
+description: Write or update a phased implementation plan with flat numbered tasks, one verify command per task and per phase, and acceptance commands, based on research evidence. Use when the user asks to write, draft, or revise an implementation plan or task breakdown for a development change, or when ap-dev-flow or ap-dev-flow-auto reaches its planning stage. Not for product requirements (ap-create-prd) or reviewing an existing plan (ap-review-plan).
 ---
 
 # Write an implementation plan
@@ -12,7 +12,7 @@ code.
 ## Establish the target
 
 Treat text supplied with the invocation as the goal, a run folder, research, or
-constraints. When a dev-flow run folder is supplied or `ap-dev-flow` invokes
+constraints. When a dev-flow run folder is supplied or an orchestrator invokes
 this stage, write `<run>/02-plan.md` from
 [templates/02-plan.md](templates/02-plan.md), base it on `01-research.md`, and
 set `status: planning` and `last_step` in `meta.yaml` and `STATUS.md`.
@@ -121,6 +121,6 @@ as tasks when the change needs them. Do not mandate a particular testing style.
 ## Finish
 
 Keep frontmatter `status: draft` until a review marks it ready. Summarize the
-phases, tasks, and remaining open questions. Under `ap-dev-flow`, the plan goes
-to `ap-review-plan` next; on its own, suggest `ap-review-plan` before
+phases, tasks, and remaining open questions. Under an orchestrator, the plan
+goes to `ap-review-plan` next; on its own, suggest `ap-review-plan` before
 implementing.

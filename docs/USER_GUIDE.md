@@ -538,6 +538,47 @@ does not push, merge, or open one without your approval.
 The pipeline needs a coding agent that can start subagents. Without them, it
 stops before plan review instead of reviewing its own work.
 
+### Run it unattended
+
+`ap-dev-flow-auto` is an optional skill that runs the same pipeline without
+stopping to ask you anything:
+
+```text
+Use ap-dev-flow-auto to add rate limiting to the public API.
+```
+
+The review bar does not change. Every task still gets an independent review,
+and the whole change still gets an integration review and acceptance
+verification. Four things change:
+
+- **Nobody approves the plan.** A machine gate does, and it is strict: the plan
+  passes only when a review round returns `ready` with zero blocking findings.
+  Anything else means the required changes are applied and a new reviewer looks
+  again, up to four rounds. If four rounds pass without that verdict, the run
+  stops rather than implementing a plan nobody approved.
+- **Open questions are carried, not asked.** Each one keeps the assumption that
+  was taken and how it can be settled, and they are all listed on the pull
+  request.
+- **Caps are higher** — four rounds instead of two for plan review, integration
+  review, and verification repair. The per-task repair ladder stays at five.
+- **The run ends with a pull request.** Invoking the skill by name authorizes it
+  to push the branch it created to the default remote and open one draft pull
+  request from it. The body carries the plan, the verification table, the
+  carried questions, and any unresolved findings.
+
+It opens a draft, never merges, publishes, deploys, or force-pushes, and never
+pushes to your primary branch. If the run stops at a cap or an unrecoverable
+defect it opens no pull request at all: the branch and the run folder are left
+as they are for you to pick up. Ask for no pull request and it stops at a ready
+branch, writing the pull request body into the run folder instead.
+
+Because it cannot ask, it checks up front that subagents are available and that
+`gh` is authenticated, and refuses to start rather than discovering at the end
+that it cannot finish.
+
+Use `ap-dev-flow` when you want to approve the plan, and `ap-dev-flow-auto`
+when you will review the result as a pull request instead.
+
 ### Where the run is recorded
 
 `ap-dev-flow` works in one dedicated Git worktree, created through
@@ -962,7 +1003,9 @@ agents-pack update --add ap-design-studio,ap-design-critic --yes
 `--add` accepts compatible component IDs from the candidate pack, including older
 components you did not previously select. It adds to your existing selection and
 skips the menu. The version update and selected additions apply together in one
-transaction. `--check` and `--dry-run` show new components without prompting.
+transaction. A version change is not required: running `update --add <id>` when
+you are already on the current version simply adds the component.
+`--check` and `--dry-run` show new components without prompting.
 
 Discovery compares the candidate's full catalog with the cached installed pack,
 so previously declined components are not offered again as new. If that cache is

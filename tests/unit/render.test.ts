@@ -79,7 +79,7 @@ describe("renderPack", () => {
 	test("renders the first-party core skills with their references", () => {
 		const rendered = renderPack(corePack, "repository", ["claude"]);
 
-		expect(corePack.manifest.version).toBe("0.32.0");
+		expect(corePack.manifest.version).toBe("0.33.0");
 		const outputPaths = rendered.outputs.map((output) => output.path);
 		const reactOutputPaths = outputPaths.filter((path) =>
 			path.startsWith(".claude/skills/ap-react-"),
@@ -119,6 +119,9 @@ describe("renderPack", () => {
 			".claude/skills/ap-design-polish/SKILL.md",
 			".claude/skills/ap-design-polish/references/ai-design-tells.md",
 			".claude/skills/ap-design-studio/SKILL.md",
+			".claude/skills/ap-dev-flow-auto/SKILL.md",
+			".claude/skills/ap-dev-flow-auto/agents/openai.yaml",
+			".claude/skills/ap-dev-flow-auto/templates/pr-body.md",
 			".claude/skills/ap-dev-flow/SKILL.md",
 			".claude/skills/ap-dev-flow/agents/openai.yaml",
 			".claude/skills/ap-dev-implement/LICENSE.md",
@@ -388,6 +391,7 @@ describe("renderPack", () => {
 		expect(devFlow.map((component) => component.id).sort()).toEqual([
 			"ap-clean-dev-runs",
 			"ap-dev-flow",
+			"ap-dev-flow-auto",
 			"ap-dev-implement",
 			"ap-dev-plan",
 			"ap-dev-research",
@@ -395,14 +399,25 @@ describe("renderPack", () => {
 			"ap-dev-verify",
 			"ap-review-plan",
 		]);
+		const opt = ["ap-clean-dev-runs", "ap-dev-flow-auto"];
 		expect(
 			devFlow
-				.filter((component) => component.id !== "ap-clean-dev-runs")
+				.filter((component) => !opt.includes(component.id))
 				.every((component) => component.selection === "recommended"),
 		).toBe(true);
-		const recommended = corePack.manifest.components
-			.filter((component) => component.selection !== "optional")
-			.map((component) => component.id);
+		expect(
+			devFlow
+				.filter((component) => opt.includes(component.id))
+				.every((component) => component.selection === "optional"),
+		).toBe(true);
+		// The unattended orchestrator is optional, so select it explicitly to
+		// render it alongside the recommended pipeline.
+		const selection = [
+			...corePack.manifest.components
+				.filter((component) => component.selection !== "optional")
+				.map((component) => component.id),
+			"ap-dev-flow-auto",
+		];
 
 		for (const [target, root] of [
 			["claude", ".claude"],
@@ -413,10 +428,14 @@ describe("renderPack", () => {
 				corePack,
 				"repository",
 				[target],
-				recommended,
+				selection,
 			).outputs;
 
-			for (const name of ["ap-dev-flow", "ap-dev-implement"]) {
+			for (const name of [
+				"ap-dev-flow",
+				"ap-dev-flow-auto",
+				"ap-dev-implement",
+			]) {
 				expect(
 					decodeOutput(outputs, `${root}/skills/${name}/agents/openai.yaml`),
 				).toContain("allow_implicit_invocation: false");

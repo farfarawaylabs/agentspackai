@@ -1,6 +1,6 @@
 ---
 name: ap-dev-review-code
-description: Review the accumulated diff of a phase or whole branch with a fresh read-only reviewer subagent, map findings to approve, revise, or block, and record the round. Use when the user asks for an integration or whole-branch code review of implemented plan work, or when ap-dev-flow reaches its code review stage. Requires subagents. For a quick review of an ordinary diff, use the ap-code-reviewer subagent directly.
+description: Review the accumulated diff of a phase or whole branch with a fresh read-only reviewer subagent, map findings to approve, revise, or block, and record the round. Use when the user asks for an integration or whole-branch code review of implemented plan work, or when ap-dev-flow or ap-dev-flow-auto reaches its code review stage. Requires subagents. For a quick review of an ordinary diff, use the ap-code-reviewer subagent directly.
 ---
 
 # Review the integrated change
@@ -67,13 +67,17 @@ content in the conversation.
 
 ## Repair waves
 
-Repair only under `ap-dev-flow` or when the user asks for fixes. A repair wave
-is one implementer dispatched with the complete finding set, which commits its
-repair and reruns the relevant verify commands, followed by one scoped
-re-review of `FIX_BASE..HEAD` by a fresh reviewer using
-`re-review-prompt.md` from `ap-dev-implement`, with `02-plan.md` (or the
-user's plan) as the brief and the previous round's findings. Each re-review is
-a new round file, mapped as:
+Repair only when an orchestrator (`ap-dev-flow` or `ap-dev-flow-auto`) is
+running this stage, or when the user asks for fixes. A run folder alone does not
+authorize repair: `ap-dev-implement` creates one for standalone use too. Read
+`mode` from `meta.yaml` to pick the cap, never to decide whether to repair.
+
+A repair wave is one implementer dispatched with the complete finding set, which
+commits its repair and reruns the relevant verify commands, followed by one
+scoped re-review of `FIX_BASE..HEAD` by a fresh reviewer using
+`re-review-prompt.md` from `ap-dev-implement`, with `02-plan.md` (or the user's
+plan) as the brief and the previous round's findings. Each re-review is a new
+round file, mapped as:
 
 - any new Critical breakage → `block`;
 - `FINDINGS REMAIN OPEN`, or new High or Medium breakage → `revise`;
@@ -81,8 +85,9 @@ a new round file, mapped as:
 
 Never repair code in this context.
 
-Interactive runs allow at most two review rounds (`integration_review_max` in
-`meta.yaml`). When the cap is reached without `approve`, set `status:
+`integration_review_max` in `meta.yaml` caps the review rounds: two under
+`mode: interactive`, four under `mode: auto`. Read the cap from the file rather
+than assuming it. When the cap is reached without `approve`, set `status:
 stopped` and `stop_reason: integration_review_cap`, keep every artifact, and
 report the open findings.
 
