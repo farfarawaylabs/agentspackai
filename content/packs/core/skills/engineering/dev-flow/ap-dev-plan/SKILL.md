@@ -12,7 +12,7 @@ code.
 ## Establish the target
 
 Treat text supplied with the invocation as the goal, a run folder, research, or
-constraints. When a dev-flow run folder is supplied or `ap-dev-flow` invokes
+constraints. When a dev-flow run folder is supplied or an orchestrator invokes
 this stage, write `<run>/02-plan.md` from
 [templates/02-plan.md](templates/02-plan.md), base it on `01-research.md`, and
 set `status: planning` and `last_step` in `meta.yaml` and `STATUS.md`.
@@ -121,6 +121,6 @@ as tasks when the change needs them. Do not mandate a particular testing style.
 ## Finish
 
 Keep frontmatter `status: draft` until a review marks it ready. Summarize the
-phases, tasks, and remaining open questions. Under `ap-dev-flow`, the plan goes
-to `ap-review-plan` next; on its own, suggest `ap-review-plan` before
+phases, tasks, and remaining open questions. Under an orchestrator, the plan
+goes to `ap-review-plan` next; on its own, suggest `ap-review-plan` before
 implementing.

@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
 # Create, resolve, or remove one dev-flow run folder in the active worktree.
 # Usage:
-#   bash dev-run-workspace new SLUG
+#   bash dev-run-workspace new SLUG [interactive|auto]
 #   bash dev-run-workspace resolve FLOW_ID|RUN_PATH
 #   bash dev-run-workspace tasks FLOW_ID|RUN_PATH    (creates and prints <run>/tasks)
 #   bash dev-run-workspace remove FLOW_ID
 # Runs live at <worktree-root>/.agents-pack/runs/<flow-id>/, where flow-id is
 # YYYY-MM-DD-<slug>-<random hex>. Every command prints an absolute path.
+# The mode argument records who drives the run and which caps apply; stages
+# read it back from meta.yaml. It defaults to interactive.
 set -euo pipefail
 
 usage() {
-  echo "usage: dev-run-workspace new SLUG | resolve FLOW_ID|RUN_PATH | tasks FLOW_ID|RUN_PATH | remove FLOW_ID" >&2
+  echo "usage: dev-run-workspace new SLUG [interactive|auto] | resolve FLOW_ID|RUN_PATH | tasks FLOW_ID|RUN_PATH | remove FLOW_ID" >&2
   exit 2
 }
 
-[ "$#" -eq 2 ] || usage
+[ "$#" -eq 2 ] || [ "$#" -eq 3 ] || usage
 command=$1
 argument=$2
+mode=${3-interactive}
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "current directory is not inside a Git worktree" >&2
@@ -76,7 +79,7 @@ render_template() {
   [[ "$2" == *.yaml ]] && yaml=1
   awk -v yaml="$yaml" '
     BEGIN {
-      split("flow_id created worktree run branch", keys, " ")
+      split("flow_id created worktree run branch mode plan_review_max integration_review_max verify_repair_max", keys, " ")
       for (i in keys) {
         value = ENVIRON["RUN_" keys[i]]
         if (yaml) gsub(/\047/, "\047\047", value)
@@ -99,6 +102,13 @@ render_template() {
 
 create_run() {
   local slug run ignore_file
+  case "$2" in
+    interactive | auto) ;;
+    *)
+      echo "mode must be interactive or auto: $2" >&2
+      exit 2
+      ;;
+  esac
   slug=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' |
     sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//' | cut -c1-40 | sed 's/-*$//')
   if [ -z "$slug" ]; then
@@ -142,9 +152,21 @@ create_run() {
   mkdir "$run"
   require_local_directory "$run"
 
-  export RUN_created RUN_worktree="$root" RUN_run="$run" RUN_branch
+  export RUN_created RUN_worktree="$root" RUN_run="$run" RUN_branch RUN_mode="$2"
+  export RUN_plan_review_max RUN_integration_review_max RUN_verify_repair_max
   RUN_created=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   RUN_branch=$(git branch --show-current 2>/dev/null || true)
+  # Auto runs raise every cap except the task repair ladder, which is 5 in both
+  # modes (spec section 5).
+  if [ "$2" = auto ]; then
+    RUN_plan_review_max=4
+    RUN_integration_review_max=4
+    RUN_verify_repair_max=4
+  else
+    RUN_plan_review_max=2
+    RUN_integration_review_max=2
+    RUN_verify_repair_max=2
+  fi
   render_template "$templates/meta.yaml" "$run/meta.yaml"
   render_template "$templates/STATUS.md" "$run/STATUS.md"
   printf '%s\n' "$run"
@@ -168,12 +190,14 @@ resolve_argument() {
 
 case "$command" in
   new)
-    create_run "$argument"
+    create_run "$argument" "$mode"
     ;;
   resolve)
+    [ "$#" -eq 2 ] || usage
     resolve_argument "$argument"
     ;;
   tasks)
+    [ "$#" -eq 2 ] || usage
     run=$(resolve_argument "$argument")
     reject_symlink "$run/tasks"
     mkdir -p "$run/tasks"
@@ -182,6 +206,7 @@ case "$command" in
     printf '%s\n' "$run/tasks"
     ;;
   remove)
+    [ "$#" -eq 2 ] || usage
     run=$(resolve_run "$argument")
     rm -rf -- "$run"
     printf 'removed %s\n' "$run"

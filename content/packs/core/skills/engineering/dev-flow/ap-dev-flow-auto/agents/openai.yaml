@@ -1,0 +1,6 @@
+interface:
+  display_name: "Dev Flow (unattended)"
+  short_description: "Research through a reviewed branch and a draft pull request, without questions"
+  default_prompt: "Use $ap-dev-flow-auto to take this goal from research to an open draft pull request without stopping to ask me questions."
+policy:
+  allow_implicit_invocation: false

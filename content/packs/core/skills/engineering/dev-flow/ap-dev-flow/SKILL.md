@@ -10,6 +10,12 @@ worktree, the run folder, the approval gate, caps, and the final report. The
 stage skills do the work, and each remains usable on its own. Never perform a
 stage's work from memory in this skill.
 
+You approve the plan here before anything is implemented. When nobody is
+available to do that, `ap-dev-flow-auto` runs the same pipeline unattended: a
+machine gate replaces your approval, open questions go to the pull request
+instead of to you, and the run ends with a pushed branch and an open draft pull
+request.
+
 ## Read the request
 
 Treat text supplied with the invocation as the goal, constraints, a base ref,

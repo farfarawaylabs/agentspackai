@@ -35,12 +35,13 @@ This stage runs commands; it does not edit code.
 
 ## Repair waves
 
-Repair only under `ap-dev-flow` or when the user asks for fixes. A repair wave
-is one implementer dispatched with the failing commands and their output. It
-commits the fix, then this stage reruns every acceptance command. Interactive
-runs allow at most two repair waves (`verify_repair_max` in `meta.yaml`).
-When the cap is reached with failures, set `status: stopped` and
-`stop_reason: verify_repair_cap` and keep every artifact.
+Repair only under an orchestrator — any run whose `meta.yaml` carries a `mode`
+— or when the user asks for fixes. A repair wave is one implementer dispatched
+with the failing commands and their output. It commits the fix, then this stage
+reruns every acceptance command. `verify_repair_max` in `meta.yaml` caps the
+waves: two under `mode: interactive`, four under `mode: auto`. Read the cap from
+the file rather than assuming it. When the cap is reached with failures, set
+`status: stopped` and `stop_reason: verify_repair_cap` and keep every artifact.
 
 ## Finish
 

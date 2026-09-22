@@ -61,9 +61,17 @@ records every step in a run folder at
 `<worktree-root>/.agents-pack/runs/<flow-id>/`. Each stage is its own skill, so
 you can also run one step alone.
 
+`ap-dev-flow-auto` runs the same pipeline unattended. The review bar is
+identical — every task still gets an independent review, and the whole change
+still gets an integration review and acceptance verification. What changes is
+that a machine gate replaces your plan approval, open questions are carried to
+the pull request instead of asked, caps are higher, and the run ends with a
+pushed branch and an open draft pull request.
+
 | Skill | Chat activation name | What it does | Source |
 |---|---|---|---|
 | Dev Flow | `ap-dev-flow` | Explicitly runs the full pipeline, owns the worktree and run folder, and stops for your approval before implementation. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-flow/SKILL.md) |
+| Dev Flow (unattended) | `ap-dev-flow-auto` | Explicitly runs the full pipeline without questions: a machine plan gate, higher caps, open questions carried to the pull request, ending in a pushed branch and an open draft pull request. Optional. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-flow-auto/SKILL.md) |
 | Research a Development Goal | `ap-dev-research` | Gathers repository and documentation evidence for a change and rejects findings that cite no source. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-research/SKILL.md) |
 | Write an Implementation Plan | `ap-dev-plan` | Writes a phased plan of flat numbered tasks, each with intent, files, and one verify command. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-plan/SKILL.md) |
 | Review a Plan | `ap-review-plan` | Has a fresh subagent challenge a plan each round. Critique-only on its own; edits the plan only when you ask or under `ap-dev-flow`. Requires subagents. | [Open skill](../content/packs/core/skills/engineering/workflows/planning/ap-review-plan/SKILL.md) |
@@ -72,13 +80,21 @@ you can also run one step alone.
 | Verify Acceptance | `ap-dev-verify` | Runs the plan's acceptance commands and records each exit status and output excerpt. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-dev-verify/SKILL.md) |
 | Clean Dev-Flow Runs | `ap-clean-dev-runs` | Lists old run folders in the current worktree and removes only the ones you confirm. | [Open skill](../content/packs/core/skills/engineering/dev-flow/ap-clean-dev-runs/SKILL.md) |
 
-`ap-dev-flow` and `ap-dev-implement` create commits through subagents, so they
-run only when invoked by name:
+`ap-dev-flow`, `ap-dev-flow-auto`, and `ap-dev-implement` create commits
+through subagents, so they run only when invoked by name:
 
 ```text
 Use ap-dev-flow to add rate limiting to the public API.
+Use ap-dev-flow-auto to add rate limiting to the public API.
 Use ap-dev-implement to execute docs/plans/feature.md.
 ```
+
+Invoking `ap-dev-flow-auto` by name also authorizes it to push the branch it
+creates to the default remote and open one draft pull request from it. It does
+not merge, publish, deploy, force-push, or touch any other branch, and a run
+that stops at a cap opens no pull request at all. Ask it for no pull request
+and it stops at a ready branch with the pull request body written to the run
+folder.
 
 ## Design exploration, implementation, and polish
 

@@ -74,6 +74,68 @@ describe("ap-dev-implement dev-run-workspace", () => {
 		expect(gitStatus.stdout).not.toContain(".agents-pack/runs");
 	});
 
+	test("defaults to interactive mode and its caps", async () => {
+		const repository = await createRepository();
+
+		const created = await run(["bash", WORKSPACE, "new", "caps"], repository);
+
+		expect(created.exitCode).toBe(0);
+		const meta = await readFile(
+			join(created.stdout.trim(), "meta.yaml"),
+			"utf8",
+		);
+		expect(meta).toContain("mode: 'interactive'");
+		expect(meta).toContain("plan_review_max: 2");
+		expect(meta).toContain("task_repair_max: 5");
+		expect(meta).toContain("integration_review_max: 2");
+		expect(meta).toContain("verify_repair_max: 2");
+	});
+
+	test("records auto mode and its raised caps", async () => {
+		const repository = await createRepository();
+
+		const created = await run(
+			["bash", WORKSPACE, "new", "caps", "auto"],
+			repository,
+		);
+
+		expect(created.exitCode).toBe(0);
+		const meta = await readFile(
+			join(created.stdout.trim(), "meta.yaml"),
+			"utf8",
+		);
+		expect(meta).toContain("mode: 'auto'");
+		expect(meta).toContain("plan_review_max: 4");
+		expect(meta).toContain("integration_review_max: 4");
+		expect(meta).toContain("verify_repair_max: 4");
+		// The task repair ladder stays at five rounds in both modes.
+		expect(meta).toContain("task_repair_max: 5");
+		expect(meta).not.toContain("{{");
+	});
+
+	test("rejects an unknown mode and a mode on other commands", async () => {
+		const repository = await createRepository();
+		const created = await run(
+			["bash", WORKSPACE, "new", "caps", "auto"],
+			repository,
+		);
+		const flowId = basename(created.stdout.trim());
+
+		const badMode = await run(
+			["bash", WORKSPACE, "new", "caps", "turbo"],
+			repository,
+		);
+		expect(badMode.exitCode).toBe(2);
+		expect(badMode.stderr).toContain("mode must be interactive or auto");
+
+		const extraArgument = await run(
+			["bash", WORKSPACE, "resolve", flowId, "auto"],
+			repository,
+		);
+		expect(extraArgument.exitCode).toBe(2);
+		expect(extraArgument.stderr).toContain("usage:");
+	});
+
 	test("never reuses an existing run folder", async () => {
 		const repository = await createRepository();
 		const bin = await fixedRandomBin();

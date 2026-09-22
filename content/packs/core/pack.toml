@@ -1,6 +1,6 @@
 schema_version = 1
 id = "agents-pack-core"
-version = "0.32.0"
+version = "0.33.0"
 title = "Agents Pack Core"
 release_notes = "RELEASE_NOTES.md"
 
@@ -332,6 +332,16 @@ summary = "Take a goal through research, a reviewed and approved plan, reviewed 
 category = "engineering/dev-flow"
 selection = "recommended"
 source = "skills/engineering/dev-flow/ap-dev-flow"
+targets = ["claude", "codex", "cursor"]
+
+[[components]]
+id = "ap-dev-flow-auto"
+kind = "skill"
+title = "Run the dev flow unattended"
+summary = "Take a goal through research, a machine-approved plan, reviewed implementation, integration review, and verification to a pushed branch and an open draft pull request, without mid-run questions."
+category = "engineering/dev-flow"
+selection = "optional"
+source = "skills/engineering/dev-flow/ap-dev-flow-auto"
 targets = ["claude", "codex", "cursor"]
 
 [[components]]

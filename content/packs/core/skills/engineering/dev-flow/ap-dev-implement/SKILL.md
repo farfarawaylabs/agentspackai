@@ -1,6 +1,6 @@
 ---
 name: ap-dev-implement
-description: Execute an approved dev-flow plan task by task with a fresh implementer subagent per task, an independent read-only task review, and a reviewed repair ladder, recording everything in the run folder. Supersedes ap-subagent-driven-development. Use only when the user explicitly invokes ap-dev-implement or ap-subagent-driven-development, or when ap-dev-flow reaches its implement stage; do not select it automatically for ordinary implementation requests.
+description: Execute an approved dev-flow plan task by task with a fresh implementer subagent per task, an independent read-only task review, and a reviewed repair ladder, recording everything in the run folder. Supersedes ap-subagent-driven-development. Use only when the user explicitly invokes ap-dev-implement or ap-subagent-driven-development, or when ap-dev-flow or ap-dev-flow-auto reaches its implement stage; do not select it automatically for ordinary implementation requests.
 license: MIT
 metadata:
   author: obra
@@ -22,15 +22,16 @@ The controller coordinates only. It owns task boundaries, the ledger,
 dispatches, review packages, rulings, and the report. It never edits code.
 Implementer self-review never replaces the independent task review.
 
-This stage is part of the `ap-dev-flow` pipeline and replaces
-`ap-subagent-driven-development`. Integration review of the whole change and
-acceptance verification belong to `ap-dev-review-code` and `ap-dev-verify`.
+This stage is part of the dev-flow pipeline (`ap-dev-flow` and
+`ap-dev-flow-auto`) and replaces `ap-subagent-driven-development`. Integration
+review of the whole change and acceptance verification belong to
+`ap-dev-review-code` and `ap-dev-verify`.
 
 ## Invocation and authority
 
 Run only when the user explicitly invokes this skill (or its predecessor
-`ap-subagent-driven-development`), or when `ap-dev-flow` reaches implement
-after the user approved the plan.
+`ap-subagent-driven-development`), or when an orchestrator reaches implement
+with an approved plan.
 
 Explicit invocation authorizes implementer subagents to create local commits
 for their assigned tasks inside the dedicated worktree. It does not authorize:
@@ -54,8 +55,8 @@ Scripts live in this skill's `scripts/` folder. Invoke them through `bash`,
 because pack installation does not preserve executable mode. Run them from the
 worktree root.
 
-- Under `ap-dev-flow`, use the run folder and worktree it passes. Never create
-  another worktree.
+- Under an orchestrator, use the run folder and worktree it passes. Never
+  create another worktree.
 - Standalone with a run path or flow id, validate it with
   `bash <skill-directory>/scripts/dev-run-workspace resolve <run>`.
 - Standalone with a plan file outside any run, create a run with
@@ -76,8 +77,10 @@ Before dispatching an implementer, verify:
   `Ruling:` naming each task's verify command and the phase verify, usually the
   repository's standard check; if no credible command exists, stop and suggest
   `ap-dev-plan` to convert the plan;
-- the plan is approved. Under `ap-dev-flow`, require `status: approved` (or
+- the plan is approved. Under an orchestrator, require `status: approved` (or
   `executing` when resuming) in the plan's frontmatter and stop otherwise.
+  Under `mode: auto` that approval comes from the machine plan gate, not a
+  human, and is no weaker a requirement.
   Standalone, the user's explicit invocation is the approval: set
   `status: approved` and record that in the ledger. Set `status: executing`
   when Task 1 starts;
@@ -88,7 +91,7 @@ Before dispatching an implementer, verify:
 - the directory is a Git worktree with at least one commit, on a feature
   branch rather than the primary branch, and clean before Task 1. If it is the
   user's ordinary checkout or primary branch, stop and recommend
-  `ap-start-dev-session` or `ap-dev-flow`; and
+  `ap-start-dev-session` or an orchestrator; and
 - Git can commit without changing repository or global identity.
 
 Record `merge_base` and `base_ref` in `meta.yaml` when they are empty.
@@ -98,12 +101,21 @@ Record `merge_base` and `base_ref` in `meta.yaml` when they are empty.
 Create `<run>/04-implementation-ledger.md` from
 [templates/04-implementation-ledger.md](templates/04-implementation-ledger.md)
 unless it exists, and record the plan's hash from
-`git hash-object <run>/02-plan.md`. On resume, compare the hash first. If the
-plan changed, do not continue against the old preflight: stop and ask the user
-whether to re-preflight the changed plan. Otherwise trust completed task lines
-and recorded commits over conversation memory. Resume at the first incomplete
-task or the next recorded repair round. Never redispatch a task marked
-complete.
+`git hash-object <run>/02-plan.md`. On resume, compare the hash first. A changed
+hash means the preflight was performed against a different plan, so never
+continue against the old one.
+
+Under `mode: interactive` (or with no run folder), stop and ask the user whether
+to re-preflight the changed plan. Under `mode: auto` there is nobody to ask:
+re-preflight the current plan, record the new hash, and write a ruling —
+`Ruling: re-preflighted after plan change -- <N> tasks already complete -- cost
+if wrong: completed work may not match the current plan`. Then continue. The
+orchestrator surfaces that ruling on the pull request, because a plan that moved
+after tasks were committed is something a human reviewer should see.
+
+When the hash matches, trust completed task lines and recorded commits over
+conversation memory. Resume at the first incomplete task or the next recorded
+repair round. Never redispatch a task marked complete.
 
 The ledger records the merge base and starting head, the preflight tables,
 every ruling, each task's implementer, `base..head`, verify result, review
@@ -277,7 +289,7 @@ not start the next phase.
 
 ## Finish
 
-Under `ap-dev-flow`, return control with the ledger path and final head; the
+Under an orchestrator, return control with the ledger path and final head; the
 orchestrator runs integration review and verification.
 
 Standalone, run `ap-dev-review-code` and then `ap-dev-verify` against this run

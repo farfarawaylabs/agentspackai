@@ -67,7 +67,8 @@ content in the conversation.
 
 ## Repair waves
 
-Repair only under `ap-dev-flow` or when the user asks for fixes. A repair wave
+Repair only under an orchestrator — any run whose `meta.yaml` carries a `mode`
+— or when the user asks for fixes. A repair wave
 is one implementer dispatched with the complete finding set, which commits its
 repair and reruns the relevant verify commands, followed by one scoped
 re-review of `FIX_BASE..HEAD` by a fresh reviewer using
@@ -81,8 +82,9 @@ a new round file, mapped as:
 
 Never repair code in this context.
 
-Interactive runs allow at most two review rounds (`integration_review_max` in
-`meta.yaml`). When the cap is reached without `approve`, set `status:
+`integration_review_max` in `meta.yaml` caps the review rounds: two under
+`mode: interactive`, four under `mode: auto`. Read the cap from the file rather
+than assuming it. When the cap is reached without `approve`, set `status:
 stopped` and `stop_reason: integration_review_cap`, keep every artifact, and
 report the open findings.
 
