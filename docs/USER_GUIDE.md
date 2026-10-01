@@ -1297,6 +1297,22 @@ Agents Pack content scope. `mcp status` is always read-only.
 
 ## Troubleshooting
 
+### `Killed: 9` on macOS, or “did not start correctly” during install
+
+CLI 0.3.1 and earlier have an invalid macOS code signature. macOS 27 kills these
+versions on launch, so the installer cannot start a downloaded copy. Rerun the
+installer to get CLI 0.3.2 or newer:
+
+```sh
+curl -fsSL https://farfarawaylabs.github.io/agentspackai/install.sh | sh
+```
+
+If you must keep an older version, replace its signature locally:
+
+```sh
+codesign --force --sign - ~/.local/bin/agents-pack
+```
+
 ### “Agents Pack is not initialized”
 
 Run the command from inside the intended repository, or initialize the desired

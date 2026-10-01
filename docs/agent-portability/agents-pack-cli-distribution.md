@@ -1,7 +1,7 @@
 # Agents Pack CLI distribution
 
 **Status:** Implemented and live since CLI 0.1.0
-**Last updated:** 2026-07-27
+**Last updated:** 2026-10-01
 
 This document explains how the standalone Agents Pack command is built,
 installed, upgraded, and released.
@@ -43,6 +43,47 @@ without changing the registry schema.
 
 The Bun runtime is compiled into each executable. Users do not need Bun,
 Node.js, npm, or repository source files.
+
+### macOS code signatures
+
+Every macOS executable must carry a valid code signature. Apple Silicon kills a
+process with `SIGKILL (Code Signature Invalid)` as soon as it touches a page
+whose hash does not match the signature. macOS 27 also reads, at exit, the
+symbol-table page that an invalid Bun signature covers, so a bad signature
+there now kills the CLI on every run instead of staying dormant.
+
+`bun build --compile` appends the bundle after the runtime was signed, and Bun
+does not reliably re-sign the result:
+
+- Bun before 1.4.1 hashes the final partial page zero-padded to 4 KiB, so every
+  `darwin-arm64` build has one wrong page hash
+  ([oven-sh/bun#32159](https://github.com/oven-sh/bun/issues/32159)). CLI
+  0.1.0 through 0.3.1 shipped with that defect.
+- Bun 1.4.2 signs `darwin-arm64` correctly but still leaves `darwin-x64` with
+  Bun's own Developer ID signature, which the appended bundle invalidates.
+
+The release workflow therefore builds each macOS target on a runner of the same
+architecture, replaces the signature with a fresh ad-hoc one
+(`codesign --force --sign -`), requires `codesign --verify --strict` to pass,
+and runs the executable before packaging it. The ad-hoc signature drops Bun's
+hardened-runtime flag, so the JavaScript JIT needs no extra entitlements.
+
+Alternatives considered:
+
+- **Rely on a fixed Bun.** That would leave `darwin-x64` invalid, and Bun's
+  signer has regressed before. The workflow still pins Bun 1.4.2, and local
+  Apple Silicon builds made with Bun 1.4.1 or newer are valid without
+  re-signing.
+- **Re-sign on Linux with a third-party signer such as `rcodesign`.** That keeps
+  the release on one runner but adds a tool to install and trust. It also
+  cannot run the macOS executables before release.
+- **Developer ID signing and notarization.** These need an Apple Developer
+  account and release secrets. `curl` does not mark downloads as quarantined,
+  so Gatekeeper does not require them for the installer path.
+
+`codesign -v` exit status is the check that matters. macOS 26 and earlier
+still run some invalidly signed executables, so a smoke test alone does not
+prove the signature is valid.
 
 ## 3. Release artifacts
 
@@ -91,6 +132,11 @@ bun run cli:build -- \
 
 Compiled production executables do not automatically load a user’s `.env` or
 `bunfig.toml`.
+
+Use Bun 1.4.1 or newer for a native macOS smoke test. An Apple Silicon build
+from an older Bun is killed on macOS 27. A cross-compiled `darwin-x64` build
+needs `codesign --force --sign -` before it is valid; see
+[macOS code signatures](#macos-code-signatures).
 
 ## 4. Installer behavior
 
@@ -150,13 +196,17 @@ git push origin cli-v0.1.0
 The tag-triggered workflow:
 
 1. validates the repository, version, registry, and tag;
-2. cross-compiles all four targets;
-3. smoke-tests the Linux x64 executable;
-4. packages each binary and calculates its SHA-256 digest;
-5. consolidates and verifies the checksum file;
-6. creates a draft GitHub Release and attaches every artifact;
-7. publishes the immutable release; and only then
-8. deploys the complete shared registry and installer through GitHub Pages.
+2. compiles each macOS target on a macOS runner of the same architecture and
+   cross-compiles both Linux targets on Linux;
+3. re-signs each macOS executable ad hoc and requires strict `codesign`
+   verification;
+4. smoke-tests the `darwin-arm64`, `darwin-x64`, and `linux-x64` executables;
+5. packages each binary, confirms the archive contains only `agents-pack`, and
+   calculates its SHA-256 digest;
+6. consolidates and verifies the checksum file;
+7. creates a draft GitHub Release and attaches every artifact;
+8. publishes the immutable release; and only then
+9. deploys the complete shared registry and installer through GitHub Pages.
 
 Publishing Pages last prevents the installer from resolving a version whose
 artifacts are not available.

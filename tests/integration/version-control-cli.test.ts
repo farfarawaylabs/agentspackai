@@ -245,7 +245,13 @@ async function runCli(
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
 	const child = Bun.spawn([process.execPath, CLI_PATH, ...args], {
 		cwd: environment.repository,
-		env: { ...process.env, HOME: environment.userHome },
+		env: {
+			...process.env,
+			HOME: environment.userHome,
+			// Bun caches transpiled source under HOME, which would pollute the
+			// snapshots that prove the CLI did not write there.
+			BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0",
+		},
 		stdout: "pipe",
 		stderr: "pipe",
 	});
