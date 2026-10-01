@@ -15,6 +15,8 @@ High-value orientation for the Agents Pack CLI and core content pack.
 
 - [Pack version bump touchpoints](shared/2026-09-22-pack-version-bump-touchpoints.md) —
   two test files pin versions, one of them pins the *next* version.
+- [CLI release touchpoints](shared/2026-10-01-cli-release-touchpoints.md) —
+  four files here, three in the web repo, and a manual docs deploy.
 - [SDD removal sequencing](shared/2026-09-22-sdd-removal-sequencing.md) —
   deferred to pack 0.34.0.
 - [macOS binary signatures](shared/2026-10-01-bun-macos-signatures.md) —
