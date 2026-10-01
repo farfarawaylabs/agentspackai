@@ -1,11 +1,11 @@
-# Agents Pack CLI 0.3.1
+# Agents Pack CLI 0.3.2
 
-- `agents-pack update` no longer fails when a newer content pack removes a
-  component you had selected. The update succeeds, uninstalls that component's
-  managed files, keeps every other selection, and records clean state.
-- The update plan and `update --check` warn once for each removed component and
-  point to the pack release notes for its replacement.
-- Explicit `--add` ids that the candidate pack does not contain are still
-  rejected.
-- Update the CLI before updating to a content pack that removes components;
-  earlier CLIs refuse that update.
+- Fix the CLI being killed on launch (`Killed: 9`) on macOS 27, which also made
+  the installer fail with "The downloaded Agents Pack executable did not start
+  correctly." The macOS executables of 0.3.1 and earlier carry an invalid code
+  signature that macOS 27 now enforces.
+- Every macOS executable is now re-signed with Apple's `codesign`, strictly
+  verified, and run on its own architecture before release.
+- If an earlier CLI is killed on macOS 27, rerun the installer to get this
+  version.
+- No command or behavior changes.

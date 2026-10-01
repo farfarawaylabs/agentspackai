@@ -17,3 +17,6 @@ High-value orientation for the Agents Pack CLI and core content pack.
   two test files pin versions, one of them pins the *next* version.
 - [SDD removal sequencing](shared/2026-09-22-sdd-removal-sequencing.md) —
   deferred to pack 0.34.0.
+- [macOS binary signatures](shared/2026-10-01-bun-macos-signatures.md) —
+  Bun's compile output is invalidly signed; release must re-sign and
+  `codesign --verify --strict`.
